@@ -1882,18 +1882,18 @@ async function loadArchive(silent=false){
       const timeBtn = `<button class="arc-mini icon-only arc-time-btn" onclick="showArchiveTimePopover(this, '${escAttr(submittedAt)}', '${escAttr(approvedAt)}')" title="عرض توقيت الطلب" aria-label="عرض توقيت الطلب">${ARC_ICONS.clock}</button>`;
       const rowClass = (x.transfer_image && !x.cancelled) ? ' class="arc-transferred"' : '';
       return `<tr${rowClass}${x.cancelled?' style="opacity:.55"':''}>
-        <td><b style="color:var(--indigo);font-size:13px">${displayRequestNo(x.req_no)||'—'}</b></td>
-        <td>${type}</td>
-        <td>${x.req_date||'—'}</td>
-        <td class="arc-ref">${ref}</td>
-        <td class="arc-amount">${x.amount?Number(x.amount).toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
-        <td>${sig}</td>
-        <td style="text-align:center">${accCol}</td>
-        <td style="text-align:center">${commentCol}</td>
-        <td style="text-align:center">${imgCol}</td>
-        <td class="arc-files-cell">${attachCol}</td>
-        <td><div class="arc-act">${act}</div></td>
-        <td class="arc-time-cell">${timeBtn}</td>
+        <td data-label="رقم الطلب"><b style="color:var(--indigo);font-size:13px">${displayRequestNo(x.req_no)||'—'}</b></td>
+        <td data-label="النوع">${type}</td>
+        <td data-label="التاريخ">${x.req_date||'—'}</td>
+        <td class="arc-ref" data-label="رقم الفاتورة / المورّد">${ref}</td>
+        <td class="arc-amount" data-label="المبلغ">${x.amount?Number(x.amount).toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+        <td data-label="التوقيع">${sig}</td>
+        <td style="text-align:center" data-label="الاعتماد">${accCol}</td>
+        <td style="text-align:center" data-label="تعليقات">${commentCol}</td>
+        <td style="text-align:center" data-label="إثبات التحويل">${imgCol}</td>
+        <td class="arc-files-cell" data-label="المرفقات">${attachCol}</td>
+        <td data-label="إجراءات"><div class="arc-act">${act}</div></td>
+        <td class="arc-time-cell" data-label="التوقيت">${timeBtn}</td>
       </tr>`;
     }).join('');
   }catch(e){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">خطأ اتصال</td></tr>`; }

@@ -8,3 +8,48 @@ table.arc tbody tr.arc-transferred td:first-child{box-shadow:inset 4px 0 0 var(-
 
 /* status bar match: تدرّج التوب-بار رأسي عشان حافته العليا تطابق لون الشريط العلوي #2F817C */
 .topbar{background:linear-gradient(180deg,#2F817C 0%,#326F82 55%,#3E3A72 100%)!important;}
+
+/* ═══ إدارة الطلبات: عرض كروت على الموبايل (بدل الجدول المزنوق) ═══ */
+@media (max-width:640px){
+  .arc-table-wrap{overflow-x:visible;}
+  table.arc{display:block;width:100%;font-size:13px;background:transparent;table-layout:auto;}
+  table.arc colgroup,table.arc thead{display:none;}
+  table.arc tbody{display:block;}
+  table.arc tbody tr{
+    display:block;position:relative;overflow:hidden;
+    background:#fff !important;border:1px solid #e2eaf3;border-radius:14px;
+    box-shadow:0 6px 18px rgba(46,58,114,.08);
+    padding:4px 14px 8px;margin:0 0 14px;
+  }
+  table.arc tbody tr::before{
+    content:'';position:absolute;top:0;inset-inline:0;height:4px;background:var(--grad);
+  }
+  table.arc tbody tr:hover td{background:transparent !important;}
+  table.arc tbody td,
+  table.arc tbody tr:nth-child(even) td{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    row-gap:4px;padding:10px 0;min-height:42px;border:none;border-bottom:1px solid #eef2f7;
+    border-right:0 none !important;border-left:0 none !important;
+    white-space:normal;overflow:visible;text-overflow:clip;text-align:start;
+    background:transparent !important;
+  }
+  table.arc tbody td.arc-time-cell{border-right:0 none !important;border-left:0 none !important;}
+  table.arc tbody td:last-child{border-bottom:none;}
+  table.arc tbody td::before{
+    content:attr(data-label);color:#66758d;font-size:11.5px;font-weight:800;
+    flex:0 0 auto;white-space:nowrap;
+  }
+  /* رقم الطلب = عنوان الكارت */
+  table.arc tbody td:nth-child(1){padding-top:12px;}
+  table.arc tbody td:nth-child(1) b{font-size:18px !important;}
+  table.arc tbody td:nth-child(1)::before{font-size:12px;color:#3f3c75;}
+  /* المورد/الفاتورة والمبلغ */
+  table.arc tbody td.arc-ref{padding-inline:0;text-align:start;}
+  table.arc tbody td.arc-amount{direction:ltr;font-size:15px;font-weight:800;color:var(--green);}
+  table.arc tbody td.arc-amount::before{direction:rtl;}
+  /* حالة فارغة/تحميل: بلوك واحد ممتد بدون كارت */
+  table.arc tbody tr:has(td.arc-empty){background:transparent !important;border:none;box-shadow:none;padding:0;}
+  table.arc tbody tr:has(td.arc-empty)::before{display:none;}
+  table.arc tbody td.arc-empty{display:block;text-align:center;color:#8492a6;padding:22px 0;border:none;}
+  table.arc tbody td.arc-empty::before{display:none;}
+}
