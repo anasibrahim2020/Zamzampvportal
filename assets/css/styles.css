@@ -9,18 +9,20 @@ table.arc tbody tr.arc-transferred td:first-child{box-shadow:inset 4px 0 0 var(-
 /* status bar match: تدرّج التوب-بار رأسي عشان حافته العليا تطابق لون الشريط العلوي #2F817C */
 .topbar{background:linear-gradient(180deg,#2F817C 0%,#326F82 55%,#3E3A72 100%)!important;}
 
-/* ═══ إدارة الطلبات: عرض كروت على الموبايل (بدل الجدول المزنوق) ═══ */
-@media (max-width:640px){
+/* ═══ إدارة الطلبات: عرض كروت (موبايل + تابلت) بدل الجدول المزنوق ═══ */
+@media (max-width:1024px){
   .arc-table-wrap{overflow-x:visible;}
   table.arc{display:block;width:100%;font-size:13px;background:transparent;table-layout:auto;}
   table.arc colgroup,table.arc thead{display:none;}
-  table.arc tbody{display:block;}
+  /* شبكة تتكيّف: عمود على الموبايل، عمودين/تلاتة على التابلت حسب العرض */
+  table.arc tbody{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-items:start;}
   table.arc tbody tr{
     display:block;position:relative;overflow:hidden;
     background:#fff !important;border:1px solid #e2eaf3;border-radius:14px;
     box-shadow:0 6px 18px rgba(46,58,114,.08);
-    padding:4px 14px 8px;margin:0 0 14px;
+    padding:4px 14px 8px;margin:0;
   }
+  table.arc tbody tr:has(td.arc-empty){grid-column:1/-1;}
   table.arc tbody tr::before{
     content:'';position:absolute;top:0;inset-inline:0;height:4px;background:var(--grad);
   }
