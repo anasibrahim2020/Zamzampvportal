@@ -2,7 +2,7 @@
 // نسخة بسيطة: تخلّي التطبيق قابل للتثبيت، وتسرّع فتح الملفات الثابتة.
 // ملاحظة: البيانات (Supabase) دايمًا من النت — مابنعملهاش cache.
 
-const CACHE = 'zamzam-v14';
+const CACHE = 'zamzam-v15';
 const ASSETS = [
   './',
   './index.html',
@@ -14,6 +14,7 @@ const ASSETS = [
   './assets/js/script-3.js',
   './assets/js/script-4.js',
   './assets/js/script-5.js',
+  './assets/js/push.js',
   './assets/images/image-5fa147e6c3d5.png',
   './assets/images/icon-192.png',
   './assets/images/icon-512.png',
@@ -47,4 +48,37 @@ self.addEventListener('fetch', (e) => {
       return res;
     }).catch(() => caches.match('./index.html')))
   );
+});
+
+// ═══ إشعارات Push — تظهر حتى والتطبيق مقفول (باللوجو) ═══
+self.addEventListener('push', (e) => {
+  let data = {};
+  try { data = e.data ? e.data.json() : {}; }
+  catch (_e) { data = { body: e.data ? e.data.text() : '' }; }
+  const title = data.title || 'زمزم للحج والعمرة';
+  const options = {
+    body: data.body || '',
+    icon: './assets/images/icon-192.png',
+    badge: './assets/images/icon-192.png',
+    dir: 'rtl',
+    lang: 'ar',
+    tag: data.tag || undefined,
+    renotify: !!data.tag,
+    vibrate: [90, 40, 90],
+    data: { url: data.url || './index.html' },
+  };
+  e.waitUntil(self.registration.showNotification(title, options));
+});
+
+// الضغط على الإشعار: يفتح البورتال أو يركّز عليه لو مفتوح
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const target = (e.notification.data && e.notification.data.url) || './index.html';
+  e.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of all) {
+      if ('focus' in c) { try { await c.navigate(target); } catch (_e) {} return c.focus(); }
+    }
+    if (self.clients.openWindow) return self.clients.openWindow(target);
+  })());
 });

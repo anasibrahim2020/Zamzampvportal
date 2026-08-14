@@ -311,6 +311,8 @@ function enterApp(){
   startArchiveAutoRefresh();
   // إشعار مقدم الطلب عند فتح البورتال بأن طلبه تم تحويله
   notifyTransferredRequests();
+  // تسجيل إشعارات Push للجهاز (تظهر حتى والتطبيق مقفول)
+  if(typeof initPush === 'function') initPush(CURRENT);
 }
 
 // إشعار صاحب الطلب أول ما يفتح البورتال إنّ طلبه تم تحويله (رُفع إثبات التحويل)
