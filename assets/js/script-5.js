@@ -249,7 +249,7 @@ async function doLogin(){
     document.getElementById('login-pass').value=''; document.getElementById('login-pass').focus();
     return;
   }
-  const ob = btn ? btn.textContent : '';
+  const ob = btn ? btn.innerHTML : '';
   if(btn){ btn.disabled=true; btn.textContent=t('جاري الدخول...'); }
   try{
     const { data, error } = await sb.auth.signInWithPassword({ email:info.email, password:p });
@@ -267,7 +267,7 @@ async function doLogin(){
     err.style.display='block';
     console.error(e);
   }
-  if(btn){ btn.disabled=false; btn.textContent=ob; }
+  if(btn){ btn.disabled=false; btn.innerHTML=ob; }
 }
 
 async function doLogout(){
@@ -879,7 +879,7 @@ function signDoc(kind){
   document.getElementById(kind+'-sig-ph').style.display='none';
   document.getElementById(kind+'-sig-stamp').classList.add('on');
   document.getElementById(kind+'-sig-mono').textContent = initials(CURRENT.name);
-  document.getElementById(kind+'-sig-name').textContent = CURRENT.name;
+  document.getElementById(kind+'-sig-name').textContent = personName(CURRENT.name);
   document.getElementById(kind+'-sig-meta').textContent = dt;
   showMessageDialog({
     title:t('تم التوقيع الإلكتروني'),
@@ -905,10 +905,10 @@ async function signAccountsFor(kind){
   document.getElementById(pfx+'-acc-ph').style.display='none';
   document.getElementById(pfx+'-acc-stamp').classList.add('on');
   document.getElementById(pfx+'-acc-mono').textContent = initials(CURRENT.name);
-  document.getElementById(pfx+'-acc-name').textContent = CURRENT.name;
+  document.getElementById(pfx+'-acc-name').textContent = personName(CURRENT.name);
   document.getElementById(pfx+'-acc-meta').textContent = dt;
   if(EDIT_ID && SB_ON){
-    const btn=document.getElementById(pfx+'-acc-btn'); const o=btn?btn.textContent:'';
+    const btn=document.getElementById(pfx+'-acc-btn'); const o=btn?btn.innerHTML:'';
     if(btn){ btn.disabled=true; btn.textContent=t('جاري الاعتماد...'); }
     try{
       const { error } = await sb.from('requests').update({
@@ -932,7 +932,7 @@ async function signAccountsFor(kind){
         });
       }
     }catch(e){ alert(t('خطأ اتصال بـ Supabase.')); console.error(e); }
-    if(btn){ btn.disabled=false; btn.textContent=o; }
+    if(btn){ btn.disabled=false; btn.innerHTML=o; }
   }
 }
 async function signCancelAccounts(){ return signAccountsFor('cancel'); }
@@ -1205,7 +1205,7 @@ async function persistRequestRecord(kind, rec){
     alert(t('لا يمكن تعديل هذا الطلب.\n\nتم اعتماد الطلب من إدارة الحسابات أو لا تملك صلاحية تعديله.'));
     return;
   }
-  btn.disabled=true; const o=btn.textContent; btn.textContent=t('جاري التقديم...');
+  btn.disabled=true; const o=btn.innerHTML; btn.textContent=t('جاري التقديم...');
   try{
     if(!EDIT_ID){
       await assignNextRequestNo(kind, rec);
@@ -1241,7 +1241,7 @@ async function persistRequestRecord(kind, rec){
       alert(msg); 
     }
   }catch(e){ alert(t('خطأ اتصال بـ Supabase.')); console.error(e); }
-  btn.disabled=false; btn.textContent=o;
+  btn.disabled=false; btn.innerHTML=o;
 }
 
 async function saveCancelDoc(){
@@ -2989,6 +2989,11 @@ function refreshDynamicUI(){
       const dept = document.getElementById('d-dept');
       if(dept && !EDIT_ID) dept.value = personName(CURRENT.dept || '');
     }
+    // أسماء التواقيع المعروضة تتحدّث مع اللغة (المخزَّن ما بيتغيّرش)
+    ['disb','cancel'].forEach(k=>{
+      const sg = SIGNED[k]; if(sg){ const el=document.getElementById(k+'-sig-name'); if(el) el.textContent = personName(sg.name); }
+      const ac = getAccSign(k); if(ac){ const el=document.getElementById(k+'-acc-name'); if(el) el.textContent = personName(ac.name); }
+    });
     if(typeof renderAttach === 'function') renderAttach();
     if(typeof updateDisbWords === 'function') updateDisbWords(document.getElementById('d-amt')?.value || '');
     if(typeof updateMatch === 'function') updateMatch();
