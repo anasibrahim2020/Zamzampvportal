@@ -2,7 +2,7 @@
 // نسخة بسيطة: تخلّي التطبيق قابل للتثبيت، وتسرّع فتح الملفات الثابتة.
 // ملاحظة: البيانات (Supabase) دايمًا من النت — مابنعملهاش cache.
 
-const CACHE = 'zamzam-v19';
+const CACHE = 'zamzam-v20';
 const ASSETS = [
   './',
   './index.html',
@@ -36,12 +36,33 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// الطلبات: أي حاجة من Supabase أو خارجية تروح للنت مباشرة؛ ملفات الموقع: كاش أولاً ثم النت
+// الطلبات:
+//  • Supabase وأي حاجة خارجية → النت مباشرة
+//  • ملفات الكود (html/css/js) → النت الأول عشان التحديث يوصل فوراً، والكاش احتياطي لو مفيش نت
+//  • الصور والخطوط → الكاش الأول (مابتتغيّرش وبتوفّر سرعة وبيانات)
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;                       // الكتابة دايمًا للنت
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;        // Supabase وغيره: من النت
+
+  const isCode = req.mode === 'navigate'
+    || /\.(?:html|css|js|json)$/i.test(url.pathname)
+    || url.pathname === '/' || url.pathname.endsWith('/');
+
+  if (isCode) {
+    // Network-first: أحدث نسخة دايمًا، ولو النت واقع نرجع للكاش
+    e.respondWith(
+      fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+        return res;
+      }).catch(() => caches.match(req).then((hit) => hit || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // Cache-first للأصول الثابتة
   e.respondWith(
     caches.match(req).then((hit) => hit || fetch(req).then((res) => {
       const copy = res.clone();

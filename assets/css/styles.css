@@ -343,13 +343,17 @@ html.lang-en .arc-amount{direction:ltr;}
   .tb-logo{height:30px;padding:4px 6px;border-radius:8px;margin-inline-start:0;flex:0 0 auto;}
   .tb-title{display:none;}                       /* اسم الشركة يتشال — اللوجو كفاية */
 
+  /* الاسم يقف جنب اللوجو مباشرة، والأزرار في الطرف التاني */
   .tb-right{gap:6px;flex:1 1 auto;min-width:0;justify-content:flex-end;}
-  .tb-user{flex:1 1 auto;min-width:0;line-height:1.2;overflow:hidden;}
-  .tb-user b{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
-  .tb-user .role{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
+  .tb-user{
+    flex:1 1 auto;min-width:0;line-height:1.25;overflow:hidden;
+    margin-inline-end:auto;padding-inline-start:10px;text-align:start;}
+  .tb-user b{font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
+  .tb-user .role{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;opacity:.8;}
+  html[dir="ltr"] .tb-user{text-align:left;}
 
   /* زر اللغة: أيقونة + رمز */
-  .tb-lang{padding:0 8px;height:32px;font-size:10px;gap:4px;flex:0 0 auto;margin-inline-end:0;}
+  .tb-lang{padding:0 9px;height:32px;font-size:10px;gap:4px;flex:0 0 auto;margin-inline-end:0;}
   .tb-lang svg{width:14px;height:14px;}
 
   /* زر الخروج: أيقونة فقط */
