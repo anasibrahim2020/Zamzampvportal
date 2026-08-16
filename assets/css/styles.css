@@ -328,3 +328,64 @@ html.lang-en .doc textarea{direction:ltr;}
 html.lang-en .doc input[dir="ltr"],
 html.lang-en .amt-input,
 html.lang-en .arc-amount{direction:ltr;}
+
+/* ══════════════════════════════════════════
+   الشريط العلوي والتنقّل على الموبايل — إعادة بناء كاملة
+   صف واحد: [لوجو] … [الاسم/القسم] [🌐] [خروج]
+══════════════════════════════════════════ */
+@media (max-width:760px){
+  .topbar{
+    padding:0 10px;gap:8px;
+    height:calc(54px + env(safe-area-inset-top, 0px));
+    padding-top:env(safe-area-inset-top, 0px);
+  }
+  .tb-left{gap:0;flex:0 0 auto;min-width:0;}
+  .tb-logo{height:30px;padding:4px 6px;border-radius:8px;margin-inline-start:0;flex:0 0 auto;}
+  .tb-title{display:none;}                       /* اسم الشركة يتشال — اللوجو كفاية */
+
+  .tb-right{gap:6px;flex:1 1 auto;min-width:0;justify-content:flex-end;}
+  .tb-user{flex:1 1 auto;min-width:0;line-height:1.2;overflow:hidden;}
+  .tb-user b{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
+  .tb-user .role{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
+
+  /* زر اللغة: أيقونة + رمز */
+  .tb-lang{padding:0 8px;height:32px;font-size:10px;gap:4px;flex:0 0 auto;margin-inline-end:0;}
+  .tb-lang svg{width:14px;height:14px;}
+
+  /* زر الخروج: أيقونة فقط */
+  .tb-logout{
+    font-size:0;width:34px;height:32px;padding:0;flex:0 0 auto;border-radius:9px;
+    display:inline-flex;align-items:center;justify-content:center;}
+  .tb-logout::before{
+    content:'';width:17px;height:17px;background:currentColor;
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'/%3E%3Cpath d='m16 17 5-5-5-5'/%3E%3Cpath d='M21 12H9'/%3E%3C/svg%3E") center/contain no-repeat;
+            mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'/%3E%3Cpath d='m16 17 5-5-5-5'/%3E%3Cpath d='M21 12H9'/%3E%3C/svg%3E") center/contain no-repeat;}
+  html[dir="rtl"] .tb-logout::before{transform:scaleX(-1);}
+
+  /* التنقّل: ثلاثة أزرار في صف واحد */
+  .nav{top:calc(54px + env(safe-area-inset-top, 0px));padding:8px 10px;gap:5px;flex-wrap:nowrap;}
+  .nav-btn{
+    flex:1 1 0;min-width:0;padding:8px 6px;font-size:11px;line-height:1.25;gap:5px;
+    justify-content:center;text-align:center;white-space:normal;}
+  .nav-btn svg{width:14px;height:14px;}
+
+  /* رأس إدارة الطلبات والتبويبات */
+  .arc-hd{padding:12px 14px;gap:10px;align-items:center;}
+  .arc-hd h2{font-size:15px;line-height:1.25;}
+  .arc-hd .sub{font-size:10px;}
+  .arc-hd-actions{gap:6px;flex-wrap:nowrap;flex:0 0 auto;}
+  .arc-refresh-btn{padding:6px 10px;font-size:11px;gap:5px;}
+  .arc-refresh-btn svg{width:13px;height:13px;}
+  .arc-tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:2px;}
+  .arc-tabs::-webkit-scrollbar{display:none;}
+  .arc-tab{flex:0 0 auto;white-space:nowrap;font-size:11.5px;padding:10px 12px;}
+}
+@media (max-width:430px){
+  .tb-user b{font-size:11px;}
+  .tb-user .role{font-size:8.5px;}
+  .nav-btn{font-size:10px;padding:7px 4px;gap:4px;}
+  .nav-btn svg{display:none;}
+  .arc-hd h2{font-size:14px;}
+  .arc-refresh-btn{padding:6px 8px;font-size:10px;}
+  .arc-hd-actions .arc-bulk-btn span{display:none;}
+}
