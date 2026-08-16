@@ -13,6 +13,8 @@ const USER_MAP = {
 };
 
 // 2) Supabase — لازم تكمّلهم عشان الدخول والأرشيف يشتغلوا (المفتاح ده آمن يتحط هنا)
+if(typeof buildUserNameMap === 'function') buildUserNameMap(USER_MAP);
+
 const SUPABASE_URL = 'https://piwuyaskrvuhblenixhf.supabase.co';   // رابط المشروع
 const SUPABASE_KEY = 'sb_publishable_Qx-F2nQVr10ynaw1JC87sQ_u2ZCJRKt';   // anon / publishable key
 const SB_ON = !!(SUPABASE_URL && SUPABASE_KEY);
@@ -44,7 +46,7 @@ async function resolveStorageUrl(path){
   return null;
 }
 async function openSourceInNewTab(src){
-  if(!src){ alert('لا يوجد ملف للعرض'); return; }
+  if(!src){ alert(t('لا يوجد ملف للعرض')); return; }
   if(isDataUrl(src)){
     const blob = dataUrlToBlob(src);
     const url = URL.createObjectURL(blob);
@@ -59,10 +61,10 @@ async function openSourceInNewTab(src){
   if(isStoragePath(src)){
     const url = await resolveStorageUrl(src);
     if(url){ window.open(url, '_blank'); return; }
-    alert('تعذّر الوصول إلى الملف من التخزين.');
+    alert(t('تعذّر الوصول إلى الملف من التخزين.'));
     return;
   }
-  alert('مصدر المرفق غير معرّف.');
+  alert(t('مصدر المرفق غير معرّف.'));
 }
 function getCurrentAttachmentCount(){ return ATTACHED.length; }
 async function uploadFileToStorage(file, folder='uploads'){
@@ -85,45 +87,45 @@ async function uploadAttachments(files, folder='uploads'){
 }
 async function openAttachment(rowIndex, attIndex){
   const x = (window._arcRows||[])[rowIndex];
-  if(!x){ alert('تعذّر فتح الطلب.'); return; }
+  if(!x){ alert(t('تعذّر فتح الطلب.')); return; }
   let atts = [];
   try{ atts = JSON.parse(x.attachments_data||'[]'); }catch(e){ atts = []; }
   const src = atts[attIndex];
-  if(!src){ alert('لا يوجد مرفق.'); return; }
+  if(!src){ alert(t('لا يوجد مرفق.')); return; }
   await openSourceInNewTab(src);
 }
 async function downloadArchiveAttachment(rowIndex, attIndex){
   const x = (window._arcRows||[])[rowIndex];
-  if(!x){ alert('تعذّر فتح الطلب.'); return; }
+  if(!x){ alert(t('تعذّر فتح الطلب.')); return; }
   let atts = [];
   try{ atts = JSON.parse(x.attachments_data||'[]'); }catch(e){ atts = []; }
   const src = atts[attIndex];
-  if(!src){ alert('لا يوجد مرفق.'); return; }
+  if(!src){ alert(t('لا يوجد مرفق.')); return; }
   try{
     const bytes = await getAttachmentBytes(src);
     dl(new Blob([bytes], { type:getAttachmentMime(src) }), getAttachmentLabel(src));
   }catch(e){
-    alert('تعذّر تنزيل المرفق.');
+    alert(t('تعذّر تنزيل المرفق.'));
     console.error(e);
   }
 }
 async function printArchiveAttachment(rowIndex, attIndex){
   const x = (window._arcRows||[])[rowIndex];
-  if(!x){ alert('تعذّر فتح الطلب.'); return; }
+  if(!x){ alert(t('تعذّر فتح الطلب.')); return; }
   let atts = [];
   try{ atts = JSON.parse(x.attachments_data||'[]'); }catch(e){ atts = []; }
   const src = atts[attIndex];
-  if(!src){ alert('لا يوجد مرفق.'); return; }
+  if(!src){ alert(t('لا يوجد مرفق.')); return; }
   try{
     const bytes = await getAttachmentBytes(src);
     const blob = new Blob([bytes], { type:getAttachmentMime(src) });
     const url = URL.createObjectURL(blob);
     const w = window.open(url, '_blank');
-    if(!w){ alert('المتصفح منع فتح نافذة الطباعة. اسمح بالـ popups وجرب تاني.'); return; }
+    if(!w){ alert(t('المتصفح منع فتح نافذة الطباعة. اسمح بالـ popups وجرب تاني.')); return; }
     w.onload = function(){ try{ w.focus(); w.print(); }catch(e){} };
     setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 900);
   }catch(e){
-    alert('تعذّر طباعة المرفق.');
+    alert(t('تعذّر طباعة المرفق.'));
     console.error(e);
   }
 }
@@ -141,7 +143,7 @@ async function bytesToPngBytes(bytes, mime){
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
     const pngBlob = await new Promise(resolve=>canvas.toBlob(resolve, 'image/png'));
-    if(!pngBlob) throw new Error('تعذّر تحويل الصورة إلى PNG');
+    if(!pngBlob) throw new Error(t('تعذّر تحويل الصورة إلى PNG'));
     return await pngBlob.arrayBuffer();
   }finally{
     URL.revokeObjectURL(url);
@@ -163,11 +165,11 @@ async function addImageAttachmentToPdf(merged, bytes, mime){
 }
 async function mergeArchiveAttachmentBytes(rowIndex){
   const x = (window._arcRows||[])[rowIndex];
-  if(!x){ throw new Error('تعذّر فتح الطلب.'); }
+  if(!x){ throw new Error(t('تعذّر فتح الطلب.')); }
   const atts = getArchiveRowAttachments(x);
-  if(!atts.length){ throw new Error('لا توجد مرفقات للدمج.'); }
+  if(!atts.length){ throw new Error(t('لا توجد مرفقات للدمج.')); }
   if(!window.PDFLib || !window.PDFLib.PDFDocument){
-    throw new Error('مكتبة دمج ملفات PDF غير متاحة.');
+    throw new Error(t('مكتبة دمج ملفات PDF غير متاحة.'));
   }
   const merged = await PDFLib.PDFDocument.create();
   for(let i=0;i<atts.length;i++){
@@ -181,20 +183,20 @@ async function mergeArchiveAttachmentBytes(rowIndex){
     } else if(mime.startsWith('image/')){
       await addImageAttachmentToPdf(merged, bytes, mime);
     } else {
-      throw new Error('نوع مرفق غير مدعوم للدمج: '+getAttachmentLabel(att));
+      throw new Error(t('نوع مرفق غير مدعوم للدمج: ')+getAttachmentLabel(att));
     }
   }
   return await merged.save();
 }
 async function downloadArchiveAttachmentsMerged(rowIndex){
   const x = (window._arcRows||[])[rowIndex];
-  if(!x){ alert('تعذّر فتح الطلب.'); return; }
+  if(!x){ alert(t('تعذّر فتح الطلب.')); return; }
   try{
     const bytes = await mergeArchiveAttachmentBytes(rowIndex);
     const reqNo = displayRequestNo(x.req_no) || 'request';
-    dl(new Blob([bytes], { type:'application/pdf' }), `مرفقات_${reqNo}.pdf`);
+    dl(new Blob([bytes], { type:'application/pdf' }), `${t('مرفقات_')}${reqNo}.pdf`);
   }catch(e){
-    alert('تعذّر دمج المرفقات. تأكد أن المرفقات PDF أو صور مدعومة.');
+    alert(t('تعذّر دمج المرفقات. تأكد أن المرفقات PDF أو صور مدعومة.'));
     console.error(e);
   }
 }
@@ -204,19 +206,19 @@ async function printArchiveAttachmentsMerged(rowIndex){
     const blob = new Blob([bytes], { type:'application/pdf' });
     const url = URL.createObjectURL(blob);
     const w = window.open(url, '_blank');
-    if(!w){ alert('المتصفح منع فتح نافذة الطباعة. اسمح بالـ popups وجرب تاني.'); return; }
+    if(!w){ alert(t('المتصفح منع فتح نافذة الطباعة. اسمح بالـ popups وجرب تاني.')); return; }
     w.onload = function(){ try{ w.focus(); w.print(); }catch(e){} };
     setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 900);
   }catch(e){
-    alert('تعذّر دمج المرفقات للطباعة. تأكد أن المرفقات PDF أو صور مدعومة.');
+    alert(t('تعذّر دمج المرفقات للطباعة. تأكد أن المرفقات PDF أو صور مدعومة.'));
     console.error(e);
   }
 }
 async function openAttachmentByRow(rowIndex, field){
   const x = (window._arcRows||[])[rowIndex];
-  if(!x){ alert('تعذّر فتح الطلب.'); return; }
+  if(!x){ alert(t('تعذّر فتح الطلب.')); return; }
   const src = x[field];
-  if(!src){ alert('لا يوجد ملف.'); return; }
+  if(!src){ alert(t('لا يوجد ملف.')); return; }
   await openSourceInNewTab(src);
 }
 
@@ -236,23 +238,23 @@ async function doLogin(){
   const err   = document.getElementById('login-error');
   const btn   = document.querySelector('.login-btn');
   if(!SB_ON){
-    err.textContent='الإعداد غير مكتمل — لازم تضيف بيانات Supabase الأول (راجع دليل الإعداد).';
+    err.textContent=t('الإعداد غير مكتمل — لازم تضيف بيانات Supabase الأول (راجع دليل الإعداد).');
     err.style.display='block';
     return;
   }
   const info = USER_MAP[uname];
   if(!info){
-    err.textContent='اسم المستخدم أو كلمة المرور غير صحيحة';
+    err.textContent=t('اسم المستخدم أو كلمة المرور غير صحيحة');
     err.style.display='block';
     document.getElementById('login-pass').value=''; document.getElementById('login-pass').focus();
     return;
   }
   const ob = btn ? btn.textContent : '';
-  if(btn){ btn.disabled=true; btn.textContent='جاري الدخول...'; }
+  if(btn){ btn.disabled=true; btn.textContent=t('جاري الدخول...'); }
   try{
     const { data, error } = await sb.auth.signInWithPassword({ email:info.email, password:p });
     if(error || !(data && data.session)){
-      err.textContent='اسم المستخدم أو كلمة المرور غير صحيحة';
+      err.textContent=t('اسم المستخدم أو كلمة المرور غير صحيحة');
       err.style.display='block';
       document.getElementById('login-pass').value=''; document.getElementById('login-pass').focus();
     } else {
@@ -261,7 +263,7 @@ async function doLogin(){
       enterApp();
     }
   }catch(e){
-    err.textContent='خطأ اتصال بالسيرفر — حاول تاني';
+    err.textContent=t('خطأ اتصال بالسيرفر — حاول تاني');
     err.style.display='block';
     console.error(e);
   }
@@ -280,11 +282,11 @@ async function doLogout(){
 function enterApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
-  document.getElementById('tb-name').textContent = CURRENT.name_en || CURRENT.name;
-  document.getElementById('tb-role').textContent = CURRENT.dept_en || CURRENT.dept || '';
+  document.getElementById('tb-name').textContent = personName(CURRENT.name);
+  document.getElementById('tb-role').textContent = personName(CURRENT.dept || '');
   // الاسم والقسم بيتعبّوا أوتوماتيك حسب الحساب
-  document.getElementById('d-name').value = CURRENT.name;
-  document.getElementById('d-dept').value = CURRENT.dept || (CURRENT.role==='accountant'?'قسم الحسابات':'قسم المبيعات');
+  document.getElementById('d-name').value = personName(CURRENT.name);
+  document.getElementById('d-dept').value = personName(CURRENT.dept || (CURRENT.role==='accountant'?'قسم الحسابات':'قسم المبيعات'));
 
   const isAcc = CURRENT.role==='accountant';
   const isViewer = CURRENT.role==='viewer';
@@ -332,20 +334,20 @@ async function notifyTransferredRequests(){
     const fresh = rows.filter(r=>r.transfer_image && !r.cancelled && !r.transfer_seen);
     if(!fresh.length) return;
     const details = fresh.slice(0,8).map(r=>({
-      label: r.doc_type==='cancel' ? 'طلب إلغاء واسترداد' : 'طلب صرف',
+      label: r.doc_type==='cancel' ? t('طلب إلغاء واسترداد') : t('طلب صرف'),
       value: displayRequestNo(r.req_no) || '—',
       ltr:true
     }));
-    if(fresh.length > 8) details.push({ label:'و طلبات أخرى', value:'+' + (fresh.length-8) });
+    if(fresh.length > 8) details.push({ label:t('و طلبات أخرى'), value:'+' + (fresh.length-8) });
     showMessageDialog({
-      title:'تم تحويل طلبك ✅',
+      title:t('تم تحويل طلبك ✅'),
       subtitle:'Request Transferred',
       message: fresh.length===1
-        ? 'تم تحويل المبلغ الخاص بطلبك ورفع إثبات التحويل. يمكنك عرض الإثبات من إدارة الطلبات.'
-        : `تم تحويل المبالغ الخاصة بعدد ${fresh.length} من طلباتك ورفع إثبات التحويل. يمكنك عرضها من إدارة الطلبات.`,
+        ? t('تم تحويل المبلغ الخاص بطلبك ورفع إثبات التحويل. يمكنك عرض الإثبات من إدارة الطلبات.')
+        : t('تم تحويل المبالغ الخاصة بعدد {n} من طلباتك ورفع إثبات التحويل. يمكنك عرضها من إدارة الطلبات.').replace('{n}', fresh.length),
       details,
-      note:'الطلبات المحوّلة تظهر باللون الأخضر داخل إدارة الطلبات.',
-      confirmText:'تم'
+      note:t('الطلبات المحوّلة تظهر باللون الأخضر داخل إدارة الطلبات.'),
+      confirmText:t('تم')
     });
     // تعليم الطلبات كمقروءة على مستوى الحساب (مش هتظهر تاني على أي جهاز)
     const ids = fresh.map(r=>r.id);
@@ -446,7 +448,7 @@ function updateDisbWords(val){
   if(!val||n===0){ we.textContent=''; wa.textContent=''; wr.classList.add('empty'); return; }
   const whole=Math.floor(n), cents=Math.round((n-whole)*100);
   let e='QAR '+toEn(whole); if(cents>0)e+=' and '+cents+'/100'; e+=' Only';
-  let a=toAr(whole); if(cents>0)a+=' و'+cents+' درهم'; a+=' ريال قطري فقط لا غير';
+  let a=toAr(whole); if(cents>0)a+=t(' و')+cents+t(' درهم'); a+=t(' ريال قطري فقط لا غير');
   we.textContent=e; wa.textContent=a; wr.classList.remove('empty');
 }
 
@@ -472,13 +474,13 @@ function getDisbTableRowsCount(){
 }
 function canAddDisbTableRow(){
   if(getDisbTableRowsCount() < MAX_DISB_TABLE_ROWS) return true;
-  alert(`لقد وصلت للحد الأقصى للمدخلات.\n\nفي نسخة الاختبار الحالية الحد الأعلى هو ${MAX_DISB_TABLE_ROWS} صفاً. الصفوف الزائدة عن ${DISB_MAIN_PRINT_ROWS} ستظهر في ملحق تفاصيل الفواتير عند الطباعة.`);
+  alert(t('لقد وصلت للحد الأقصى للمدخلات.\n\nالحد الأعلى هو {max} صفاً. الصفوف الزائدة عن {main} ستظهر في ملحق تفاصيل الفواتير عند الطباعة.').replace('{max}', MAX_DISB_TABLE_ROWS).replace('{main}', DISB_MAIN_PRINT_ROWS));
   return false;
 }
 function ensureDisbRowsPrintable(){
   const count = getDisbTableRowsCount();
   if(count <= MAX_DISB_TABLE_ROWS) return true;
-  alert(`لا يمكن طباعة الطلب بعدد الصفوف الحالي.\n\nالعدد الحالي: ${count}\nالحد الأقصى في نسخة الاختبار: ${MAX_DISB_TABLE_ROWS} صفاً.`);
+  alert(t('لا يمكن طباعة الطلب بعدد الصفوف الحالي.\n\nالعدد الحالي: {n}\nالحد الأقصى: {max} صفاً.').replace('{n}', count).replace('{max}', MAX_DISB_TABLE_ROWS));
   return false;
 }
 function getDisbSupplierRows(){
@@ -512,10 +514,10 @@ function setDisbMainTotalLabels(hasAppendix){
   const supplierLabel = document.getElementById('supplier-total-label');
   const clientLabel = document.getElementById('client-total-label');
   if(supplierLabel){
-    supplierLabel.textContent = hasAppendix ? 'إجمالي كل الصفوف · All Rows Total' : 'الإجمالي · Total';
+    supplierLabel.textContent = hasAppendix ? t('إجمالي كل الصفوف · All Rows Total') : t('الإجمالي · Total');
   }
   if(clientLabel){
-    clientLabel.textContent = hasAppendix ? 'إجمالي كل صفوف مركز التكلفة · All Rows Total' : 'إجمالي مركز التكلفة · Total Cost Center';
+    clientLabel.textContent = hasAppendix ? t('إجمالي كل صفوف مركز التكلفة · All Rows Total') : t('إجمالي مركز التكلفة · Total Cost Center');
   }
 }
 function markDisbMainRowsForPrint(supplierRows, clientRows){
@@ -528,25 +530,25 @@ function markDisbMainRowsForPrint(supplierRows, clientRows){
 function renderAppendixSupplierRows(rows){
   if(!rows.length) return '';
   return `
-    <div class="sec-title"><span class="ar">فواتير المورد - التفاصيل الكاملة</span><span class="en">Supplier Invoices - Full Details</span></div>
+    <div class="sec-title"><span class="ar">${t('فواتير المورد - التفاصيل الكاملة')}</span><span class="en">Supplier Invoices - Full Details</span></div>
     <table class="appendix-table">
-      <thead><tr><th style="width:10%">#</th><th style="width:36%">المورّد<small>Supplier</small></th><th style="width:32%">رقم الفاتورة<small>Invoice No.</small></th><th style="width:22%">المبلغ ر.ق<small>Amount QAR</small></th></tr></thead>
+      <thead><tr><th style="width:10%">#</th><th style="width:36%">${t('المورّد')}<small>Supplier</small></th><th style="width:32%">${t('رقم الفاتورة')}<small>Invoice No.</small></th><th style="width:22%">${t('المبلغ ر.ق')}<small>Amount QAR</small></th></tr></thead>
       <tbody>${rows.map(r=>`
         <tr><td class="num">${r.idx}</td><td>${escapeHtml(r.supplier || '—')}</td><td>${escapeHtml(r.invoice || '—')}</td><td class="num">${escapeHtml(r.amount || '0.00')}</td></tr>
       `).join('')}</tbody>
-      <tfoot><tr class="appendix-total"><td colspan="3">الإجمالي · Total</td><td class="num">${escapeHtml(document.getElementById('supplier-total')?.textContent || '0.00')}</td></tr></tfoot>
+      <tfoot><tr class="appendix-total"><td colspan="3">${t('الإجمالي · Total')}</td><td class="num">${escapeHtml(document.getElementById('supplier-total')?.textContent || '0.00')}</td></tr></tfoot>
     </table>`;
 }
 function renderAppendixClientRows(rows){
   if(!rows.length) return '';
   return `
-    <div class="sec-title"><span class="ar">مركز التكلفة - التفاصيل الكاملة</span><span class="en">Cost Center - Full Details</span></div>
+    <div class="sec-title"><span class="ar">${t('مركز التكلفة - التفاصيل الكاملة')}</span><span class="en">Cost Center - Full Details</span></div>
     <table class="appendix-table">
-      <thead><tr><th style="width:10%">#</th><th style="width:58%"><span dir="rtl">رقم فاتورة العميل</span> - <span dir="ltr">Odoo</span><small>Client Invoice No. - Odoo</small></th><th style="width:32%">النصيب ر.ق<small>Share QAR</small></th></tr></thead>
+      <thead><tr><th style="width:10%">#</th><th style="width:58%"><span dir="rtl">${t('رقم فاتورة العميل')}</span> - <span dir="ltr">Odoo</span><small>Client Invoice No. - Odoo</small></th><th style="width:32%">${t('النصيب ر.ق')}<small>Share QAR</small></th></tr></thead>
       <tbody>${rows.map(r=>`
         <tr><td class="num">${r.idx}</td><td>${escapeHtml(r.invoice || '—')}</td><td class="num">${escapeHtml(r.share || '0.00')}</td></tr>
       `).join('')}</tbody>
-      <tfoot><tr class="appendix-total"><td colspan="2">إجمالي مركز التكلفة · Total Cost Center</td><td class="num">${escapeHtml(document.getElementById('client-total')?.textContent || '0.00')}</td></tr></tfoot>
+      <tfoot><tr class="appendix-total"><td colspan="2">${t('إجمالي مركز التكلفة · Total Cost Center')}</td><td class="num">${escapeHtml(document.getElementById('client-total')?.textContent || '0.00')}</td></tr></tfoot>
     </table>`;
 }
 function prepareDisbPrintAppendix(){
@@ -567,7 +569,7 @@ function prepareDisbPrintAppendix(){
   const reqNo = document.getElementById('d-reqno')?.value || 'PV';
   appendix.innerHTML = `
     <div class="appendix-head">
-      <div><b>ملحق تفاصيل الفواتير</b><small>Invoice Details Appendix</small></div>
+      <div><b>${t('ملحق تفاصيل الفواتير')}</b><small>Invoice Details Appendix</small></div>
       <span>${escapeHtml(reqNo)}</span>
     </div>
     ${renderAppendixSupplierRows(supplierRows)}
@@ -580,8 +582,8 @@ function addSupplierRow(supplier='',inv='',amt='', skipLimit=false){
   const tb=document.getElementById('supplier-rows');
   const tr=document.createElement('tr');
   tr.innerHTML=`
-    <td><input type="text" class="s-name" list="supplier-names" placeholder="اسم المورّد" value="${supplier}"></td>
-    <td><input type="text" class="s-inv"  placeholder="رقم الفاتورة" value="${inv}"></td>
+    <td><input type="text" class="s-name" list="supplier-names" placeholder="${t('اسم المورّد')}" data-i18n-attr="placeholder|اسم المورّد" value="${supplier}"></td>
+    <td><input type="text" class="s-inv"  placeholder="${t('رقم الفاتورة')}" data-i18n-attr="placeholder|رقم الفاتورة" value="${inv}"></td>
     <td class="amt-cell"><input type="text" class="s-amt" placeholder="0.00" value="${amt}" oninput="handleSupplierAmt(this)"></td>
     <td class="no-print"><button class="del-row" onclick="this.closest('tr').remove();recalcSupplier()">✕</button></td>`;
   tb.appendChild(tr);
@@ -607,7 +609,7 @@ function addClientRow(inv='',amt='', skipLimit=false){
   const tb=document.getElementById('client-rows');
   const tr=document.createElement('tr');
   tr.innerHTML=`
-    <td><input type="text" class="c-inv" placeholder="رقم فاتورة العميل - ‎Odoo" value="${inv}"></td>
+    <td><input type="text" class="c-inv" placeholder="${t('رقم فاتورة العميل - ‎Odoo')}" data-i18n-attr="placeholder|رقم فاتورة العميل - ‎Odoo" value="${inv}"></td>
     <td class="amt-cell"><input type="text" class="c-amt" placeholder="0.00" value="${amt}" oninput="handleClientAmt(this)"></td>
     <td class="no-print"><button class="del-row" onclick="this.closest('tr').remove();recalcClient()">✕</button></td>`;
   tb.appendChild(tr);
@@ -647,7 +649,7 @@ function updateMatch(){
   const box = document.getElementById('client-match');
   if(!box) return;
   const hasAppendix = getDisbTableRowsCount() > DISB_MAIN_PRINT_ROWS;
-  const appendixHint = hasAppendix ? '<span class="appendix-hint">التفاصيل الكاملة في الملحق التالي · See appendix</span>' : '';
+  const appendixHint = hasAppendix ? t('<span class="appendix-hint">التفاصيل الكاملة في الملحق التالي · See appendix</span>') : '';
   updateCostCenterDisabledUI();
   if(isCostCenterDisabled()){
     box.style.display='none';
@@ -665,11 +667,11 @@ function updateMatch(){
   const diff = Math.round((cli - sup)*100)/100;
   if(Math.abs(diff) < 0.005){
     box.className='match-note ok';
-    box.innerHTML='✓ إجمالي مركز التكلفة مطابق لإجمالي فاتورة المورّد <small>('+sup.toLocaleString('en-US',{minimumFractionDigits:2})+' ر.ق)</small>'+appendixHint;
+    box.innerHTML=t('✓ إجمالي مركز التكلفة مطابق لإجمالي فاتورة المورّد <small>(')+sup.toLocaleString('en-US',{minimumFractionDigits:2})+t(' ر.ق)</small>')+appendixHint;
   } else {
     box.className='match-note bad';
-    const sign = diff>0 ? 'أكبر' : 'أقل';
-    box.innerHTML='✗ الإجمالي لا يساوي إجمالي فاتورة المورّد — '+sign+' بمقدار <small>'+Math.abs(diff).toLocaleString('en-US',{minimumFractionDigits:2})+' ر.ق</small>'+appendixHint;
+    const sign = diff>0 ? t('أكبر') : t('أقل');
+    box.innerHTML=t('✗ الإجمالي لا يساوي إجمالي فاتورة المورّد — ')+sign+t(' بمقدار <small>')+Math.abs(diff).toLocaleString('en-US',{minimumFractionDigits:2})+t(' ر.ق</small>')+appendixHint;
   }
 }
 addClientRow(); // أول صف
@@ -707,7 +709,7 @@ function getAttachmentSize(attachment){
   if(attachment instanceof Blob && typeof attachment.size==='number'){
     return `${(attachment.size/1024).toFixed(0)} KB`;
   }
-  return '(محفوظ)';
+  return t('(محفوظ)');
 }
 function getAttachmentMime(attachment){
   if(attachment instanceof Blob && attachment.type) return attachment.type;
@@ -745,8 +747,8 @@ function renderAttach(){
       <span class="nm">${escapeHtml(getAttachmentLabel(f))}</span>
       <span class="sz">${escapeHtml(getAttachmentSize(f))}</span>
       <div class="attach-actions no-print">
-        <button class="att-btn" onclick="previewAttachment(${i})">معاينة</button>
-        <button class="att-btn" onclick="downloadAttachment(${i})">تنزيل</button>
+        <button class="att-btn" onclick="previewAttachment(${i})">${t('معاينة')}</button>
+        <button class="att-btn" onclick="downloadAttachment(${i})">${t('تنزيل')}</button>
         <button class="rm" onclick="removeFile(${i})">✕</button>
       </div>
     </div>`).join('');
@@ -754,7 +756,7 @@ function renderAttach(){
 function removeFile(i){ ATTACHED.splice(i,1); renderAttach(); }
 async function previewAttachment(i){
   const attachment = ATTACHED[i];
-  if(!attachment){ alert('لا يوجد مرفق.'); return; }
+  if(!attachment){ alert(t('لا يوجد مرفق.')); return; }
   if(attachment instanceof Blob){
     const url = URL.createObjectURL(attachment);
     window.open(url, '_blank');
@@ -765,13 +767,13 @@ async function previewAttachment(i){
 }
 async function downloadAttachment(i){
   const attachment = ATTACHED[i];
-  if(!attachment){ alert('لا يوجد مرفق.'); return; }
+  if(!attachment){ alert(t('لا يوجد مرفق.')); return; }
   try{
     const bytes = await getAttachmentBytes(attachment);
     const name = getAttachmentLabel(attachment) || `attachment_${i+1}.pdf`;
     dl(new Blob([bytes], { type:getAttachmentMime(attachment) }), name);
   }catch(e){
-    alert('تعذّر تنزيل المرفق.');
+    alert(t('تعذّر تنزيل المرفق.'));
     console.error(e);
   }
 }
@@ -819,13 +821,13 @@ function applyArchiveEditLock(kind, request){
   setDocumentLocked(kind, locked);
   if(VIEW_ONLY){
     const status = document.getElementById(kind + '-pdf-status');
-    if(status) status.textContent = 'أنت تعرض الطلب للقراءة فقط — اختر «تعديل الطلب» من الأرشيف للتعديل عليه.';
+    if(status) status.textContent = t('أنت تعرض الطلب للقراءة فقط — اختر «تعديل الطلب» من الأرشيف للتعديل عليه.');
     return;
   }
   if(locked && CURRENT && CURRENT.role !== 'accountant'){
     if(kind === 'disb'){
       const status = document.getElementById('disb-pdf-status');
-      if(status) status.textContent = 'هذا الطلب معتمد من الحسابات، متاح للطباعة فقط ولا يمكن تعديله.';
+      if(status) status.textContent = t('هذا الطلب معتمد من الحسابات، متاح للطباعة فقط ولا يمكن تعديله.');
     }
   }
 }
@@ -868,7 +870,7 @@ function stampDate(d){
 function signDoc(kind){
   if(!CURRENT) return;
   if(CURRENT.role==='viewer'){
-    showMessageDialog({ title:'صلاحية العرض فقط', message:'حسابك مخصّص للعرض والطباعة فقط، ولا يمكنك التوقيع على الطلبات.', confirmText:'حسنًا' });
+    showMessageDialog({ title:t('صلاحية العرض فقط'), message:t('حسابك مخصّص للعرض والطباعة فقط، ولا يمكنك التوقيع على الطلبات.'), confirmText:t('حسنًا') });
     return;
   }
   const now=new Date();
@@ -880,14 +882,14 @@ function signDoc(kind){
   document.getElementById(kind+'-sig-name').textContent = CURRENT.name;
   document.getElementById(kind+'-sig-meta').textContent = dt;
   showMessageDialog({
-    title:'تم التوقيع الإلكتروني',
-    message:'تم تسجيل توقيعك الإلكتروني على الطلب بنجاح.',
+    title:t('تم التوقيع الإلكتروني'),
+    message:t('تم تسجيل توقيعك الإلكتروني على الطلب بنجاح.'),
     details:[
-      { label:'الموقّع', value:CURRENT.name },
-      { label:'وقت التوقيع', value:dt, ltr:true }
+      { label:t('الموقّع'), value:CURRENT.name },
+      { label:t('وقت التوقيع'), value:dt, ltr:true }
     ],
-    note:'يمكنك الآن تقديم الطلب أو طباعته حسب الإجراء المطلوب.',
-    confirmText:'حسنًا'
+    note:t('يمكنك الآن تقديم الطلب أو طباعته حسب الإجراء المطلوب.'),
+    confirmText:t('حسنًا')
   });
 }
 function signCancelDoc(){ return signDoc('cancel'); }
@@ -895,7 +897,7 @@ function signDisbDoc(){ return signDoc('disb'); }
 
 // اعتماد إدارة الحسابات (للمحاسب فقط) — من النموذج أو من الأرشيف، لطلب الصرف أو الإلغاء
 async function signAccountsFor(kind){
-  if(!CURRENT || CURRENT.role!=='accountant'){ alert('اعتماد الحسابات متاح للمحاسب فقط.'); return; }
+  if(!CURRENT || CURRENT.role!=='accountant'){ alert(t('اعتماد الحسابات متاح للمحاسب فقط.')); return; }
   const pfx = kind === 'cancel' ? 'cancel' : 'disb';
   const now=new Date();
   const dt = stampDate(now);
@@ -907,29 +909,29 @@ async function signAccountsFor(kind){
   document.getElementById(pfx+'-acc-meta').textContent = dt;
   if(EDIT_ID && SB_ON){
     const btn=document.getElementById(pfx+'-acc-btn'); const o=btn?btn.textContent:'';
-    if(btn){ btn.disabled=true; btn.textContent='جاري الاعتماد...'; }
+    if(btn){ btn.disabled=true; btn.textContent=t('جاري الاعتماد...'); }
     try{
       const { error } = await sb.from('requests').update({
         accounts_signed_by: CURRENT.name, accounts_signed_at: now.toISOString()
       }).eq('id', EDIT_ID);
-      if(error){ console.error(error); alert('تعذّر حفظ الاعتماد — اتأكد إن سياسة التعديل (update) متفعّلة في Supabase (راجع كود SQL في التعليمات).'); }
+      if(error){ console.error(error); alert(t('تعذّر حفظ الاعتماد — اتأكد إن سياسة التعديل (update) متفعّلة في Supabase (راجع كود SQL في التعليمات).')); }
       else {
         if(EDIT_REQUEST){
           EDIT_REQUEST = { ...EDIT_REQUEST, accounts_signed_by: CURRENT.name, accounts_signed_at: now.toISOString() };
         }
         showMessageDialog({
-          title:'تم اعتماد الطلب',
-          message:'تم اعتماد الطلب من إدارة الحسابات وحفظه في الأرشيف.',
+          title:t('تم اعتماد الطلب'),
+          message:t('تم اعتماد الطلب من إدارة الحسابات وحفظه في الأرشيف.'),
           details:[
-            { label:'رقم الطلب', value: displayRequestNo(EDIT_REQUEST?.req_no) || '—', ltr:true },
-            { label:'معتمد بواسطة', value: CURRENT.name },
-            { label:'وقت الاعتماد', value: dt, ltr:true }
+            { label:t('رقم الطلب'), value: displayRequestNo(EDIT_REQUEST?.req_no) || '—', ltr:true },
+            { label:t('معتمد بواسطة'), value: CURRENT.name },
+            { label:t('وقت الاعتماد'), value: dt, ltr:true }
           ],
-          note:'الطلب الآن متاح للطباعة.',
-          confirmText:'حسنًا'
+          note:t('الطلب الآن متاح للطباعة.'),
+          confirmText:t('حسنًا')
         });
       }
-    }catch(e){ alert('خطأ اتصال بـ Supabase.'); console.error(e); }
+    }catch(e){ alert(t('خطأ اتصال بـ Supabase.')); console.error(e); }
     if(btn){ btn.disabled=false; btn.textContent=o; }
   }
 }
@@ -1010,26 +1012,26 @@ async function getAttachmentBytes(attachment){
     }
     if(attachment.startsWith('blob:')){
       const res = await fetch(attachment);
-      if(!res.ok) throw new Error('فشل جلب Blob URL');
+      if(!res.ok) throw new Error(t('فشل جلب Blob URL'));
       return await res.arrayBuffer();
     }
     if(isHttpUrl(attachment)){
       const res = await fetch(attachment);
-      if(!res.ok) throw new Error('فشل جلب رابط المرفق');
+      if(!res.ok) throw new Error(t('فشل جلب رابط المرفق'));
       return await res.arrayBuffer();
     }
     if(isStoragePath(attachment)){
       const url = await resolveStorageUrl(attachment);
-      if(!url) throw new Error('فشل تحويل مسار التخزين إلى رابط');
+      if(!url) throw new Error(t('فشل تحويل مسار التخزين إلى رابط'));
       const res = await fetch(url);
-      if(!res.ok) throw new Error('فشل جلب ملف التخزين');
+      if(!res.ok) throw new Error(t('فشل جلب ملف التخزين'));
       return await res.arrayBuffer();
     }
   }
   if(attachment && typeof attachment.arrayBuffer==='function'){
     return await attachment.arrayBuffer();
   }
-  throw new Error('نوع المرفق غير مدعوم');
+  throw new Error(t('نوع المرفق غير مدعوم'));
 }
 function dl(blob,name){ const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=name; a.click(); URL.revokeObjectURL(u); }
 
@@ -1044,7 +1046,7 @@ function collectCancel(){
     ? (document.getElementById('c-iban').value||null)
     : (document.getElementById('c-fawran-phone').value||null);
   const refund=[...document.querySelectorAll('#refund-rows tr')].map(tr=>({
-    desc: tr.querySelector('td')?.textContent||'',
+    desc: tr.getAttribute('data-refund-key') || tr.querySelector('td')?.textContent||'',
     amount: parseAmt(tr.querySelector('.r-amt')?.value||0),
   })).filter(r=>r.amount);
   return {
@@ -1084,8 +1086,8 @@ function collectDisb(){
     doc_type:'disb',
     req_no: document.getElementById('d-reqno').value,
     req_date: document.getElementById('d-date').value||null,
-    name: document.getElementById('d-name').value||null,
-    department: document.getElementById('d-dept').value||null,
+    name: (CURRENT && CURRENT.name) || document.getElementById('d-name').value || null,
+    department: (CURRENT && CURRENT.dept) || document.getElementById('d-dept').value || null,
     project: document.getElementById('d-project').value||null,
     beneficiary: (sup[0] && sup[0].supplier) || null,
     client_invoices: cli.map(c=>c.invoice).filter(Boolean).join(', ')||null,
@@ -1177,22 +1179,22 @@ function refreshNextRequestNumbers(){
 
 async function persistRequestRecord(kind, rec){
   if(CURRENT && CURRENT.role==='viewer'){
-    showMessageDialog({ title:'صلاحية العرض فقط', message:'حسابك مخصّص للعرض والطباعة فقط، ولا يمكنك تقديم أو تعديل الطلبات.', confirmText:'حسنًا' });
+    showMessageDialog({ title:t('صلاحية العرض فقط'), message:t('حسابك مخصّص للعرض والطباعة فقط، ولا يمكنك تقديم أو تعديل الطلبات.'), confirmText:t('حسنًا') });
     return;
   }
   // لا يمكن التقديم بدون توقيع إلكتروني
   if(!rec.signed_by){
     showMessageDialog({
-      title:'التوقيع الإلكتروني مطلوب',
+      title:t('التوقيع الإلكتروني مطلوب'),
       subtitle:'Signature Required',
-      message:'لا يمكن تقديم الطلب قبل التوقيع إلكترونيًا. الرجاء الضغط على زر «توقيع إلكتروني» أولاً، ثم تقديم الطلب.',
-      confirmText:'حسنًا'
+      message:t('لا يمكن تقديم الطلب قبل التوقيع إلكترونيًا. الرجاء الضغط على زر «توقيع إلكتروني» أولاً، ثم تقديم الطلب.'),
+      confirmText:t('حسنًا')
     });
     return;
   }
   const btn = document.getElementById(kind+'-save-btn');
   if(!SB_ON){
-    alert('الحفظ السحابي غير مفعّل — الطلب جاهز للطباعة والتحميل والإرسال على Teams. لتفعيل الأرشيف أضف بيانات Supabase في إعدادات الملف.');
+    alert(t('الحفظ السحابي غير مفعّل — الطلب جاهز للطباعة والتحميل والإرسال على Teams. لتفعيل الأرشيف أضف بيانات Supabase في إعدادات الملف.'));
     return;
   }
   if(EDIT_ID && EDIT_REQUEST?.cancelled){
@@ -1200,10 +1202,10 @@ async function persistRequestRecord(kind, rec){
     EDIT_REQUEST = null;
   }
   if(EDIT_ID && !canCurrentEditRequest(EDIT_REQUEST)){
-    alert('لا يمكن تعديل هذا الطلب.\n\nتم اعتماد الطلب من إدارة الحسابات أو لا تملك صلاحية تعديله.');
+    alert(t('لا يمكن تعديل هذا الطلب.\n\nتم اعتماد الطلب من إدارة الحسابات أو لا تملك صلاحية تعديله.'));
     return;
   }
-  btn.disabled=true; const o=btn.textContent; btn.textContent='جاري التقديم...';
+  btn.disabled=true; const o=btn.textContent; btn.textContent=t('جاري التقديم...');
   try{
     if(!EDIT_ID){
       await assignNextRequestNo(kind, rec);
@@ -1215,14 +1217,14 @@ async function persistRequestRecord(kind, rec){
     const { data, error } = result;
     if(!error){
       showMessageDialog({
-        title: EDIT_ID ? 'تم تحديث الطلب' : 'تم تقديم الطلب',
+        title: EDIT_ID ? t('تم تحديث الطلب') : t('تم تقديم الطلب'),
         message: EDIT_ID
-          ? 'تم تحديث بيانات الطلب بنجاح، والتعديلات متاحة الآن في إدارة الطلبات.'
-          : 'تم تقديم الطلب بنجاح، وأصبح متاحاً في إدارة الطلبات.',
+          ? t('تم تحديث بيانات الطلب بنجاح، والتعديلات متاحة الآن في إدارة الطلبات.')
+          : t('تم تقديم الطلب بنجاح، وأصبح متاحاً في إدارة الطلبات.'),
         details:[
-          { label:'رقم الطلب', value: rec.req_no || '—', ltr:true }
+          { label:t('رقم الطلب'), value: rec.req_no || '—', ltr:true }
         ],
-        confirmText:'حسنًا'
+        confirmText:t('حسنًا')
       });
       if(EDIT_ID && EDIT_REQUEST) EDIT_REQUEST = { ...EDIT_REQUEST, ...rec };
       if(!EDIT_ID && data?.id){
@@ -1231,14 +1233,14 @@ async function persistRequestRecord(kind, rec){
       }
     }
     else { console.error(error); 
-      let msg = 'تعذّر الحفظ — اتأكد إنك مسجّل دخول وإن جدول requests متظبط في Supabase.';
-      if(error.message && error.message.includes('column')){ msg += '\n\nتحتاج تشغّل الـ SQL ده في Supabase > SQL Editor:\nALTER TABLE requests ADD COLUMN IF NOT EXISTS attachments_data TEXT;\nALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_image TEXT;'; }
+      let msg = t('تعذّر الحفظ — اتأكد إنك مسجّل دخول وإن جدول requests متظبط في Supabase.');
+      if(error.message && error.message.includes('column')){ msg += t('\n\nتحتاج تشغّل الـ SQL ده في Supabase > SQL Editor:\nALTER TABLE requests ADD COLUMN IF NOT EXISTS attachments_data TEXT;\nALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_image TEXT;'); }
       if(error.code === '23505' || /duplicate|unique/i.test(error.message||'')){
-        msg += '\n\nفي طلب ملغي قديم بنفس الرقم. اضغط حفظ مرة تانية بعد تحديث الصفحة، ولو استمر الخطأ افتح الطلب الملغي من الأرشيف وألغيه مرة أخرى لتحرير الرقم.';
+        msg += t('\n\nفي طلب ملغي قديم بنفس الرقم. اضغط حفظ مرة تانية بعد تحديث الصفحة، ولو استمر الخطأ افتح الطلب الملغي من الأرشيف وألغيه مرة أخرى لتحرير الرقم.');
       }
       alert(msg); 
     }
-  }catch(e){ alert('خطأ اتصال بـ Supabase.'); console.error(e); }
+  }catch(e){ alert(t('خطأ اتصال بـ Supabase.')); console.error(e); }
   btn.disabled=false; btn.textContent=o;
 }
 
@@ -1250,7 +1252,7 @@ async function saveCancelDoc(){
 function validateDisbRequest(){
   const errs = [];
   // 1) التوقيع الإلكتروني
-  if(!SIGNED.disb) errs.push('التوقيع إلكترونيًا');
+  if(!SIGNED.disb) errs.push(t('التوقيع إلكترونيًا'));
   // 2) فاتورة مورّد مكتملة (اسم + رقم فاتورة + مبلغ)
   const supRows = [...document.querySelectorAll('#supplier-rows tr')].map(tr=>({
     name: (tr.querySelector('.s-name')?.value||'').trim(),
@@ -1258,7 +1260,7 @@ function validateDisbRequest(){
     amt:  parseAmt(tr.querySelector('.s-amt')?.value||0),
   }));
   if(!supRows.some(r=> r.name && r.inv && r.amt>0))
-    errs.push('إضافة فاتورة مورّد مكتملة (اسم المورّد ورقم الفاتورة والمبلغ)');
+    errs.push(t('إضافة فاتورة مورّد مكتملة (اسم المورّد ورقم الفاتورة والمبلغ)'));
   // 3) في حالة عدم تفعيل «فاتورة عامة» → فاتورة عميل + مبلغ
   const generalInvoice = !!document.getElementById('d-cost-disabled')?.checked;
   if(!generalInvoice){
@@ -1267,11 +1269,11 @@ function validateDisbRequest(){
       amt: parseAmt(tr.querySelector('.c-amt')?.value||0),
     }));
     if(!cliRows.some(r=> r.inv && r.amt>0))
-      errs.push('إضافة فاتورة العميل ومبلغها (أو تفعيل «فاتورة عامة»)');
+      errs.push(t('إضافة فاتورة العميل ومبلغها (أو تفعيل «فاتورة عامة»)'));
   }
   // 4) إجمالي المبلغ المطلوب صرفه
   if(!(parseAmt(document.getElementById('d-amt')?.value||0) > 0))
-    errs.push('إدخال إجمالي المبلغ المطلوب صرفه');
+    errs.push(t('إدخال إجمالي المبلغ المطلوب صرفه'));
   return errs;
 }
 
@@ -1279,11 +1281,11 @@ async function saveDisbDoc(){
   const errs = validateDisbRequest();
   if(errs.length){
     showMessageDialog({
-      title:'حقول إلزامية ناقصة',
+      title:t('حقول إلزامية ناقصة'),
       subtitle:'Required Fields',
-      message:'لا يمكن تقديم الطلب قبل استكمال التالي:\n\n'
-        + errs.map((e,i)=>`${i+1}- يجب ${e}`).join('\n'),
-      confirmText:'حسنًا'
+      message:t('لا يمكن تقديم الطلب قبل استكمال التالي:\n\n')
+        + errs.map((e,i)=>`${i+1}- ${t('يجب ')}${e}`).join('\n'),
+      confirmText:t('حسنًا')
     });
     return;
   }
@@ -1347,7 +1349,7 @@ function formatArchiveDateTime(value){
 function escAttr(value){
   return String(value ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
-function showConfirmDialog({ title, message, details=[], note='', confirmText='تأكيد', cancelText='رجوع', danger=false, showCancel=true, subtitle }){
+function showConfirmDialog({ title, message, details=[], note='', confirmText=t('تأكيد'), cancelText=t('رجوع'), danger=false, showCancel=true, subtitle }){
   return new Promise(resolve=>{
     const old = document.getElementById('app-confirm-overlay');
     if(old) old.remove();
@@ -1418,7 +1420,7 @@ function showConfirmDialog({ title, message, details=[], note='', confirmText='�
     (overlay.querySelector(showCancel ? '[data-action="cancel"]' : '[data-action="confirm"]')).focus();
   });
 }
-function showMessageDialog({ title, message, details=[], note='', confirmText='تم', subtitle }){
+function showMessageDialog({ title, message, details=[], note='', confirmText=t('تم'), subtitle }){
   return showConfirmDialog({ title, message, details, note, confirmText, subtitle, showCancel:false, danger:false });
 }
 function getArchiveSubmittedDateRange(){
@@ -1450,9 +1452,9 @@ function showArchiveTimePopover(btn, submittedAt, approvedAt){
   if(!pop) return;
   closeArchiveMenu();
   pop.innerHTML = `
-    <div class="pop-title"><span>تفاصيل التوقيت</span><small>Timeline</small></div>
-    <div class="arc-time-row"><span>تقديم الطلب</span><b>${submittedAt || '—'}</b></div>
-    <div class="arc-time-row"><span>اعتماد الحسابات</span><b>${approvedAt || 'لم يعتمد بعد'}</b></div>
+    <div class="pop-title"><span>${t('تفاصيل التوقيت')}</span><small>Timeline</small></div>
+    <div class="arc-time-row"><span>${t('تاريخ التقديم')}</span><b>${submittedAt || '—'}</b></div>
+    <div class="arc-time-row"><span>${t('توقيت اعتماد الحسابات')}</span><b>${approvedAt || t('لم يعتمد بعد')}</b></div>
   `;
   pop.classList.add('on');
   positionArchivePopover(pop, btn);
@@ -1485,9 +1487,9 @@ function getArchiveRowAttachments(row){
 //  mgmt  = الإدارة فقط  → المحاسب + فريق الإدارة (viewer)
 //  staff = الموظفين     → المحاسب + المبيعات (sales)
 const COMMENT_VIS = {
-  all:   { label:'الجميع',      hint:'يظهر لكل المستخدمين' },
-  mgmt:  { label:'الإدارة فقط', hint:'المحاسب وفريق الإدارة فقط' },
-  staff: { label:'الموظفين',    hint:'المحاسب والمبيعات فقط' },
+  all:   { label:t('الجميع'),      hint:t('يظهر لكل المستخدمين') },
+  mgmt:  { label:t('الإدارة فقط'), hint:t('المحاسب وفريق الإدارة فقط') },
+  staff: { label:t('الموظفين'),    hint:t('المحاسب والمبيعات فقط') },
 };
 let COMMENT_EDIT = null; // id التعليق قيد التعديل (داخل نافذة التعليقات)
 
@@ -1518,21 +1520,21 @@ function canModifyComment(row, c){
   return c.user === CURRENT.user;
 }
 function commentRoleLabel(role){
-  return role === 'accountant' ? 'المحاسبة'
-    : role === 'viewer' ? 'الإدارة'
-    : role === 'sales' ? 'المبيعات' : '';
+  return role === 'accountant' ? t('المحاسبة')
+    : role === 'viewer' ? t('الإدارة')
+    : role === 'sales' ? t('المبيعات') : '';
 }
 function commentVisBadge(v){
   const m = COMMENT_VIS[v] || COMMENT_VIS.all;
   return `<span class="cmt-vis-badge cmt-${v||'all'}">${escapeHtml(m.label)}</span>`;
 }
 async function persistComments(row, comments){
-  if(!SB_ON){ alert('الأرشيف غير مفعّل.'); return false; }
+  if(!SB_ON){ alert(t('الأرشيف غير مفعّل.')); return false; }
   const json = JSON.stringify(comments);
   const { error } = await sb.from('requests').update({ comments_data: json }).eq('id', row.id);
   if(error){
     console.error(error);
-    alert('تعذّر حفظ التعليق — تأكد من إضافة عمود comments_data وتفعيل سياسة التعديل في Supabase.\n\nSQL:\nALTER TABLE requests ADD COLUMN IF NOT EXISTS comments_data TEXT;');
+    alert(t('تعذّر حفظ التعليق — تأكد من إضافة عمود comments_data وتفعيل سياسة التعديل في Supabase.\n\nSQL:\nALTER TABLE requests ADD COLUMN IF NOT EXISTS comments_data TEXT;'));
     return false;
   }
   row.comments_data = json;
@@ -1541,7 +1543,7 @@ async function persistComments(row, comments){
 }
 function openCommentsDialog(i){
   const x = (window._arcRows||[])[i];
-  if(!x){ alert('تعذّر فتح الطلب.'); return; }
+  if(!x){ alert(t('تعذّر فتح الطلب.')); return; }
   COMMENT_EDIT = null;
   renderCommentsOverlay(i);
 }
@@ -1567,8 +1569,8 @@ function renderCommentsOverlay(i){
           <textarea id="cmt-edit-input" rows="3" maxlength="500" class="cmt-edit-area">${escapeHtml(c.text||'')}</textarea>
           <div class="cmt-foot"><span class="cmt-time">${escapeHtml(when)}</span>
             <span class="cmt-actions">
-              <button class="cmt-link save" onclick="saveEditComment(${i}, '${escAttr(c.id)}')">حفظ</button>
-              <button class="cmt-link" onclick="cancelEditComment(${i})">إلغاء</button>
+              <button class="cmt-link save" onclick="saveEditComment(${i}, '${escAttr(c.id)}')">${t('حفظ')}</button>
+              <button class="cmt-link" onclick="cancelEditComment(${i})">${t('إلغاء')}</button>
             </span>
           </div>
         </div>`;
@@ -1585,17 +1587,17 @@ function renderCommentsOverlay(i){
           </span>` : ''}
         </div>
       </div>`;
-  }).join('') : `<div class="cmt-empty">لا توجد تعليقات${canAdd ? ' بعد — أضف أول تعليق بالأسفل.' : '.'}</div>`;
+  }).join('') : `<div class="cmt-empty">${t('لا توجد تعليقات')}${canAdd ? t(' بعد — أضف أول تعليق بالأسفل.') : '.'}</div>`;
 
   const addHtml = canAdd ? `
     <div class="cmt-add">
-      <textarea id="cmt-input" rows="3" maxlength="500" placeholder="اكتب تعليقك هنا ..."></textarea>
+      <textarea id="cmt-input" rows="3" maxlength="500" placeholder="${t('اكتب تعليقك هنا ...')}"></textarea>
       <div class="cmt-vis-row">
-        <span class="cmt-vis-lbl">يظهر لـ</span>
+        <span class="cmt-vis-lbl">${t('يظهر لـ')}</span>
         ${Object.entries(COMMENT_VIS).map(([k,m],idx)=>`<label class="cmt-vis-opt" title="${escAttr(m.hint)}"><input type="radio" name="cmt-vis" value="${k}"${idx===0?' checked':''}><span>${escapeHtml(m.label)}</span></label>`).join('')}
       </div>
-      <button class="cmt-submit" onclick="addComment(${i})">إضافة تعليق</button>
-    </div>` : `<div class="cmt-locked">${x.cancelled ? 'هذا الطلب ملغى' : 'هذا الطلب معتمد'} — التعليقات متاحة للقراءة فقط.</div>`;
+      <button class="cmt-submit" onclick="addComment(${i})">${t('إضافة تعليق')}</button>
+    </div>` : `<div class="cmt-locked">${x.cancelled ? t('هذا الطلب ملغى') : t('هذا الطلب معتمد')} — ${t('التعليقات متاحة للقراءة فقط.')}</div>`;
 
   const overlay = document.createElement('div');
   overlay.id = 'app-comments-overlay';
@@ -1646,8 +1648,8 @@ function renderCommentsOverlay(i){
     </style>
     <div class="cmt-card" role="dialog" aria-modal="true">
       <div class="cmt-head">
-        <div><div class="cmt-htitle">تعليقات الطلب</div><div class="cmt-hcap">${escAttr(reqNo)} · COMMENTS</div></div>
-        <button class="cmt-x" onclick="closeCommentsOverlay()" aria-label="إغلاق">✕</button>
+        <div><div class="cmt-htitle">${t('تعليقات الطلب')}</div><div class="cmt-hcap">${escAttr(reqNo)} · COMMENTS</div></div>
+        <button class="cmt-x" onclick="closeCommentsOverlay()" aria-label="${t('إغلاق')}">✕</button>
       </div>
       <div class="cmt-body">${listHtml}</div>
       ${addHtml}
@@ -1668,7 +1670,7 @@ async function fetchLatestComments(row){
 }
 async function addComment(i){
   const x=(window._arcRows||[])[i]; if(!x) return;
-  if(!canAddComment(x)){ alert('لا يمكن إضافة تعليق على هذا الطلب.'); return; }
+  if(!canAddComment(x)){ alert(t('لا يمكن إضافة تعليق على هذا الطلب.')); return; }
   const ta = document.getElementById('cmt-input');
   const text = (ta?.value || '').trim();
   if(!text){ ta?.focus(); return; }
@@ -1686,11 +1688,11 @@ function cancelEditComment(i){ COMMENT_EDIT = null; renderCommentsOverlay(i); }
 async function saveEditComment(i, id){
   const x=(window._arcRows||[])[i]; if(!x) return;
   const text = (document.getElementById('cmt-edit-input')?.value || '').trim();
-  if(!text){ alert('لا يمكن ترك التعليق فارغاً.'); return; }
+  if(!text){ alert(t('لا يمكن ترك التعليق فارغاً.')); return; }
   const comments = await fetchLatestComments(x);
   const c = comments.find(k=>k.id===id);
-  if(!c){ alert('التعليق لم يعد موجوداً (ربما حُذف).'); COMMENT_EDIT=null; renderCommentsOverlay(i); return; }
-  if(!canModifyComment(x, c)){ alert('لا يمكن تعديل هذا التعليق.'); COMMENT_EDIT=null; renderCommentsOverlay(i); return; }
+  if(!c){ alert(t('التعليق لم يعد موجوداً (ربما حُذف).')); COMMENT_EDIT=null; renderCommentsOverlay(i); return; }
+  if(!canModifyComment(x, c)){ alert(t('لا يمكن تعديل هذا التعليق.')); COMMENT_EDIT=null; renderCommentsOverlay(i); return; }
   c.text = text;
   c.edited_at = new Date().toISOString();
   if(await persistComments(x, comments)){ COMMENT_EDIT = null; renderCommentsOverlay(i); loadArchive(); }
@@ -1698,50 +1700,40 @@ async function saveEditComment(i, id){
 async function deleteComment(i, id){
   const x=(window._arcRows||[])[i]; if(!x) return;
   const localC = getRequestComments(x).find(k=>k.id===id);
-  if(!localC || !canModifyComment(x, localC)){ alert('لا يمكنك حذف هذا التعليق.'); return; }
+  if(!localC || !canModifyComment(x, localC)){ alert(t('لا يمكنك حذف هذا التعليق.')); return; }
   const ok = await showConfirmDialog({
-    title:'حذف التعليق',
-    message:'هل تريد حذف هذا التعليق نهائياً؟',
-    confirmText:'حذف',
-    cancelText:'تراجع',
+    title:t('حذف التعليق'),
+    message:t('هل تريد حذف هذا التعليق نهائياً؟'),
+    confirmText:t('حذف'),
+    cancelText:t('تراجع'),
     danger:true
   });
   if(!ok){ renderCommentsOverlay(i); return; }
   const comments = await fetchLatestComments(x);
   const c = comments.find(k=>k.id===id);
   if(!c){ COMMENT_EDIT=null; renderCommentsOverlay(i); return; }   // اتحذف بالفعل
-  if(!canModifyComment(x, c)){ alert('لا يمكنك حذف هذا التعليق.'); renderCommentsOverlay(i); return; }
+  if(!canModifyComment(x, c)){ alert(t('لا يمكنك حذف هذا التعليق.')); renderCommentsOverlay(i); return; }
   const next = comments.filter(k=>k.id!==id);
   if(await persistComments(x, next)){ COMMENT_EDIT = null; renderCommentsOverlay(i); loadArchive(); }
 }
 
 function showArchiveAttachmentsMenu(btn, rowIndex){
   const row = (window._arcRows||[])[rowIndex];
-  if(!row) return;
   const atts = getArchiveRowAttachments(row);
-  // تنزيل نسخة الطلب نفسه PDF — متاح دائماً حتى لو الطلب بدون مرفقات
-  let html = `
-    <div class="arc-time-row"><span>الطلب</span><b>Request</b></div>
-    ${archiveMenuButton('تنزيل الطلب PDF', ARC_ICONS.doc, `downloadRequestPdfFromArchive(${rowIndex})`)}
+  if(!atts.length) return;
+  const mergedActions = `
+    ${archiveMenuButton(t('تنزيل الكل PDF'), ARC_ICONS.download, `downloadArchiveAttachmentsMerged(${rowIndex})`)}
+    ${archiveMenuButton(t('طباعة الكل PDF'), ARC_ICONS.print, `printArchiveAttachmentsMerged(${rowIndex})`)}
+    <div class="arc-menu-sep"></div>
   `;
-  if(atts.length){
-    html += `
-      ${archiveMenuButton('تنزيل الطلب + المرفقات', ARC_ICONS.download, `downloadRequestWithAttachments(${rowIndex})`)}
-      <div class="arc-menu-sep"></div>
-      <div class="arc-time-row"><span>كل المرفقات</span><b>All Attachments</b></div>
-      ${archiveMenuButton('تنزيل الكل PDF', ARC_ICONS.download, `downloadArchiveAttachmentsMerged(${rowIndex})`)}
-      ${archiveMenuButton('طباعة الكل PDF', ARC_ICONS.print, `printArchiveAttachmentsMerged(${rowIndex})`)}
-    `;
-    html += atts.map((_, ai)=>`
-      <div class="arc-menu-sep"></div>
-      <div class="arc-time-row"><span>مرفق ${ai+1}</span><b>Attachment ${ai+1}</b></div>
-      ${archiveMenuButton('معاينة', ARC_ICONS.view, `openAttachment(${rowIndex}, ${ai})`)}
-      ${archiveMenuButton('تنزيل', ARC_ICONS.download, `downloadArchiveAttachment(${rowIndex}, ${ai})`)}
-      ${archiveMenuButton('طباعة', ARC_ICONS.print, `printArchiveAttachment(${rowIndex}, ${ai})`)}
-    `).join('');
-  }
-  const subtitle = atts.length ? `${atts.length} file${atts.length>1?'s':''}` : 'No attachments';
-  showArchiveMenu(btn, 'الطلب والمرفقات', subtitle, html);
+  const html = mergedActions + atts.map((_, ai)=>`
+    ${ai>0?'<div class="arc-menu-sep"></div>':''}
+    <div class="arc-time-row"><span>${t('مرفق')} ${ai+1}</span><b>${isEnglish()?'':'Attachment '+(ai+1)}</b></div>
+    ${archiveMenuButton(t('معاينة'), ARC_ICONS.view, `openAttachment(${rowIndex}, ${ai})`)}
+    ${archiveMenuButton(t('تنزيل'), ARC_ICONS.download, `downloadArchiveAttachment(${rowIndex}, ${ai})`)}
+    ${archiveMenuButton(t('طباعة'), ARC_ICONS.print, `printArchiveAttachment(${rowIndex}, ${ai})`)}
+  `).join('');
+  showArchiveMenu(btn, t('المرفقات'), `${atts.length} file${atts.length>1?'s':''}`, html);
 }
 function showArchiveActionsMenu(btn, rowIndex){
   const x = (window._arcRows||[])[rowIndex];
@@ -1750,19 +1742,19 @@ function showArchiveActionsMenu(btn, rowIndex){
   const canEdit = isAcc || canCurrentEditRequest(x);
   let html = '';
   // عرض الطلب (قراءة فقط) + طباعة الطلب متاحان دائماً
-  html += archiveMenuButton('عرض الطلب', ARC_ICONS.view, `viewFromArchive(${rowIndex})`);
-  html += archiveMenuButton('طباعة الطلب', ARC_ICONS.print, `reprintFromArchive(${rowIndex})`);
+  html += archiveMenuButton(t('عرض الطلب'), ARC_ICONS.view, `viewFromArchive(${rowIndex})`);
+  html += archiveMenuButton(t('طباعة الطلب'), ARC_ICONS.print, `reprintFromArchive(${rowIndex})`);
   // تعديل الطلب ثم إلغاء الطلب (لمن يملك صلاحية التعديل فقط)
   if(canEdit){
     html += '<div class="arc-menu-sep"></div>';
-    html += archiveMenuButton('تعديل الطلب', ARC_ICONS.sign, `editFromArchive(${rowIndex})`);
+    html += archiveMenuButton(t('تعديل الطلب'), ARC_ICONS.sign, `editFromArchive(${rowIndex})`);
     // إلغاء الاعتماد: للمحاسب فقط على الطلبات المعتمدة غير الملغاة — يرجّع الطلب «غير معتمد»
     if(isAcc && x.accounts_signed_by && !x.cancelled){
-      html += archiveMenuButton('إلغاء الاعتماد', ARC_ICONS.sign, `revokeApproval(${rowIndex})`, true);
+      html += archiveMenuButton(t('إلغاء الاعتماد'), ARC_ICONS.sign, `revokeApproval(${rowIndex})`, true);
     }
-    html += archiveMenuButton('إلغاء الطلب', ARC_ICONS.trash, `cancelRequest(${rowIndex})`, true);
+    html += archiveMenuButton(t('إلغاء الطلب'), ARC_ICONS.trash, `cancelRequest(${rowIndex})`, true);
   }
-  showArchiveMenu(btn, 'إجراءات الطلب', escAttr(displayRequestNo(x.req_no) || 'Request'), html);
+  showArchiveMenu(btn, t('إجراءات الطلب'), escAttr(displayRequestNo(x.req_no) || 'Request'), html);
 }
 document.addEventListener('click', e=>{
   if(e.target.closest('.arc-time-btn') || e.target.closest('#arc-time-pop')) return;
@@ -1809,11 +1801,11 @@ async function loadArchive(silent=false){
     if(tab) tab.classList.toggle('on',x===ARC_TAB);
   });
   if(!SB_ON){
-    note.innerHTML='<div class="arc-note">الأرشيف السحابي غير مفعّل بعد. الطلبات تشتغل وتطبع وتتحمّل عادي.<br>لحفظ الطلبات وعرضها هنا للجميع، أضف رابط ومفتاح Supabase في أعلى كود الملف.</div>';
-    body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">— الأرشيف غير مفعّل —</td></tr>`;
+    note.innerHTML=t('<div class="arc-note">الأرشيف السحابي غير مفعّل بعد. الطلبات تشتغل وتطبع وتتحمّل عادي.<br>لحفظ الطلبات وعرضها هنا للجميع، أضف رابط ومفتاح Supabase في أعلى كود الملف.</div>');
+    body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('— الأرشيف غير مفعّل —')}</td></tr>`;
     return;
   }
-  if(!silent) body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">جاري التحميل...</td></tr>`;
+  if(!silent) body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('جاري التحميل...')}</td></tr>`;
   try{
     await ensureTransferColumns();   // أعمدة التحويل المجمّع موجودة؟ (فحص مرة واحدة لكل جلسة)
     let qy = sb.from('requests').select('*').order('id',{ascending:false}).limit(200);
@@ -1836,44 +1828,45 @@ async function loadArchive(silent=false){
     const { data:rows, error } = await qy;
     if(error){ 
       console.error(error); 
-      let errMsg = 'خطأ اتصال';
+      let errMsg = t('خطأ اتصال');
       if(error.message && error.message.includes('column')){
-        errMsg = 'خطأ: عمود غير موجود في الجدول. شغّل الـ SQL ده في Supabase:<br><code style="font-size:10px;direction:ltr;display:block;background:#f5f5f5;padding:6px;margin-top:4px">ALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_image TEXT;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS attachments_data TEXT;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS cancelled BOOLEAN DEFAULT FALSE;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();</code>';
+        errMsg = t('خطأ: عمود غير موجود في الجدول. شغّل الـ SQL ده في Supabase:<br><code style="font-size:10px;direction:ltr;display:block;background:#f5f5f5;padding:6px;margin-top:4px">ALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_image TEXT;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS attachments_data TEXT;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS cancelled BOOLEAN DEFAULT FALSE;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();</code>');
         note.innerHTML = `<div class="arc-note">${errMsg}</div>`;
       }
-      body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">خطأ اتصال</td></tr>`; return; 
+      body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('خطأ اتصال')}</td></tr>`; return; 
     }
-    if(!Array.isArray(rows)||rows.length===0){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">لا توجد طلبات</td></tr>`; return; }
+    if(!Array.isArray(rows)||rows.length===0){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('لا توجد طلبات')}</td></tr>`; return; }
     // الطلبات الملغية تظهر في تبويب «الملغاة / المسحوبة» فقط؛ باقي التبويبات تستثنيها
     const reqNum = r => extractRequestNoNumber(r.doc_type==='cancel' ? 'cancel' : 'disb', r.req_no);
     const list = (ARC_TAB==='cancelled' ? rows.filter(x=>x.cancelled) : rows.filter(x=>!x.cancelled))
       .slice()
       .sort((a,b)=> (reqNum(b)-reqNum(a)) || ((b.id||0)-(a.id||0)));   // ترتيب حسب الرقم: الأجدد فوق والأقدم تحت
-    if(list.length===0){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">لا توجد طلبات</td></tr>`; return; }
-    window._arcRows = list;
+    if(list.length===0){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('لا توجد طلبات')}</td></tr>`; return; }
     await loadTransferGroupsFor(list);          // بيانات مجموعات التحويل الظاهرة في القائمة
+    sortTransferGroupsTogether(list, reqNum);   // طلبات التحويل الواحد تفضل ورا بعض ككتلة واحدة
+    window._arcRows = list;
     renderTransferGroupNote(note, search);      // لافتة ملخّص عند فلترة مجموعة تحويل
     body.innerHTML=list.map((x,i)=>{
       const type=x.doc_type==='cancel'
-        ?'<span class="badge cancel-doc">إلغاء</span>'
-        :'<span class="badge disb-doc">صرف</span>';
+        ?`<span class="badge cancel-doc">${t('إلغاء')}</span>`
+        :`<span class="badge disb-doc">${t('صرف')}</span>`;
       // حالة التوقيع (مقدم الطلب فقط)
       let sig = x.signed_by
-        ?`<span class="badge signed"><span class="ok-mark">✓</span>${x.signed_by}</span>`
-        :'<span class="badge unsigned">غير موقّع</span>';
-      if(x.cancelled) sig += ' <span class="badge cancel-doc">ملغى</span>';
+        ?`<span class="badge signed"><span class="ok-mark">✓</span>${personName(x.signed_by)}</span>`
+        :t('<span class="badge unsigned">غير موقّع</span>');
+      if(x.cancelled) sig += ` <span class="badge cancel-doc">${t('ملغى')}</span>`;
       // عمود الاعتماد
       const accTitle = x.accounts_signed_by
-        ? `الحالة: معتمد من الحسابات\nبواسطة: ${x.accounts_signed_by}${x.accounts_signed_at ? `\nالتوقيت: ${formatArchiveDateTime(x.accounts_signed_at)}` : ''}`
-        : 'الحالة: بانتظار اعتماد الحسابات';
+        ? `${t('الحالة: معتمد من الحسابات')}\n${t('بواسطة:')} ${personName(x.accounts_signed_by)}${x.accounts_signed_at ? `\n${t('التوقيت:')} ${formatArchiveDateTime(x.accounts_signed_at)}` : ''}`
+        : t('الحالة: بانتظار اعتماد الحسابات');
       let accCol = x.accounts_signed_by
         ? `<span class="arc-approval-status approved" title="${escAttr(accTitle)}" aria-label="${escAttr(accTitle)}">${ARC_ICONS.sign}</span>`
         : `<span class="arc-approval-status pending" title="${escAttr(accTitle)}" aria-label="${escAttr(accTitle)}">${ARC_ICONS.sign}<span class="hourglass">${ARC_ICONS.hourglass}</span></span>`;
       if(isAcc && !x.accounts_signed_by && !x.cancelled){
-        accCol = `<button class="arc-approval-status pending clickable" onclick="approveFromArchive(${i})" title="${escAttr(accTitle)} - اضغط للاعتماد" aria-label="${escAttr(accTitle)} - اضغط للاعتماد">${ARC_ICONS.sign}<span class="hourglass">${ARC_ICONS.hourglass}</span></button>`;
+        accCol = `<button class="arc-approval-status pending clickable" onclick="approveFromArchive(${i})" title="${escAttr(accTitle)} — ${t('اضغط للاعتماد')}" aria-label="${escAttr(accTitle)} — ${t('اضغط للاعتماد')}">${ARC_ICONS.sign}<span class="hourglass">${ARC_ICONS.hourglass}</span></button>`;
       } else if(isAcc && x.accounts_signed_by && !x.cancelled){
         // الطلب معتمد: المحاسب يضغط على القلم لإلغاء الاعتماد
-        accCol = `<button class="arc-approval-status approved clickable" onclick="revokeApproval(${i})" title="${escAttr(accTitle)} - اضغط لإلغاء الاعتماد" aria-label="${escAttr(accTitle)} - اضغط لإلغاء الاعتماد">${ARC_ICONS.sign}</button>`;
+        accCol = `<button class="arc-approval-status approved clickable" onclick="revokeApproval(${i})" title="${escAttr(accTitle)} — ${t('اضغط لإلغاء الاعتماد')}" aria-label="${escAttr(accTitle)} — ${t('اضغط لإلغاء الاعتماد')}">${ARC_ICONS.sign}</button>`;
       }
       // عمود إثبات التحويل — يتحوّل لمربع تحديد أثناء وضع «التحويل المجمّع»
       const groupId = x.transfer_group || '';
@@ -1882,72 +1875,94 @@ async function loadArchive(silent=false){
       let imgCol = '';
       if(ARC_SELECT_MODE && isTransferSelectable(x)){
         const checked = ARC_SELECTED.has(x.id) ? ' checked' : '';
-        imgCol = `<label class="arc-sel-check" title="تحديد الطلب لتحويل مجمّع"><input type="checkbox"${checked} onchange="toggleTransferSelection(${x.id}, this.checked, this)" aria-label="تحديد الطلب لتحويل مجمّع"><span></span></label>`;
+        imgCol = `<label class="arc-sel-check" title="${t('تحديد الطلب لتحويل مجمّع')}"><input type="checkbox"${checked} onchange="toggleTransferSelection(${x.id}, this.checked, this)" aria-label="${t('تحديد الطلب لتحويل مجمّع')}"><span></span></label>`;
       } else if(x.transfer_image){
         // الضغط على الأيقونة يفتح قائمة: معاينة / تنزيل / حذف (الحذف للمحاسب)
         imgCol = groupId
-          ? `<button class="arc-mini arc-file-pill transferred arc-menu-btn" onclick="showTransferProofMenu(this, ${i})" title="تحويل مجمّع ${escAttr(groupId)} — ${groupCount} طلبات بإثبات واحد" aria-label="تحويل مجمّع ${escAttr(groupId)}">${ARC_ICONS.layers}<b>${groupCount}</b></button>`
-          : `<button class="arc-mini icon-only transferred arc-menu-btn" onclick="showTransferProofMenu(this, ${i})" title="إثبات التحويل — تم التحويل" aria-label="إثبات التحويل — تم التحويل">${ARC_ICONS.file}</button>`;
+          ? `<button class="arc-mini arc-file-pill transferred arc-menu-btn" onclick="showTransferProofMenu(this, ${i})" title="${t('تحويل مجمّع')} ${escAttr(groupId)} — ${groupCount} ${t('طلبات بإثبات واحد')}" aria-label="${t('تحويل مجمّع')} ${escAttr(groupId)}">${ARC_ICONS.layers}<b>${groupCount}</b></button>`
+          : `<button class="arc-mini icon-only transferred arc-menu-btn" onclick="showTransferProofMenu(this, ${i})" title="${t('إثبات التحويل — تم التحويل')}" aria-label="${t('إثبات التحويل — تم التحويل')}">${ARC_ICONS.file}</button>`;
       } else if(isAcc && x.accounts_signed_by && !x.cancelled){
-        imgCol = `<button class="arc-mini icon-only" onclick="uploadTransferImage(${i})" title="رفع إثبات التحويل" aria-label="رفع إثبات التحويل">${ARC_ICONS.upload}</button>`;
+        imgCol = `<button class="arc-mini icon-only" onclick="uploadTransferImage(${i})" title="${t('رفع إثبات التحويل')}" aria-label="${t('رفع إثبات التحويل')}">${ARC_ICONS.upload}</button>`;
       } else {
           imgCol = '<span class="arc-empty-mark">—</span>';
       }
-      // عمود المرفقات (PDF): يظهر دائماً — منه يتحمّل الطلب نفسه حتى لو بدون مرفقات
+      // عمود المرفقات (PDF): ملخص هادئ بدل أزرار كثيرة داخل الصف
       const atts = getArchiveRowAttachments(x);
-      const attachCol = `<button class="arc-mini ${atts.length?'arc-file-pill':'icon-only'} arc-menu-btn" onclick="showArchiveAttachmentsMenu(this, ${i})" title="تنزيل الطلب والمرفقات" aria-label="تنزيل الطلب والمرفقات${atts.length?' ('+atts.length+')':''}">${ARC_ICONS.paperclip}${atts.length?`<b>${atts.length}</b>`:''}</button>`;
+      const attachCol = atts.length
+        ? `<button class="arc-mini arc-file-pill arc-menu-btn" onclick="showArchiveAttachmentsMenu(this, ${i})" title="${t('عرض المرفقات')}" aria-label="${t('عرض المرفقات')} (${atts.length})">${ARC_ICONS.paperclip}<b>${atts.length}</b></button>`
+        : '<span class="arc-empty-mark">—</span>';
       // عمود التعليقات: أيقونة فقط (مع عدّاد التعليقات الظاهرة للمستخدم الحالي)
       const visComments = getVisibleComments(x);
-      const commentCol = `<button class="arc-mini ${visComments.length?'arc-file-pill':'icon-only'}" onclick="openCommentsDialog(${i})" title="تعليقات الطلب" aria-label="تعليقات الطلب${visComments.length?' ('+visComments.length+')':''}">${ARC_ICONS.comment}${visComments.length?`<b>${visComments.length}</b>`:''}</button>`;
+      const commentCol = `<button class="arc-mini ${visComments.length?'arc-file-pill':'icon-only'}" onclick="openCommentsDialog(${i})" title="${t('تعليقات الطلب')}" aria-label="${t('تعليقات الطلب')}${visComments.length?' ('+visComments.length+')':''}">${ARC_ICONS.comment}${visComments.length?`<b>${visComments.length}</b>`:''}</button>`;
       // الإجراءات
       let act;
       if(!isAcc){
         if(x.accounts_signed_by){
           // الطلب المعتمد للمبيعات: طباعة فقط، بدون تعديل.
-          act = `<button class="arc-mini icon-only arc-menu-btn" onclick="showArchiveActionsMenu(this, ${i})" title="إجراءات الطلب" aria-label="إجراءات الطلب">${ARC_ICONS.more}</button>`;
+          act = `<button class="arc-mini icon-only arc-menu-btn" onclick="showArchiveActionsMenu(this, ${i})" title="${t('إجراءات الطلب')}" aria-label="${t('إجراءات الطلب')}">${ARC_ICONS.more}</button>`;
         } else {
           // الطلب غير المعتمد: المبيعات تقدر تفتح وتعدل أو تلغي.
-          act = `<button class="arc-mini icon-only arc-menu-btn" onclick="showArchiveActionsMenu(this, ${i})" title="إجراءات الطلب" aria-label="إجراءات الطلب">${ARC_ICONS.more}</button>`;
+          act = `<button class="arc-mini icon-only arc-menu-btn" onclick="showArchiveActionsMenu(this, ${i})" title="${t('إجراءات الطلب')}" aria-label="${t('إجراءات الطلب')}">${ARC_ICONS.more}</button>`;
         }
       } else if(x.cancelled){
-        act = '<span style="color:#d9415f;font-size:11px;font-weight:700">ملغى</span>';
+        act = t('<span style="color:#d9415f;font-size:11px;font-weight:700">ملغى</span>');
       } else {
-        act = `<button class="arc-mini icon-only arc-menu-btn" onclick="showArchiveActionsMenu(this, ${i})" title="إجراءات الطلب" aria-label="إجراءات الطلب">${ARC_ICONS.more}</button>`;
+        act = `<button class="arc-mini icon-only arc-menu-btn" onclick="showArchiveActionsMenu(this, ${i})" title="${t('إجراءات الطلب')}" aria-label="${t('إجراءات الطلب')}">${ARC_ICONS.more}</button>`;
       }
       const ref = x.doc_type==='cancel' ? (x.invoice_ref||'—') : (x.beneficiary||'—');
       const submittedAt = formatArchiveDateTime(x.created_at || x.signed_at || x.req_date);
-      const approvedAt = x.accounts_signed_at ? formatArchiveDateTime(x.accounts_signed_at) : 'لم يعتمد بعد';
-      const timeBtn = `<button class="arc-mini icon-only arc-time-btn" onclick="showArchiveTimePopover(this, '${escAttr(submittedAt)}', '${escAttr(approvedAt)}')" title="عرض توقيت الطلب" aria-label="عرض توقيت الطلب">${ARC_ICONS.clock}</button>`;
+      const approvedAt = x.accounts_signed_at ? formatArchiveDateTime(x.accounts_signed_at) : t('لم يعتمد بعد');
+      const timeBtn = `<button class="arc-mini icon-only arc-time-btn" onclick="showArchiveTimePopover(this, '${escAttr(submittedAt)}', '${escAttr(approvedAt)}')" title="${t('عرض توقيت الطلب')}" aria-label="${t('عرض توقيت الطلب')}">${ARC_ICONS.clock}</button>`;
+      // كتلة المجموعة: أول صف / وسط / آخر صف — عشان الإطار يبان متصل
+      const blockGid = (!x.cancelled && groupId) ? groupId : '';
+      const gidAt = k => { const r = list[k]; return (r && !r.cancelled && r.transfer_group) ? r.transfer_group : ''; };
+      const isBlockFirst = !!blockGid && blockGid !== gidAt(i-1);
+      const isBlockLast  = !!blockGid && blockGid !== gidAt(i+1);
       const rowCls = [];
-      if(x.transfer_image && !x.cancelled) rowCls.push('arc-transferred');
+      if(x.transfer_image && !x.cancelled && !blockGid) rowCls.push('arc-transferred');
+      if(blockGid){
+        rowCls.push('arc-grp');
+        if(isBlockFirst) rowCls.push('arc-grp-first');
+        if(isBlockLast) rowCls.push('arc-grp-last');
+      }
       if(groupId && !x.cancelled) rowCls.push('arc-grouped');
       if(ARC_SELECT_MODE && ARC_SELECTED.has(x.id)) rowCls.push('arc-row-selected');
       const rowClass = rowCls.length ? ` class="${rowCls.join(' ')}"` : '';
       const rowStyles = [];
-      if(groupId) rowStyles.push(`--grp:${transferGroupColor(groupId)}`);
+      if(groupId) rowStyles.push(transferGroupVars(groupId));
       if(x.cancelled) rowStyles.push('opacity:.55');
       const rowStyle = rowStyles.length ? ` style="${rowStyles.join(';')}"` : '';
       const groupChip = (groupId && !x.cancelled)
-        ? `<button class="arc-group-chip" onclick="filterByTransferGroup('${escAttr(groupId)}')" title="تحويل مجمّع — اضغط لعرض طلبات المجموعة" aria-label="تحويل مجمّع ${escAttr(groupId)}">${ARC_ICONS.layers}<span>${escAttr(groupId)}</span></button>`
+        ? `<button class="arc-group-chip" onclick="filterByTransferGroup('${escAttr(groupId)}')" title="${t('تحويل مجمّع — اضغط لعرض طلبات المجموعة')}" aria-label="${t('تحويل مجمّع')} ${escAttr(groupId)}">${ARC_ICONS.layers}<span>${escAttr(groupId)}</span></button>`
         : '';
-      return `<tr${rowClass}${rowStyle}>
-        <td data-label="رقم الطلب"><b style="color:var(--indigo);font-size:13px">${displayRequestNo(x.req_no)||'—'}</b>${groupChip}</td>
-        <td data-label="النوع">${type}</td>
-        <td data-label="التاريخ">${x.req_date||'—'}</td>
-        <td class="arc-ref" data-label="رقم الفاتورة / المورّد">${ref}</td>
-        <td class="arc-amount" data-label="المبلغ">${x.amount?Number(x.amount).toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
-        <td data-label="التوقيع">${sig}</td>
-        <td style="text-align:center" data-label="الاعتماد">${accCol}</td>
-        <td style="text-align:center" data-label="تعليقات">${commentCol}</td>
-        <td style="text-align:center" data-label="إثبات التحويل">${imgCol}</td>
-        <td class="arc-files-cell" data-label="المرفقات">${attachCol}</td>
-        <td data-label="إجراءات"><div class="arc-act">${act}</div></td>
-        <td class="arc-time-cell" data-label="التوقيت">${timeBtn}</td>
-      </tr>`;
+      // فاصل بسيط قبل الكتلة وبعدها عشان تبان مستقلة
+      const gapBefore = (isBlockFirst && i>0) ? `<tr class="arc-grp-gap"><td colspan="${ARC_COLS}"></td></tr>` : '';
+      // شريط نهاية الكتلة: فراغ على الديسكتوب، وخط بلون المجموعة يقفل الكروت على الموبايل/التابلت
+      const gapAfter  = isBlockLast ? `<tr class="arc-grp-gap arc-grp-end" style="${transferGroupVars(blockGid)}"><td colspan="${ARC_COLS}"></td></tr>` : '';
+      // شريط عنوان فوق أول طلب في المجموعة
+      const headRow = isBlockFirst ? `<tr class="arc-grp-head" style="${transferGroupVars(blockGid)}">
+        <td colspan="${ARC_COLS}"><div class="agh">
+          <span class="agh-ttl">${ARC_ICONS.layers}<span class="agh-lbl">${t('تحويل مجمّع')}</span><span class="agh-code">${escAttr(blockGid)}</span></span>
+          <span class="agh-sub"><span class="agh-cnt">${groupCount} ${t('طلبات')}</span>${t('إجمالي')} <b>${formatMoney(groupInfo ? groupInfo.total : x.amount)}</b> ${t('ر.ق')}${groupInfo && groupInfo.note ? `<span class="agh-ref">${t('مرجع:')} ${escapeHtml(groupInfo.note)}</span>` : ''}</span>
+        </div></td></tr>` : '';
+      return gapBefore + headRow + `<tr${rowClass}${rowStyle}>
+        <td data-label="${t('رقم الطلب')}"><b style="color:var(--indigo);font-size:13px">${displayRequestNo(x.req_no)||'—'}</b>${groupChip}</td>
+        <td data-label="${t('النوع')}">${type}</td>
+        <td data-label="${t('التاريخ')}">${x.req_date||'—'}</td>
+        <td class="arc-ref" data-label="${t('رقم الفاتورة / المورّد')}">${ref}</td>
+        <td class="arc-amount" data-label="${t('المبلغ')}">${x.amount?Number(x.amount).toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+        <td data-label="${t('التوقيع')}">${sig}</td>
+        <td style="text-align:center" data-label="${t('الاعتماد')}">${accCol}</td>
+        <td style="text-align:center" data-label="${t('تعليقات')}">${commentCol}</td>
+        <td style="text-align:center" data-label="${t('إثبات التحويل')}">${imgCol}</td>
+        <td class="arc-files-cell" data-label="${t('المرفقات')}">${attachCol}</td>
+        <td data-label="${t('إجراءات')}"><div class="arc-act">${act}</div></td>
+        <td class="arc-time-cell" data-label="${t('التوقيت')}">${timeBtn}</td>
+      </tr>` + gapAfter;
     }).join('');
     pruneTransferSelection(list);
     updateTransferSelectUI();
-  }catch(e){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">خطأ اتصال</td></tr>`; }
+  }catch(e){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('خطأ اتصال')}</td></tr>`; }
 }
 
 /* ══════════════════════════════════════════
@@ -1962,26 +1977,26 @@ function viewFromArchive(i){
 // تعديل الطلب من الأرشيف (مع تنبيه أن الحفظ سيستبدل البيانات الحالية)
 async function editFromArchive(i){
   const x = (window._arcRows||[])[i];
-  if(!x){ alert('تعذّر فتح الطلب.'); return; }
+  if(!x){ alert(t('تعذّر فتح الطلب.')); return; }
   if(CURRENT && CURRENT.role !== 'accountant' && !canCurrentEditRequest(x)){
     showMessageDialog({
-      title:'تعذّر التعديل',
+      title:t('تعذّر التعديل'),
       message: x.cancelled
-        ? 'هذا الطلب ملغي ولا يمكن تعديله.'
-        : 'هذا الطلب معتمد من إدارة الحسابات، متاح للطباعة فقط ولا يمكن تعديله.',
-      confirmText:'حسنًا'
+        ? t('هذا الطلب ملغي ولا يمكن تعديله.')
+        : t('هذا الطلب معتمد من إدارة الحسابات، متاح للطباعة فقط ولا يمكن تعديله.'),
+      confirmText:t('حسنًا')
     });
     return;
   }
   const ok = await showConfirmDialog({
-    title:'تعديل الطلب',
-    message:'أنت على وشك فتح الطلب للتعديل عليه. أي تغيير تقوم بحفظه سيستبدل البيانات الحالية للطلب في الأرشيف.',
+    title:t('تعديل الطلب'),
+    message:t('أنت على وشك فتح الطلب للتعديل عليه. أي تغيير تقوم بحفظه سيستبدل البيانات الحالية للطلب في الأرشيف.'),
     details:[
-      { label:'رقم الطلب', value: displayRequestNo(x.req_no) || '—', ltr:true }
+      { label:t('رقم الطلب'), value: displayRequestNo(x.req_no) || '—', ltr:true }
     ],
-    note:'تأكد من صحة التعديلات قبل الحفظ.',
-    confirmText:'متابعة التعديل',
-    cancelText:'رجوع',
+    note:t('تأكد من صحة التعديلات قبل الحفظ.'),
+    confirmText:t('متابعة التعديل'),
+    cancelText:t('رجوع'),
     danger:true
   });
   if(!ok) return;
@@ -1992,9 +2007,9 @@ async function editFromArchive(i){
 function openFromArchive(i){
   if(!CURRENT){ return; }
   const x = (window._arcRows||[])[i];
-  if(!x){ alert('تعذّر فتح الطلب.'); return; }
+  if(!x){ alert(t('تعذّر فتح الطلب.')); return; }
   if(!VIEW_ONLY && CURRENT.role !== 'accountant' && !canCurrentEditRequest(x)){
-    alert('هذا الطلب معتمد من الحسابات، متاح للطباعة فقط ولا يمكن تعديله.');
+    alert(t('هذا الطلب معتمد من الحسابات، متاح للطباعة فقط ولا يمكن تعديله.'));
     return;
   }
   if(x.doc_type==='cancel'){ loadCancelFromRow(x); showPage('cancel'); }
@@ -2005,7 +2020,7 @@ function openFromArchive(i){
 function reprintFromArchive(i){
   VIEW_ONLY = true;
   const x = (window._arcRows||[])[i];
-  if(!x){ alert('تعذّر فتح الطلب.'); return; }
+  if(!x){ alert(t('تعذّر فتح الطلب.')); return; }
   const isAcc = CURRENT && CURRENT.role==='accountant';
   if(x.doc_type==='cancel'){
     loadCancelFromRow(x);
@@ -2019,33 +2034,33 @@ function reprintFromArchive(i){
 
 // رفع إثبات التحويل (المحاسب فقط بعد الاعتماد)
 async function uploadTransferImage(i){
-  if(!CURRENT || CURRENT.role!=='accountant'){ alert('هذه الخاصية للمحاسب فقط.'); return; }
+  if(!CURRENT || CURRENT.role!=='accountant'){ alert(t('هذه الخاصية للمحاسب فقط.')); return; }
   const x=(window._arcRows||[])[i]; if(!x) return;
-  if(!SB_ON){ alert('الأرشيف غير مفعّل.'); return; }
+  if(!SB_ON){ alert(t('الأرشيف غير مفعّل.')); return; }
   // إنشاء input file مخفي
   const inp = document.createElement('input');
   inp.type='file'; inp.accept='image/*,application/pdf';
   inp.onchange=async function(){
     const file=inp.files[0]; if(!file) return;
     if(file.size>2*1024*1024){
-      await showMessageDialog({ title:'الملف كبير', message:'حجم إثبات التحويل أكبر من الحد المسموح (2 ميجابايت). الرجاء اختيار ملف أصغر.', confirmText:'حسنًا' });
+      await showMessageDialog({ title:t('الملف كبير'), message:t('حجم إثبات التحويل أكبر من الحد المسموح (2 ميجابايت). الرجاء اختيار ملف أصغر.'), confirmText:t('حسنًا') });
       return;
     }
     try{
       const path = await uploadFileToStorage(file, 'transfer-images');
       const { error } = await sb.from('requests').update({ transfer_image:path }).eq('id', x.id);
       if(error){ console.error(error);
-        alert('تعذّر حفظ الصورة.\n\nشغّل الـ SQL ده في Supabase > SQL Editor:\n\nALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_image TEXT;\nALTER TABLE requests ADD COLUMN IF NOT EXISTS attachments_data TEXT;');
+        alert(t('تعذّر حفظ الصورة.\n\nشغّل الـ SQL ده في Supabase > SQL Editor:\n\nALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_image TEXT;\nALTER TABLE requests ADD COLUMN IF NOT EXISTS attachments_data TEXT;'));
         return;
       }
       loadArchive();
       await showMessageDialog({
-        title:'تم رفع إثبات التحويل ✅',
+        title:t('تم رفع إثبات التحويل ✅'),
         subtitle:'Transfer Proof Uploaded',
-        message:'تم حفظ إثبات التحويل بنجاح، وأُرسل إشعار لمقدّم الطلب بأن طلبه تم تحويله.',
-        confirmText:'تم'
+        message:t('تم حفظ إثبات التحويل بنجاح، وأُرسل إشعار لمقدّم الطلب بأن طلبه تم تحويله.'),
+        confirmText:t('تم')
       });
-    }catch(e){ await showMessageDialog({ title:'خطأ اتصال', message:'تعذّر رفع إثبات التحويل. تحقّق من الاتصال وحاول مرة أخرى.', confirmText:'حسنًا' }); console.error(e); }
+    }catch(e){ await showMessageDialog({ title:t('خطأ اتصال'), message:t('تعذّر رفع إثبات التحويل. تحقّق من الاتصال وحاول مرة أخرى.'), confirmText:t('حسنًا') }); console.error(e); }
   };
   inp.click();
 }
@@ -2057,21 +2072,21 @@ function showTransferProofMenu(btn, rowIndex){
   const isAcc = CURRENT && CURRENT.role==='accountant';
   const gid = x.transfer_group || '';
   const info = gid ? (window._arcGroups||{})[gid] : null;
-  let html = archiveMenuButton('معاينة', ARC_ICONS.view, `openAttachmentByRow(${rowIndex}, 'transfer_image')`)
-    + archiveMenuButton('تنزيل', ARC_ICONS.download, `downloadTransferImage(${rowIndex})`);
+  let html = archiveMenuButton(t('معاينة'), ARC_ICONS.view, `openAttachmentByRow(${rowIndex}, 'transfer_image')`)
+    + archiveMenuButton(t('تنزيل'), ARC_ICONS.download, `downloadTransferImage(${rowIndex})`);
   if(gid){
     html += '<div class="arc-menu-sep"></div>'
-      + `<div class="arc-time-row"><span>عدد الطلبات</span><b>${info ? info.rows.length : 1}</b></div>`
-      + `<div class="arc-time-row"><span>إجمالي المجموعة</span><b>${info ? formatMoney(info.total) : '—'}</b></div>`
-      + (x.transfer_group_note ? `<div class="arc-time-row"><span>مرجع التحويل</span><b>${escapeHtml(x.transfer_group_note)}</b></div>` : '')
-      + archiveMenuButton('عرض طلبات المجموعة', ARC_ICONS.list, `filterByTransferGroup('${escAttr(gid)}')`);
+      + `<div class="arc-time-row"><span>${t('عدد الطلبات')}</span><b>${info ? info.rows.length : 1}</b></div>`
+      + `<div class="arc-time-row"><span>${t('إجمالي المجموعة')}</span><b>${info ? formatMoney(info.total) : '—'}</b></div>`
+      + (x.transfer_group_note ? `<div class="arc-time-row"><span>${t('مرجع التحويل')}</span><b>${escapeHtml(x.transfer_group_note)}</b></div>` : '')
+      + archiveMenuButton(t('عرض طلبات المجموعة'), ARC_ICONS.list, `filterByTransferGroup('${escAttr(gid)}')`);
   }
   if(isAcc && !x.cancelled){
     html += '<div class="arc-menu-sep"></div>'
-      + archiveMenuButton(gid ? 'حذف الإثبات من هذا الطلب' : 'حذف', ARC_ICONS.trash, `deleteTransferImage(${rowIndex})`, true);
-    if(gid) html += archiveMenuButton('حذف الإثبات من كل المجموعة', ARC_ICONS.trash, `deleteTransferGroup('${escAttr(gid)}')`, true);
+      + archiveMenuButton(gid ? t('حذف الإثبات من هذا الطلب') : t('حذف'), ARC_ICONS.trash, `deleteTransferImage(${rowIndex})`, true);
+    if(gid) html += archiveMenuButton(t('حذف الإثبات من كل المجموعة'), ARC_ICONS.trash, `deleteTransferGroup('${escAttr(gid)}')`, true);
   }
-  showArchiveMenu(btn, gid ? `تحويل مجمّع · ${gid}` : 'إثبات التحويل', gid ? 'Grouped Transfer' : 'Transfer Proof', html);
+  showArchiveMenu(btn, gid ? `${t('تحويل مجمّع')} · ${gid}` : t('إثبات التحويل'), gid ? 'Grouped Transfer' : 'Transfer Proof', html);
 }
 
 // تنزيل إثبات التحويل
@@ -2081,24 +2096,24 @@ async function downloadTransferImage(rowIndex){
   try{
     const bytes = await getAttachmentBytes(x.transfer_image);
     dl(new Blob([bytes], { type:getAttachmentMime(x.transfer_image) }), getAttachmentLabel(x.transfer_image));
-  }catch(e){ console.error(e); await showMessageDialog({ title:'تعذّر التنزيل', message:'حصل خطأ أثناء تنزيل إثبات التحويل.', confirmText:'حسنًا' }); }
+  }catch(e){ console.error(e); await showMessageDialog({ title:t('تعذّر التنزيل'), message:t('حصل خطأ أثناء تنزيل إثبات التحويل.'), confirmText:t('حسنًا') }); }
 }
 
 // حذف إثبات التحويل (المحاسب فقط) — يسمح برفع غيره
 async function deleteTransferImage(rowIndex){
-  if(!CURRENT || CURRENT.role!=='accountant'){ await showMessageDialog({ title:'غير مسموح', message:'هذه الخاصية للمحاسب فقط.', confirmText:'حسنًا' }); return; }
+  if(!CURRENT || CURRENT.role!=='accountant'){ await showMessageDialog({ title:t('غير مسموح'), message:t('هذه الخاصية للمحاسب فقط.'), confirmText:t('حسنًا') }); return; }
   const x = (window._arcRows||[])[rowIndex];
   if(!x || !x.transfer_image || !SB_ON) return;
   const ok = await showConfirmDialog({
-    title:'حذف إثبات التحويل',
+    title:t('حذف إثبات التحويل'),
     message: x.transfer_group
-      ? 'هل تريد حذف إثبات التحويل من هذا الطلب فقط؟ سيخرج الطلب من مجموعة التحويل، وباقي طلبات المجموعة تفضل كما هي.'
-      : 'هل تريد حذف إثبات التحويل الحالي؟ سيمكنك بعدها رفع إثبات جديد.',
+      ? t('هل تريد حذف إثبات التحويل من هذا الطلب فقط؟ سيخرج الطلب من مجموعة التحويل، وباقي طلبات المجموعة تفضل كما هي.')
+      : t('هل تريد حذف إثبات التحويل الحالي؟ سيمكنك بعدها رفع إثبات جديد.'),
     details:[
-      { label:'رقم الطلب', value: displayRequestNo(x.req_no)||'—', ltr:true },
-      ...(x.transfer_group ? [{ label:'مجموعة التحويل', value:x.transfer_group, ltr:true }] : [])
+      { label:t('رقم الطلب'), value: displayRequestNo(x.req_no)||'—', ltr:true },
+      ...(x.transfer_group ? [{ label:t('مجموعة التحويل'), value:x.transfer_group, ltr:true }] : [])
     ],
-    confirmText:'حذف', cancelText:'رجوع', danger:true
+    confirmText:t('حذف'), cancelText:t('رجوع'), danger:true
   });
   if(!ok) return;
   try{
@@ -2107,43 +2122,43 @@ async function deleteTransferImage(rowIndex){
       ? { transfer_image:null, transfer_seen:false, transfer_group:null, transfer_group_at:null, transfer_group_note:null }
       : { transfer_image:null, transfer_seen:false };
     const { error } = await sb.from('requests').update(patch).eq('id', x.id);
-    if(error){ console.error(error); await showMessageDialog({ title:'تعذّر الحذف', message:'حصل خطأ أثناء الحذف. حاول مرة أخرى.', confirmText:'حسنًا' }); return; }
+    if(error){ console.error(error); await showMessageDialog({ title:t('تعذّر الحذف'), message:t('حصل خطأ أثناء الحذف. حاول مرة أخرى.'), confirmText:t('حسنًا') }); return; }
     loadArchive();
-    await showMessageDialog({ title:'تم الحذف ✅', message:'تم حذف إثبات التحويل. يمكنك الآن رفع إثبات جديد.', confirmText:'تم' });
-  }catch(e){ console.error(e); await showMessageDialog({ title:'خطأ اتصال', message:'تعذّر الحذف. تحقّق من الاتصال وحاول مرة أخرى.', confirmText:'حسنًا' }); }
+    await showMessageDialog({ title:t('تم الحذف ✅'), message:t('تم حذف إثبات التحويل. يمكنك الآن رفع إثبات جديد.'), confirmText:t('تم') });
+  }catch(e){ console.error(e); await showMessageDialog({ title:t('خطأ اتصال'), message:t('تعذّر الحذف. تحقّق من الاتصال وحاول مرة أخرى.'), confirmText:t('حسنًا') }); }
 }
 
 // إلغاء طلب — المحاسب يقدر يلغي، والمبيعات تقدر تلغي طلبها قبل اعتماد الحسابات فقط.
 async function cancelRequest(i){
-  if(!CURRENT){ alert('لازم تسجل دخول أولاً.'); return; }
+  if(!CURRENT){ alert(t('لازم تسجل دخول أولاً.')); return; }
   const x=(window._arcRows||[])[i]; if(!x) return;
   const isAcc = CURRENT.role === 'accountant';
   const canSalesCancel = isOwnRequest(x) && !isApprovedRequest(x) && !x.cancelled;
   if(!isAcc && !canSalesCancel){
-    alert('لا يمكن إلغاء هذا الطلب.\n\nالمبيعات تقدر تلغي الطلب فقط قبل اعتماد الحسابات.');
+    alert(t('لا يمكن إلغاء هذا الطلب.\n\nالمبيعات تقدر تلغي الطلب فقط قبل اعتماد الحسابات.'));
     return;
   }
   const ok = await showConfirmDialog({
-    title:'تأكيد إلغاء الطلب',
-    message:'هل تريد إلغاء هذا الطلب؟',
+    title:t('تأكيد إلغاء الطلب'),
+    message:t('هل تريد إلغاء هذا الطلب؟'),
     details:[
-      { label:'رقم الطلب', value:displayRequestNo(x.req_no), ltr:true },
-      { label:'صاحب الطلب', value:x.name || x.created_by || '—' },
-      { label:'نوع الطلب', value:x.doc_type === 'cancel' ? 'طلب إلغاء' : 'طلب صرف' }
+      { label:t('رقم الطلب'), value:displayRequestNo(x.req_no), ltr:true },
+      { label:t('صاحب الطلب'), value:x.name || x.created_by || '—' },
+      { label:t('نوع الطلب'), value:x.doc_type === 'cancel' ? t('طلب إلغاء') : t('طلب صرف') }
     ],
-    note:'سيتم الاحتفاظ بالطلب داخل الأرشيف مع علامة ملغى.',
-    confirmText:'إلغاء الطلب',
-    cancelText:'تراجع',
+    note:t('سيتم الاحتفاظ بالطلب داخل الأرشيف مع علامة ملغى.'),
+    confirmText:t('إلغاء الطلب'),
+    cancelText:t('تراجع'),
     danger:true
   });
   if(!ok) return;
-  if(!SB_ON){ alert('الأرشيف غير مفعّل.'); return; }
+  if(!SB_ON){ alert(t('الأرشيف غير مفعّل.')); return; }
   try{
     const { error } = await sb.from('requests').update({
       cancelled:true,
       req_no: cancelledStorageRequestNo(x)
     }).eq('id', x.id);
-    if(error){ console.error(error); alert('تعذّر الإلغاء — تأكد من إضافة عمود cancelled في جدول requests (راجع التعليمات) ومن تفعيل سياسة التعديل.'); return; }
+    if(error){ console.error(error); alert(t('تعذّر الإلغاء — تأكد من إضافة عمود cancelled في جدول requests (راجع التعليمات) ومن تفعيل سياسة التعديل.')); return; }
     x.cancelled = true;
     x.req_no = cancelledStorageRequestNo(x);
     if(EDIT_ID === x.id){
@@ -2153,84 +2168,84 @@ async function cancelRequest(i){
     }
     loadArchive();
     refreshNextRequestNo(x.doc_type === 'cancel' ? 'cancel' : 'disb');
-  }catch(e){ alert('خطأ اتصال بـ Supabase.'); console.error(e); }
+  }catch(e){ alert(t('خطأ اتصال بـ Supabase.')); console.error(e); }
 }
 
 // اعتماد الطلب مباشرةً من الأرشيف — المحاسب فقط — بدون فتح النموذج أو تغيير الصفحة
 async function approveFromArchive(i){
-  if(!CURRENT || CURRENT.role !== 'accountant'){ alert('اعتماد الحسابات متاح للمحاسب فقط.'); return; }
+  if(!CURRENT || CURRENT.role !== 'accountant'){ alert(t('اعتماد الحسابات متاح للمحاسب فقط.')); return; }
   const x=(window._arcRows||[])[i]; if(!x) return;
-  if(x.accounts_signed_by){ alert('هذا الطلب معتمد بالفعل.'); return; }
-  if(x.cancelled){ alert('هذا الطلب ملغى، لا يمكن اعتماده.'); return; }
+  if(x.accounts_signed_by){ alert(t('هذا الطلب معتمد بالفعل.')); return; }
+  if(x.cancelled){ alert(t('هذا الطلب ملغى، لا يمكن اعتماده.')); return; }
   const kind = x.doc_type === 'cancel' ? 'cancel' : 'disb';
   const ok = await showConfirmDialog({
-    title:'تأكيد اعتماد الطلب',
-    message:'هل تريد اعتماد هذا الطلب من إدارة الحسابات الآن؟',
+    title:t('تأكيد اعتماد الطلب'),
+    message:t('هل تريد اعتماد هذا الطلب من إدارة الحسابات الآن؟'),
     details:[
-      { label:'رقم الطلب', value:displayRequestNo(x.req_no), ltr:true },
-      { label:'صاحب الطلب', value:x.name || x.created_by || '—' },
-      { label:'نوع الطلب', value:kind === 'cancel' ? 'طلب إلغاء' : 'طلب صرف' }
+      { label:t('رقم الطلب'), value:displayRequestNo(x.req_no), ltr:true },
+      { label:t('صاحب الطلب'), value:x.name || x.created_by || '—' },
+      { label:t('نوع الطلب'), value:kind === 'cancel' ? t('طلب إلغاء') : t('طلب صرف') }
     ],
-    note:'سيظهر اعتمادك على الطلب ويصبح متاحاً للطباعة فقط.',
-    confirmText:'اعتماد الطلب',
-    cancelText:'تراجع'
+    note:t('سيظهر اعتمادك على الطلب ويصبح متاحاً للطباعة فقط.'),
+    confirmText:t('اعتماد الطلب'),
+    cancelText:t('تراجع')
   });
   if(!ok) return;
-  if(!SB_ON){ alert('الأرشيف غير مفعّل.'); return; }
+  if(!SB_ON){ alert(t('الأرشيف غير مفعّل.')); return; }
   const now = new Date();
   try{
     const { error } = await sb.from('requests').update({
       accounts_signed_by: CURRENT.name,
       accounts_signed_at: now.toISOString()
     }).eq('id', x.id);
-    if(error){ console.error(error); alert('تعذّر حفظ الاعتماد — تأكد من تفعيل سياسة التعديل (update) في Supabase.'); return; }
+    if(error){ console.error(error); alert(t('تعذّر حفظ الاعتماد — تأكد من تفعيل سياسة التعديل (update) في Supabase.')); return; }
     x.accounts_signed_by = CURRENT.name;
     x.accounts_signed_at = now.toISOString();
     if(EDIT_ID === x.id && EDIT_REQUEST){
       EDIT_REQUEST = { ...EDIT_REQUEST, accounts_signed_by: CURRENT.name, accounts_signed_at: now.toISOString() };
     }
     showMessageDialog({
-      title:'تم اعتماد الطلب',
-      message:'تم اعتماد الطلب من إدارة الحسابات وحفظه في الأرشيف.',
+      title:t('تم اعتماد الطلب'),
+      message:t('تم اعتماد الطلب من إدارة الحسابات وحفظه في الأرشيف.'),
       details:[
-        { label:'رقم الطلب', value: displayRequestNo(x.req_no) || '—', ltr:true },
-        { label:'معتمد بواسطة', value: CURRENT.name },
-        { label:'وقت الاعتماد', value: stampDate(now), ltr:true }
+        { label:t('رقم الطلب'), value: displayRequestNo(x.req_no) || '—', ltr:true },
+        { label:t('معتمد بواسطة'), value: CURRENT.name },
+        { label:t('وقت الاعتماد'), value: stampDate(now), ltr:true }
       ],
-      note:'الطلب الآن متاح للطباعة.',
-      confirmText:'حسنًا'
+      note:t('الطلب الآن متاح للطباعة.'),
+      confirmText:t('حسنًا')
     });
     loadArchive();
-  }catch(e){ alert('خطأ اتصال بـ Supabase.'); console.error(e); }
+  }catch(e){ alert(t('خطأ اتصال بـ Supabase.')); console.error(e); }
 }
 
 // إلغاء اعتماد الحسابات — المحاسب فقط — يرجّع الطلب «غير معتمد» ويفكّ القفل
 async function revokeApproval(i){
-  if(!CURRENT || CURRENT.role !== 'accountant'){ alert('إلغاء الاعتماد متاح للمحاسب فقط.'); return; }
+  if(!CURRENT || CURRENT.role !== 'accountant'){ alert(t('إلغاء الاعتماد متاح للمحاسب فقط.')); return; }
   const x=(window._arcRows||[])[i]; if(!x) return;
-  if(!x.accounts_signed_by){ alert('هذا الطلب غير معتمد أصلاً.'); return; }
-  if(x.cancelled){ alert('هذا الطلب ملغى، لا يمكن تعديل اعتماده.'); return; }
+  if(!x.accounts_signed_by){ alert(t('هذا الطلب غير معتمد أصلاً.')); return; }
+  if(x.cancelled){ alert(t('هذا الطلب ملغى، لا يمكن تعديل اعتماده.')); return; }
   const ok = await showConfirmDialog({
-    title:'تأكيد إلغاء الاعتماد',
-    message:'هل تريد إلغاء اعتماد الحسابات لهذا الطلب؟ سيرجع الطلب لحالة «غير معتمد» ويصبح قابلاً للتعديل من جديد.',
+    title:t('تأكيد إلغاء الاعتماد'),
+    message:t('هل تريد إلغاء اعتماد الحسابات لهذا الطلب؟ سيرجع الطلب لحالة «غير معتمد» ويصبح قابلاً للتعديل من جديد.'),
     details:[
-      { label:'رقم الطلب', value:displayRequestNo(x.req_no), ltr:true },
-      { label:'معتمد بواسطة', value:x.accounts_signed_by || '—' },
-      { label:'نوع الطلب', value:x.doc_type === 'cancel' ? 'طلب إلغاء' : 'طلب صرف' }
+      { label:t('رقم الطلب'), value:displayRequestNo(x.req_no), ltr:true },
+      { label:t('معتمد بواسطة'), value:x.accounts_signed_by || '—' },
+      { label:t('نوع الطلب'), value:x.doc_type === 'cancel' ? t('طلب إلغاء') : t('طلب صرف') }
     ],
-    note:'يمكن إعادة اعتماد الطلب لاحقاً في أي وقت.',
-    confirmText:'إلغاء الاعتماد',
-    cancelText:'تراجع',
+    note:t('يمكن إعادة اعتماد الطلب لاحقاً في أي وقت.'),
+    confirmText:t('إلغاء الاعتماد'),
+    cancelText:t('تراجع'),
     danger:true
   });
   if(!ok) return;
-  if(!SB_ON){ alert('الأرشيف غير مفعّل.'); return; }
+  if(!SB_ON){ alert(t('الأرشيف غير مفعّل.')); return; }
   try{
     const { error } = await sb.from('requests').update({
       accounts_signed_by:null,
       accounts_signed_at:null
     }).eq('id', x.id);
-    if(error){ console.error(error); alert('تعذّر إلغاء الاعتماد — تأكد من تفعيل سياسة التعديل (update) في Supabase.'); return; }
+    if(error){ console.error(error); alert(t('تعذّر إلغاء الاعتماد — تأكد من تفعيل سياسة التعديل (update) في Supabase.')); return; }
     x.accounts_signed_by = null;
     x.accounts_signed_at = null;
     // لو الطلب مفتوح حالياً في المحرّر: حدّث ختم الاعتماد وأظهر زر الاعتماد وافكّ القفل
@@ -2244,7 +2259,7 @@ async function revokeApproval(i){
       applyArchiveEditLock(kind, EDIT_REQUEST);
     }
     loadArchive();
-  }catch(e){ alert('خطأ اتصال بـ Supabase.'); console.error(e); }
+  }catch(e){ alert(t('خطأ اتصال بـ Supabase.')); console.error(e); }
 }
 
 function loadDisbFromRow(x){
@@ -2253,7 +2268,7 @@ function loadDisbFromRow(x){
   const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value = v==null?'':v; };
   set('d-reqno', displayRequestNo(x.req_no));
   set('d-date',  x.req_date);
-  set('d-name',  x.name);
+  set('d-name',  personName(x.name));
   set('d-dept',  x.department);
   set('d-project', x.project);
   set('d-amt', x.amount!=null ? fmtAmt(String(x.amount)) : '');
@@ -2280,7 +2295,7 @@ function loadDisbFromRow(x){
     document.getElementById('disb-sig-ph').style.display='none';
     document.getElementById('disb-sig-stamp').classList.add('on');
     document.getElementById('disb-sig-mono').textContent = initials(x.signed_by);
-    document.getElementById('disb-sig-name').textContent = x.signed_by;
+    document.getElementById('disb-sig-name').textContent = personName(x.signed_by);
     document.getElementById('disb-sig-meta').textContent = stampDate(x.signed_at);
   } else {
     SIGNED.disb=null;
@@ -2293,7 +2308,7 @@ function loadDisbFromRow(x){
     document.getElementById('disb-acc-ph').style.display='none';
     document.getElementById('disb-acc-stamp').classList.add('on');
     document.getElementById('disb-acc-mono').textContent = initials(x.accounts_signed_by);
-    document.getElementById('disb-acc-name').textContent = x.accounts_signed_by;
+    document.getElementById('disb-acc-name').textContent = personName(x.accounts_signed_by);
     document.getElementById('disb-acc-meta').textContent = stampDate(x.accounts_signed_at);
   } else {
     setAccSign('disb', null);
@@ -2329,7 +2344,9 @@ function loadCancelFromRow(x){
   let rarr=[]; try{ rarr=JSON.parse(x.refund_json||'[]'); }catch(e){ rarr=[]; }
   rows.forEach(tr=>{ const a=tr.querySelector('.r-amt'); if(a) a.value=''; });
   rarr.forEach(item=>{
-    const tr=[...rows].find(t=>(t.querySelector('td')?.textContent||'').trim()===String(item.desc||'').trim());
+    const want=String(item.desc||'').trim();
+    const tr=[...rows].find(r=>(r.getAttribute('data-refund-key')||'').trim()===want
+      || (r.querySelector('td')?.textContent||'').trim()===want);
     if(tr){ const a=tr.querySelector('.r-amt'); if(a) a.value=item.amount?fmtAmt(String(item.amount)):''; }
   });
   recalcRefund();
@@ -2344,7 +2361,7 @@ function loadCancelFromRow(x){
     document.getElementById('cancel-sig-ph').style.display='none';
     document.getElementById('cancel-sig-stamp').classList.add('on');
     document.getElementById('cancel-sig-mono').textContent = initials(x.signed_by);
-    document.getElementById('cancel-sig-name').textContent = x.signed_by;
+    document.getElementById('cancel-sig-name').textContent = personName(x.signed_by);
     document.getElementById('cancel-sig-meta').textContent = stampDate(x.signed_at);
   } else {
     SIGNED.cancel=null;
@@ -2357,7 +2374,7 @@ function loadCancelFromRow(x){
     document.getElementById('cancel-acc-ph').style.display='none';
     document.getElementById('cancel-acc-stamp').classList.add('on');
     document.getElementById('cancel-acc-mono').textContent = initials(x.accounts_signed_by);
-    document.getElementById('cancel-acc-name').textContent = x.accounts_signed_by;
+    document.getElementById('cancel-acc-name').textContent = personName(x.accounts_signed_by);
     document.getElementById('cancel-acc-meta').textContent = stampDate(x.accounts_signed_at);
   } else {
     setAccSign('cancel', null);
@@ -2402,8 +2419,8 @@ function clearDisb(){
   VIEW_ONLY = false;
   setDocumentLocked('disb', false);
   ['d-project','d-amt'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('d-name').value = CURRENT?.name||'';
-  document.getElementById('d-dept').value = CURRENT?.dept||'';
+  document.getElementById('d-name').value = personName(CURRENT?.name||'');
+  document.getElementById('d-dept').value = t(CURRENT?.dept||'');
   document.getElementById('d-date').value=TODAY;
   document.getElementById('d-reqno').value='PV-0001';
   document.getElementById('supplier-rows').innerHTML=''; addSupplierRow(); recalcSupplier();
@@ -2477,7 +2494,7 @@ function updateRequestPdfStatus(){
   const note = document.getElementById('disb-pdf-status');
   if(!note) return;
   if(window.LAST_REQUEST_PDF){
-    note.textContent = 'نسخة الطلب جاهزة للتنزيل كـ PDF منفصل. المرفقات متاحة من قائمة المرفقات.';
+    note.textContent = t('نسخة الطلب جاهزة للتنزيل كـ PDF منفصل. المرفقات متاحة من قائمة المرفقات.');
   } else {
     note.textContent = '';
   }
@@ -2491,19 +2508,21 @@ document.addEventListener('input', function(event){
   }
 });
 window.addEventListener('beforeprint', ()=>{
+  if(typeof beginBilingualDocument === 'function') beginBilingualDocument();   // الوثيقة تُطبع عربي + إنجليزي دائماً
   if(document.getElementById('page-disb')?.classList.contains('on')){
     prepareDisbPrintAppendix();
   }
 });
 window.addEventListener('afterprint', ()=>{
   clearDisbPrintAppendix();
+  if(typeof endBilingualDocument === 'function') endBilingualDocument();
 });
 
 /* === تأمين إضافي وقت الطباعة ===
    قبل أي طباعة بنثبّت القيمة اللي المستخدم كتبها جوه الـ value attribute نفسه،
    عشان حتى لو حصل أي إعادة رسم أو نسخ للصفحة، اللي اتكتب يفضل ظاهر في المطبوع.
    ده مع إخفاء الـ placeholder في CSS بيضمن إن الطلب الفاضي يطلع فاضي،
-   والطلب المليان يطلع بكل بياناته من غير ما يبان "صفر" أو قيمة وهمية. */
+   والطلب المليان يطلع بكل بياناته من غير ما يبان t("صفر") أو قيمة وهمية. */
 function commitValuesForPrint(){
   document.querySelectorAll('input, textarea, select').forEach(function(el){
     if(el.type==='checkbox' || el.type==='radio'){
@@ -2538,14 +2557,14 @@ function showBusyOverlay(text){
       #app-busy-overlay .abz-card{background:#fff;border-radius:18px;padding:24px 30px;display:flex;align-items:center;gap:14px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;color:#1B2233;box-shadow:0 20px 50px -14px rgba(20,24,46,.4);}
       #app-busy-overlay .abz-spin{width:22px;height:22px;border-radius:50%;border:3px solid #DCE4EE;border-top-color:#2C8B8E;animation:abzSpin .8s linear infinite;}
     </style>
-    <div class="abz-card"><span class="abz-spin"></span><span>${escapeHtml(text||'جاري التجهيز...')}</span></div>`;
+    <div class="abz-card"><span class="abz-spin"></span><span>${escapeHtml(text||t('جاري التجهيز...'))}</span></div>`;
   document.body.appendChild(ov);
 }
 function hideBusyOverlay(){
   document.getElementById('app-busy-overlay')?.remove();
 }
 async function mergePdfBuffers(buffers){
-  if(!window.PDFLib || !window.PDFLib.PDFDocument) throw new Error('مكتبة دمج ملفات PDF غير متاحة.');
+  if(!window.PDFLib || !window.PDFLib.PDFDocument) throw new Error(t('مكتبة دمج ملفات PDF غير متاحة.'));
   const merged = await PDFLib.PDFDocument.create();
   for(const buf of buffers){
     const src = await PDFLib.PDFDocument.load(buf, { ignoreEncryption:true });
@@ -2554,96 +2573,6 @@ async function mergePdfBuffers(buffers){
   }
   return await merged.save();
 }
-// هل في بيانات مكتوبة في النموذج ولسه متحفظتش؟ (تحذير قبل استخدام الشاشة لتوليد PDF)
-function hasUnsavedDraft(kind){
-  if(EDIT_ID) return false;
-  if(kind==='cancel'){
-    if(SIGNED.cancel) return true;
-    return [...document.querySelectorAll('#page-cancel input[type=text],#page-cancel input[type=tel],#page-cancel textarea')]
-      .some(inp=>inp.id!=='c-reqno' && (inp.value||'').trim());
-  }
-  if(SIGNED.disb) return true;
-  if((document.getElementById('d-project')?.value||'').trim()) return true;
-  if(parseAmt(document.getElementById('d-amt')?.value||0) > 0) return true;
-  return [...document.querySelectorAll('#supplier-rows tr input, #client-rows tr input')]
-    .some(inp=>(inp.value||'').trim());
-}
-// توليد PDF لطلب من الأرشيف: يحمّل الطلب في الشاشة مؤقتاً ثم يرجّع الأرشيف ويصفّي النموذج
-async function buildRequestPdfBytes(x){
-  const kind = x.doc_type==='cancel' ? 'cancel' : 'disb';
-  const docId = kind==='cancel' ? 'doc-cancel' : 'doc-disb';
-  const tmpStyle = document.createElement('style');
-  tmpStyle.textContent = '#doc-disb tr.print-main-overflow{display:none !important;}';
-  VIEW_ONLY = true;
-  if(kind==='cancel') loadCancelFromRow(x); else loadDisbFromRow(x);
-  showPage(kind);
-  document.head.appendChild(tmpStyle);
-  try{
-    let hasAppendix = false;
-    if(kind==='disb'){
-      prepareDisbPrintAppendix();
-      hasAppendix = !!document.getElementById('disb-appendix')?.classList.contains('on');
-    }
-    commitValuesForPrint();
-    await document.fonts.ready;
-    await new Promise(r=>setTimeout(r, 280));
-    const PDF_OPTS = { scale:2, format:'JPEG', quality:0.94 };   // حجم ملف أخف للتنزيل والمشاركة
-    const main = await generateRequestPDF(docId, PDF_OPTS);
-    if(hasAppendix){
-      const extra = await generateRequestPDF('disb-appendix', PDF_OPTS);
-      return await mergePdfBuffers([main, extra]);
-    }
-    return new Uint8Array(main);
-  } finally {
-    tmpStyle.remove();
-    if(kind==='disb') clearDisbPrintAppendix();
-    VIEW_ONLY = false;
-    if(kind==='cancel') clearCancel(); else clearDisb();
-    showPage('arc');
-  }
-}
-async function confirmDraftOverwrite(kind){
-  if(!hasUnsavedDraft(kind)) return true;
-  return await showConfirmDialog({
-    title:'تنبيه — بيانات غير محفوظة',
-    message:'تجهيز نسخة PDF من الطلب بيستخدم شاشة النموذج مؤقتاً، وده هيمسح البيانات المكتوبة حالياً في النموذج وغير المحفوظة.',
-    note:'احفظ أو قدّم طلبك أولاً لو محتاج تحتفظ بالبيانات.',
-    confirmText:'متابعة التنزيل', cancelText:'رجوع', danger:true
-  });
-}
-async function downloadRequestPdfFromArchive(rowIndex){
-  const x = (window._arcRows||[])[rowIndex];
-  if(!x){ alert('تعذّر فتح الطلب.'); return; }
-  const kind = x.doc_type==='cancel' ? 'cancel' : 'disb';
-  if(!(await confirmDraftOverwrite(kind))) return;
-  const reqNo = displayRequestNo(x.req_no) || 'request';
-  showBusyOverlay('جاري تجهيز نسخة الطلب PDF...');
-  try{
-    const bytes = await buildRequestPdfBytes(x);
-    dl(new Blob([bytes], { type:'application/pdf' }), `${reqNo}.pdf`);
-  }catch(e){
-    console.error(e);
-    await showMessageDialog({ title:'تعذّر التنزيل', message:'حصل خطأ أثناء تجهيز نسخة الطلب PDF. حاول مرة أخرى.', confirmText:'حسنًا' });
-  } finally { hideBusyOverlay(); }
-}
-async function downloadRequestWithAttachments(rowIndex){
-  const x = (window._arcRows||[])[rowIndex];
-  if(!x){ alert('تعذّر فتح الطلب.'); return; }
-  const kind = x.doc_type==='cancel' ? 'cancel' : 'disb';
-  if(!(await confirmDraftOverwrite(kind))) return;
-  const reqNo = displayRequestNo(x.req_no) || 'request';
-  showBusyOverlay('جاري تجهيز الطلب مع المرفقات...');
-  try{
-    const attBytes = await mergeArchiveAttachmentBytes(rowIndex);   // قبل تحميل الطلب في الشاشة
-    const reqBytes = await buildRequestPdfBytes(x);
-    const merged = await mergePdfBuffers([reqBytes, attBytes]);
-    dl(new Blob([merged], { type:'application/pdf' }), `${reqNo}_مع_المرفقات.pdf`);
-  }catch(e){
-    console.error(e);
-    await showMessageDialog({ title:'تعذّر التنزيل', message:'حصل خطأ أثناء دمج الطلب مع المرفقات. تأكد أن المرفقات PDF أو صور مدعومة.', confirmText:'حسنًا' });
-  } finally { hideBusyOverlay(); }
-}
-
 /* ══════════════════════════════════════════
    التحويل المجمّع — إثبات تحويل واحد لعدة طلبات
 ══════════════════════════════════════════ */
@@ -2661,6 +2590,39 @@ function transferGroupColor(gid){
   const palette = ['#2C8B8E','#3E3A72','#C9A24B','#1E9E78','#7A5CB8','#D97706','#0F766E','#BE185D'];
   const n = parseInt(String(gid||'').replace(/\D/g,''),10) || 0;
   return palette[n % palette.length];
+}
+// مزج لون المجموعة بالأبيض (k = نسبة اللون) لإنتاج درجات فاتحة
+function mixWithWhite(hex, k){
+  const c = i => Math.round(parseInt(hex.substr(i,2),16) * k + 255 * (1-k));
+  return `rgb(${c(0)},${c(2)},${c(4)})`;
+}
+function transferGroupTint(gid){
+  return mixWithWhite(transferGroupColor(gid).replace('#',''), 0.07);
+}
+// متغيّرات لون الكتلة: اللون الأساسي + خلفية الصفوف + خلفية التمرير + لون الحدود الرفيعة
+function transferGroupVars(gid){
+  const hex = transferGroupColor(gid).replace('#','');
+  return `--grp:#${hex};--grp-bg:${mixWithWhite(hex,0.045)};--grp-bg2:${mixWithWhite(hex,0.10)};--grp-line:${mixWithWhite(hex,0.28)}`;
+}
+// ترتيب القائمة بحيث تفضل طلبات كل تحويل مجمّع ورا بعض ككتلة واحدة،
+// والكتلة تاخد مكان أعلى رقم طلب فيها عشان الترتيب العام ما يتلخبطش.
+function sortTransferGroupsTogether(list, reqNum){
+  const gidOf = r => (r && !r.cancelled && r.transfer_group) ? r.transfer_group : '';
+  const anchor = {};
+  list.forEach(r=>{
+    const g = gidOf(r); if(!g) return;
+    const n = reqNum(r);
+    if(!(g in anchor) || n > anchor[g]) anchor[g] = n;
+  });
+  list.sort((a,b)=>{
+    const ga = gidOf(a), gb = gidOf(b);
+    const ka = ga ? anchor[ga] : reqNum(a);
+    const kb = gb ? anchor[gb] : reqNum(b);
+    if(kb !== ka) return kb - ka;
+    if(ga !== gb) return ga < gb ? -1 : 1;      // نفس المرتبة → كل مجموعة لوحدها متلاصقة
+    return (reqNum(b) - reqNum(a)) || ((b.id||0) - (a.id||0));
+  });
+  return list;
 }
 // الطلب صالح للتحويل المجمّع: معتمد من الحسابات، غير ملغي، ولسه مرفعلوش إثبات
 function isTransferSelectable(x){
@@ -2692,7 +2654,7 @@ async function loadTransferGroupsFor(list){
       if(!g.note && r.transfer_group_note) g.note = r.transfer_group_note;
       if(!g.at && r.transfer_group_at) g.at = r.transfer_group_at;
     });
-  }catch(e){ console.warn('تعذّر تحميل بيانات مجموعات التحويل', e); }
+  }catch(e){ console.warn(t('تعذّر تحميل بيانات مجموعات التحويل'), e); }
 }
 function renderTransferGroupNote(noteSlot, search){
   if(!noteSlot) return;
@@ -2703,9 +2665,9 @@ function renderTransferGroupNote(noteSlot, search){
   noteSlot.innerHTML = `<div class="arc-note arc-group-note" style="--grp:${transferGroupColor(gid)}">
       <div class="agn-txt">
         <b>مجموعة تحويل ${escapeHtml(gid)}</b>
-        <span>${info.rows.length} طلبات · إجمالي ${formatMoney(info.total)} ر.ق${info.at?' · '+formatArchiveDateTime(info.at):''}${info.note?' · مرجع: '+escapeHtml(info.note):''}</span>
+        <span>${info.rows.length} ${t('طلبات')} · ${t('إجمالي')} ${formatMoney(info.total)} ${t('ر.ق')}${info.at?' · '+formatArchiveDateTime(info.at):''}${info.note?t(' · مرجع: ')+escapeHtml(info.note):''}</span>
       </div>
-      <button class="arc-group-clear" onclick="clearArchiveSearch()">إلغاء الفلتر</button>
+      <button class="arc-group-clear" onclick="clearArchiveSearch()">${t('إلغاء الفلتر')}</button>
     </div>`;
 }
 function filterByTransferGroup(gid){
@@ -2725,15 +2687,15 @@ function clearArchiveSearch(){
 /* ── وضع التحديد ── */
 function toggleTransferSelectMode(){
   if(!CURRENT || CURRENT.role!=='accountant'){
-    showMessageDialog({ title:'غير مسموح', message:'التحويل المجمّع متاح للمحاسب فقط.', confirmText:'حسنًا' });
+    showMessageDialog({ title:t('غير مسموح'), message:t('التحويل المجمّع متاح للمحاسب فقط.'), confirmText:t('حسنًا') });
     return;
   }
   if(TRANSFER_COLS_OK === false){
     showMessageDialog({
-      title:'الميزة تحتاج تجهيز قاعدة البيانات',
+      title:t('الميزة تحتاج تجهيز قاعدة البيانات'),
       subtitle:'Setup Required',
-      message:'أعمدة التحويل المجمّع غير موجودة في جدول requests. شغّل الأوامر دي مرة واحدة في Supabase > SQL Editor:\n\n'+TRANSFER_GROUP_SQL,
-      confirmText:'حسنًا'
+      message:t('أعمدة التحويل المجمّع غير موجودة في جدول requests. شغّل الأوامر دي مرة واحدة في Supabase > SQL Editor:\n\n')+TRANSFER_GROUP_SQL,
+      confirmText:t('حسنًا')
     });
     return;
   }
@@ -2805,12 +2767,12 @@ function updateTransferSelectUI(){
   bar.innerHTML = `
     <div class="asb-info">
       <b>${picked.length}</b>
-      <span>طلب محدد · إجمالي <b class="asb-total">${formatMoney(total)}</b> ر.ق</span>
+      <span>${t('طلب محدد · إجمالي')} <b class="asb-total">${formatMoney(total)}</b> ${t('ر.ق')}</span>
     </div>
     <div class="asb-actions">
-      ${candidates.length ? `<button class="asb-btn ghost" onclick="selectAllTransferCandidates(${allOn?'false':'true'})">${allOn?'إلغاء تحديد الكل':'تحديد كل المعروض'}</button>` : ''}
-      <button class="asb-btn ghost" onclick="cancelTransferSelectMode()">إنهاء</button>
-      <button class="asb-btn go"${picked.length<2?' disabled':''} onclick="startGroupTransfer()">رفع إثبات تحويل مجمّع</button>
+      ${candidates.length ? `<button class="asb-btn ghost" onclick="selectAllTransferCandidates(${allOn?'false':'true'})">${allOn?t('إلغاء تحديد الكل'):t('تحديد كل المعروض')}</button>` : ''}
+      <button class="asb-btn ghost" onclick="cancelTransferSelectMode()">${t('إنهاء')}</button>
+      <button class="asb-btn go"${picked.length<2?' disabled':''} onclick="startGroupTransfer()">${t('رفع إثبات تحويل مجمّع')}</button>
     </div>`;
   bar.classList.add('on');
   document.body.classList.add('arc-selecting');
@@ -2860,7 +2822,7 @@ function showGroupTransferDialog(rows, total){
       </style>
       <div class="agd-card" role="dialog" aria-modal="true">
         <div class="agd-head">
-          <div class="agd-title">تحويل مجمّع — إثبات واحد لعدة طلبات</div>
+          <div class="agd-title">${t('تحويل مجمّع — إثبات واحد لعدة طلبات')}</div>
           <div class="agd-cap">Grouped Transfer</div>
         </div>
         <div class="agd-body">
@@ -2870,20 +2832,20 @@ function showGroupTransferDialog(rows, total){
               <div class="agd-amt">${formatMoney(r.amount)}</div>
             </div>`).join('')}
           </div>
-          <div class="agd-total"><span>إجمالي المبلغ المحوّل (${rows.length} طلبات)</span><b>${formatMoney(total)} QAR</b></div>
+          <div class="agd-total"><span>${t('إجمالي المبلغ المحوّل')} (${rows.length} ${t('طلبات')})</span><b>${formatMoney(total)} QAR</b></div>
           <div class="agd-field">
-            <label>مرجع التحويل / ملاحظة (اختياري)</label>
-            <input type="text" id="agd-note" placeholder="مثال: تحويل بنكي رقم 123456" maxlength="80"/>
+            <label>${t('مرجع التحويل / ملاحظة (اختياري)')}</label>
+            <input type="text" id="agd-note" placeholder="${t('مثال: تحويل بنكي رقم 123456')}" maxlength="80"/>
           </div>
           <div class="agd-file" id="agd-file-box">
-            <b>اضغط لاختيار إثبات التحويل</b>
-            <small>صورة أو PDF — بحد أقصى 2 ميجابايت</small>
+            <b>${t('اضغط لاختيار إثبات التحويل')}</b>
+            <small>${t('صورة أو PDF — بحد أقصى 2 ميجابايت')}</small>
           </div>
           <input type="file" id="agd-file" accept="image/*,application/pdf" style="display:none"/>
         </div>
         <div class="agd-foot">
-          <button class="agd-btn agd-cancel" data-action="cancel">رجوع</button>
-          <button class="agd-btn agd-confirm" data-action="confirm" disabled>رفع الإثبات للكل</button>
+          <button class="agd-btn agd-cancel" data-action="cancel">${t('رجوع')}</button>
+          <button class="agd-btn agd-confirm" data-action="confirm" disabled>${t('رفع الإثبات للكل')}</button>
         </div>
       </div>`;
     const fileInput = overlay.querySelector('#agd-file');
@@ -2895,13 +2857,13 @@ function showGroupTransferDialog(rows, total){
       if(!f) return;
       if(f.size > 2*1024*1024){
         fileBox.classList.remove('picked');
-        fileBox.innerHTML = '<b style="color:#d9415f">الملف أكبر من 2 ميجابايت</b><small>اختر ملفاً أصغر</small>';
+        fileBox.innerHTML = t('<b style="color:#d9415f">الملف أكبر من 2 ميجابايت</b><small>اختر ملفاً أصغر</small>');
         fileInput.value = '';
         confirmBtn.disabled = true;
         return;
       }
       fileBox.classList.add('picked');
-      fileBox.innerHTML = `<b>${escapeHtml(f.name)}</b><small>${(f.size/1024).toFixed(0)} KB — اضغط للتغيير</small>`;
+      fileBox.innerHTML = `<b>${escapeHtml(f.name)}</b><small>${(f.size/1024).toFixed(0)} KB — ${t('اضغط للتغيير')}</small>`;
       confirmBtn.disabled = false;
     });
     const close = value => { document.removeEventListener('keydown', onKey); overlay.remove(); resolve(value); };
@@ -2929,17 +2891,17 @@ async function getNextTransferGroupNo(){
   return `TRF-${String(max+1).padStart(4,'0')}`;
 }
 async function startGroupTransfer(){
-  if(!CURRENT || CURRENT.role!=='accountant'){ await showMessageDialog({ title:'غير مسموح', message:'التحويل المجمّع متاح للمحاسب فقط.', confirmText:'حسنًا' }); return; }
-  if(!SB_ON){ await showMessageDialog({ title:'الأرشيف غير مفعّل', message:'لا يمكن رفع إثبات التحويل بدون اتصال بقاعدة البيانات.', confirmText:'حسنًا' }); return; }
+  if(!CURRENT || CURRENT.role!=='accountant'){ await showMessageDialog({ title:t('غير مسموح'), message:t('التحويل المجمّع متاح للمحاسب فقط.'), confirmText:t('حسنًا') }); return; }
+  if(!SB_ON){ await showMessageDialog({ title:t('الأرشيف غير مفعّل'), message:t('لا يمكن رفع إثبات التحويل بدون اتصال بقاعدة البيانات.'), confirmText:t('حسنًا') }); return; }
   const picked = [...ARC_SELECTED_DATA.values()];
   if(picked.length < 2){
-    await showMessageDialog({ title:'اختر طلبين على الأقل', message:'التحويل المجمّع بيربط أكتر من طلب بإثبات تحويل واحد. حدّد طلبين أو أكتر.', confirmText:'حسنًا' });
+    await showMessageDialog({ title:t('اختر طلبين على الأقل'), message:t('التحويل المجمّع بيربط أكتر من طلب بإثبات تحويل واحد. حدّد طلبين أو أكتر.'), confirmText:t('حسنًا') });
     return;
   }
   const total = picked.reduce((s,r)=>s+(Number(r.amount)||0), 0);
   const result = await showGroupTransferDialog(picked, total);
   if(!result) return;
-  showBusyOverlay('جاري رفع إثبات التحويل وربط الطلبات...');
+  showBusyOverlay(t('جاري رفع إثبات التحويل وربط الطلبات...'));
   try{
     const path = await uploadFileToStorage(result.file, 'transfer-images');
     const gid = await getNextTransferGroupNo();
@@ -2956,45 +2918,45 @@ async function startGroupTransfer(){
     loadArchive();
     hideBusyOverlay();
     await showMessageDialog({
-      title:'تم إنشاء التحويل المجمّع ✅',
+      title:t('تم إنشاء التحويل المجمّع ✅'),
       subtitle:'Grouped Transfer Created',
-      message:'تم ربط الطلبات المحددة بإثبات تحويل واحد، وأُرسل إشعار لأصحاب الطلبات.',
+      message:t('تم ربط الطلبات المحددة بإثبات تحويل واحد، وأُرسل إشعار لأصحاب الطلبات.'),
       details:[
-        { label:'رقم المجموعة', value:gid, ltr:true },
-        { label:'عدد الطلبات', value:String(picked.length), ltr:true },
-        { label:'إجمالي المبلغ', value:formatMoney(total)+' QAR', ltr:true },
-        ...(result.note ? [{ label:'مرجع التحويل', value:result.note }] : [])
+        { label:t('رقم المجموعة'), value:gid, ltr:true },
+        { label:t('عدد الطلبات'), value:String(picked.length), ltr:true },
+        { label:t('إجمالي المبلغ'), value:formatMoney(total)+' QAR', ltr:true },
+        ...(result.note ? [{ label:t('مرجع التحويل'), value:result.note }] : [])
       ],
-      confirmText:'تم'
+      confirmText:t('تم')
     });
   }catch(e){
     console.error(e);
     hideBusyOverlay();
     const msg = String(e?.message||'');
     await showMessageDialog({
-      title:'تعذّر إتمام التحويل المجمّع',
+      title:t('تعذّر إتمام التحويل المجمّع'),
       message: /column|transfer_group/i.test(msg)
-        ? 'أعمدة التحويل المجمّع غير موجودة. شغّل الأوامر دي في Supabase > SQL Editor:\n\n'+TRANSFER_GROUP_SQL
-        : 'حصل خطأ أثناء رفع الإثبات أو ربط الطلبات. تحقّق من الاتصال وحاول مرة أخرى.',
-      confirmText:'حسنًا'
+        ? t('أعمدة التحويل المجمّع غير موجودة. شغّل الأوامر دي في Supabase > SQL Editor:\n\n')+TRANSFER_GROUP_SQL
+        : t('حصل خطأ أثناء رفع الإثبات أو ربط الطلبات. تحقّق من الاتصال وحاول مرة أخرى.'),
+      confirmText:t('حسنًا')
     });
   } finally { hideBusyOverlay(); }
 }
 async function deleteTransferGroup(gid){
-  if(!CURRENT || CURRENT.role!=='accountant'){ await showMessageDialog({ title:'غير مسموح', message:'هذه الخاصية للمحاسب فقط.', confirmText:'حسنًا' }); return; }
+  if(!CURRENT || CURRENT.role!=='accountant'){ await showMessageDialog({ title:t('غير مسموح'), message:t('هذه الخاصية للمحاسب فقط.'), confirmText:t('حسنًا') }); return; }
   if(!gid || !SB_ON) return;
   const info = (window._arcGroups||{})[gid];
   const ok = await showConfirmDialog({
-    title:'حذف التحويل المجمّع',
-    message:'هيتم حذف إثبات التحويل من كل طلبات المجموعة وفك ارتباطها ببعض. الطلبات نفسها مش هتتأثر، وتقدر ترفع إثبات جديد بعدها.',
+    title:t('حذف التحويل المجمّع'),
+    message:t('هيتم حذف إثبات التحويل من كل طلبات المجموعة وفك ارتباطها ببعض. الطلبات نفسها مش هتتأثر، وتقدر ترفع إثبات جديد بعدها.'),
     details:[
-      { label:'رقم المجموعة', value:gid, ltr:true },
-      { label:'عدد الطلبات', value:String(info ? info.rows.length : '—'), ltr:true }
+      { label:t('رقم المجموعة'), value:gid, ltr:true },
+      { label:t('عدد الطلبات'), value:String(info ? info.rows.length : '—'), ltr:true }
     ],
-    confirmText:'حذف المجموعة', cancelText:'رجوع', danger:true
+    confirmText:t('حذف المجموعة'), cancelText:t('رجوع'), danger:true
   });
   if(!ok) return;
-  showBusyOverlay('جاري حذف التحويل المجمّع...');
+  showBusyOverlay(t('جاري حذف التحويل المجمّع...'));
   try{
     const { error } = await sb.from('requests').update({
       transfer_image:null, transfer_seen:false,
@@ -3003,10 +2965,39 @@ async function deleteTransferGroup(gid){
     if(error) throw error;
     loadArchive();
     hideBusyOverlay();
-    await showMessageDialog({ title:'تم الحذف ✅', message:'تم حذف إثبات التحويل من كل طلبات المجموعة.', confirmText:'تم' });
+    await showMessageDialog({ title:t('تم الحذف ✅'), message:t('تم حذف إثبات التحويل من كل طلبات المجموعة.'), confirmText:t('تم') });
   }catch(e){
     console.error(e);
     hideBusyOverlay();
-    await showMessageDialog({ title:'تعذّر الحذف', message:'حصل خطأ أثناء حذف المجموعة. حاول مرة أخرى.', confirmText:'حسنًا' });
+    await showMessageDialog({ title:t('تعذّر الحذف'), message:t('حصل خطأ أثناء حذف المجموعة. حاول مرة أخرى.'), confirmText:t('حسنًا') });
   } finally { hideBusyOverlay(); }
+}
+
+
+/* ══════════════════════════════════════════
+   تحديث الأجزاء الديناميكية بعد تبديل اللغة
+══════════════════════════════════════════ */
+function refreshDynamicUI(){
+  try{
+    if(CURRENT){
+      const role = document.getElementById('tb-role');
+      if(role) role.textContent = personName(CURRENT.dept || '');
+      const nameEl = document.getElementById('tb-name');
+      if(nameEl) nameEl.textContent = personName(CURRENT.name);
+      const dName = document.getElementById('d-name');
+      if(dName && !EDIT_ID) dName.value = personName(CURRENT.name);
+      const dept = document.getElementById('d-dept');
+      if(dept && !EDIT_ID) dept.value = personName(CURRENT.dept || '');
+    }
+    if(typeof renderAttach === 'function') renderAttach();
+    if(typeof updateDisbWords === 'function') updateDisbWords(document.getElementById('d-amt')?.value || '');
+    if(typeof updateMatch === 'function') updateMatch();
+    if(typeof updateCostCenterDisabledUI === 'function') updateCostCenterDisabledUI();
+    if(typeof updateRequestPdfStatus === 'function') updateRequestPdfStatus();
+    if(typeof setDisbMainTotalLabels === 'function') setDisbMainTotalLabels(!!document.getElementById('doc-disb')?.classList.contains('has-appendix'));
+    if(typeof closeArchiveMenu === 'function') closeArchiveMenu();
+    if(typeof closeArchiveTimePopover === 'function') closeArchiveTimePopover();
+    if(document.getElementById('page-arc')?.classList.contains('on') && typeof loadArchive === 'function') loadArchive();
+    if(typeof updateTransferSelectUI === 'function') updateTransferSelectUI();
+  }catch(e){ console.warn('refreshDynamicUI', e); }
 }

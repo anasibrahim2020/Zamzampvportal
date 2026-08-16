@@ -124,11 +124,53 @@ table.arc tbody tr.arc-transferred td:first-child{box-shadow:inset 4px 0 0 var(-
 table.arc tbody tr.arc-row-selected td{background-color:#EFF7FF !important;}
 table.arc tbody tr.arc-row-selected td:first-child{box-shadow:inset 4px 0 0 var(--teal);}
 
-/* صفوف مجموعة التحويل — شريط جانبي بلون المجموعة */
-table.arc tbody tr.arc-grouped td:first-child{box-shadow:inset 4px 0 0 var(--grp,var(--green)) !important;}
-.arc-group-chip{display:flex;width:fit-content;max-width:100%;align-items:center;gap:4px;margin:4px 0 0;padding:2px 7px;border-radius:999px;border:1.2px solid var(--grp,var(--green));color:var(--grp,var(--green));background:#fff;font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:.4px;cursor:pointer;line-height:1.6;}
-.arc-group-chip svg{width:11px;height:11px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
-.arc-group-chip:hover{background:var(--grp,var(--green));color:#fff;}
+/* ── كتلة التحويل المجمّع: شريط عنوان أنيق + إطار متصل حول طلبات المجموعة ── */
+table.arc tbody tr.arc-grp-gap td{
+  height:14px;padding:0 !important;background:transparent !important;border:none !important;box-shadow:none !important;}
+table.arc tbody tr.arc-grp-gap:hover td{background:transparent !important;}
+
+/* شريط العنوان — بنفس لغة رؤوس الجدول في الموقع: خلفية فاتحة وحد رفيع ولمسة لون للمجموعة */
+table.arc tbody tr.arc-grp-head td,
+table.arc tbody tr.arc-grp-head:hover td{
+  background:linear-gradient(180deg,#FBFDFE 0%,#F2F6FA 100%) !important;
+  padding:0 !important;
+  border-top:1px solid var(--grp-line,#d5e1eb) !important;
+  border-bottom:1px solid var(--grp-line,#d5e1eb) !important;
+  box-shadow:none !important;}
+.agh{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:7px 14px;}
+.agh-ttl{display:flex;align-items:center;gap:8px;color:var(--grp,var(--teal));}
+.agh-ttl::before{content:'';width:4px;height:15px;border-radius:99px;background:var(--grp,var(--teal));flex-shrink:0;}
+.agh-ttl svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:.85;}
+.agh-lbl{font-size:11px;font-weight:900;letter-spacing:.1px;color:#314057;}
+.agh-code{font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:1.1px;direction:ltr;
+  color:var(--grp,var(--teal));background:var(--grp-bg2,#eef4f4);border:1px solid var(--grp-line,#d5e1eb);border-radius:999px;padding:2px 9px;}
+.agh-sub{display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:800;color:#64748B;}
+.agh-sub b{font-weight:800;direction:ltr;display:inline-block;font-size:11.5px;color:var(--green);}
+.agh-cnt{background:#fff;border:1px solid #e2eaf3;border-radius:999px;padding:2px 9px;color:#3f3c75;}
+.agh-ref{border-inline-start:1px solid #dbe4ee;padding-inline-start:9px;font-weight:700;}
+
+/* صفوف الكتلة — لمسة لون خفيفة جداً + قضبان جانبية رفيعة */
+table.arc tbody tr.arc-grp td,
+table.arc tbody tr.arc-grp:nth-child(even) td{
+  background-color:var(--grp-bg,#f7fafa) !important;
+  border-bottom:1px solid rgba(20,24,46,.045) !important;}
+table.arc tbody tr.arc-grp:hover td{background-color:var(--grp-bg2,#eef4f4) !important;}
+table.arc tbody tr.arc-grp td:first-child{box-shadow:inset 3px 0 0 var(--grp,var(--green)) !important;}
+table.arc tbody tr.arc-grp td:last-child{box-shadow:inset -3px 0 0 var(--grp,var(--green)) !important;}
+table.arc tbody tr.arc-grp-last td{
+  border-bottom:none !important;
+  box-shadow:inset 0 -2px 0 var(--grp-line,#cdd9e5) !important;}
+table.arc tbody tr.arc-grp-last td:first-child{box-shadow:inset 3px 0 0 var(--grp,var(--green)), inset 0 -2px 0 var(--grp-line,#cdd9e5) !important;}
+table.arc tbody tr.arc-grp-last td:last-child{box-shadow:inset -3px 0 0 var(--grp,var(--green)), inset 0 -2px 0 var(--grp-line,#cdd9e5) !important;}
+
+/* صفوف مجموعة التحويل — شريط جانبي بلون المجموعة (خارج الكتلة، مثلاً في تبويب الملغاة) */
+table.arc tbody tr.arc-grouped:not(.arc-grp) td:first-child{box-shadow:inset 4px 0 0 var(--grp,var(--green)) !important;}
+.arc-group-chip{display:flex;width:fit-content;max-width:100%;align-items:center;gap:4px;margin:4px 0 0;padding:2px 8px;border-radius:999px;
+  color:var(--grp,var(--green));background:#fff;border:1px solid var(--grp-line,#d5e1eb);
+  font-family:'Montserrat',sans-serif;font-size:8.6px;font-weight:800;letter-spacing:.8px;cursor:pointer;line-height:1.75;
+  transition:background .14s ease,border-color .14s ease;}
+.arc-group-chip svg{width:9px;height:9px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:.8;}
+.arc-group-chip:hover{background:var(--grp-bg2,#eef4f4);border-color:var(--grp,var(--green));}
 
 /* لافتة عرض مجموعة تحويل */
 .arc-note.arc-group-note{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;border-inline-start:4px solid var(--grp,var(--green));}
@@ -163,3 +205,126 @@ body.arc-selecting .page-wrap{padding-bottom:110px;}
 @media print{
   .arc-select-bar,.arc-group-chip,.arc-sel-check,.arc-hd-actions{display:none !important;}
 }
+
+/* ── كتلة التحويل المجمّع على الموبايل/التابلت (وضع الكروت) ── */
+@media (max-width:1024px){
+  table.arc tbody tr.arc-grp-gap{display:none;}
+  /* شريط نهاية الكتلة: يمتد على العرض كله فيمنع أي كارت خارج المجموعة من الوقوف جنبها */
+  table.arc tbody tr.arc-grp-end{
+    display:block !important;grid-column:1/-1;background:transparent !important;border:none;box-shadow:none;padding:0;margin:-8px 0 4px;}
+  table.arc tbody tr.arc-grp-end::before{display:none;}
+  table.arc tbody tr.arc-grp-end td{
+    display:block !important;height:5px;padding:0 !important;min-height:0 !important;border:none !important;
+    border-radius:999px;background:var(--grp,var(--green)) !important;opacity:.55;}
+  table.arc tbody tr.arc-grp-end td::before{display:none !important;}
+  table.arc tbody tr.arc-grp-head{
+    grid-column:1/-1;display:block;background:transparent !important;border:none;box-shadow:none;padding:0;margin:2px 0 -6px;}
+  table.arc tbody tr.arc-grp-head::before{display:none;}
+  table.arc tbody tr.arc-grp-head td{
+    display:block !important;border-radius:12px;padding:0 !important;min-height:0 !important;
+    border:1px solid var(--grp-line,#d5e1eb) !important;}
+  table.arc tbody tr.arc-grp-head td::before{display:none !important;}
+  .agh{padding:9px 14px;gap:8px;}
+  .agh-sub{flex-wrap:wrap;}
+  /* كروت المجموعة: إطار بلون المجموعة وخلفية خفيفة */
+  table.arc tbody tr.arc-grp{
+    background:var(--grp-bg,#f7fafa) !important;
+    border:1px solid var(--grp-line,#d5e1eb) !important;
+    box-shadow:0 6px 18px -15px rgba(20,24,46,.7) !important;}
+  table.arc tbody tr.arc-grp::before{background:var(--grp,var(--green)) !important;}
+  table.arc tbody tr.arc-grp td,
+  table.arc tbody tr.arc-grp:nth-child(even) td,
+  table.arc tbody tr.arc-grp:hover td{background:transparent !important;box-shadow:none !important;border-bottom:1px solid rgba(20,24,46,.06) !important;}
+  table.arc tbody tr.arc-grp td:last-child{border-bottom:none !important;}
+}
+
+/* ══════════════════════════════════════════
+   الوضع الإنجليزي — English mode (LTR)
+   النص العربي نفسه بيتحوّل لإنجليزي، فبنخفي السطر الإنجليزي المكرر
+══════════════════════════════════════════ */
+.tb-lang{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.14);border:1.5px solid rgba(255,255,255,.45);
+  color:#fff;border-radius:999px;padding:5px 10px 5px 8px;font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:800;
+  letter-spacing:.6px;cursor:pointer;margin-inline-end:8px;line-height:1;transition:background .15s,border-color .15s,transform .15s;}
+.tb-lang svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:.92;}
+.tb-lang:hover{background:rgba(255,255,255,.26);border-color:#fff;transform:translateY(-1px);}
+
+html.lang-en .en,
+html.lang-en .btn-text>span:nth-child(2),
+html.lang-en .wa,
+html.lang-en .login-sub,
+html.lang-en .tb-title small,
+html.lang-en .chk span small,
+html.lang-en .inv-table th small,
+html.lang-en .payout-pill span small,
+html.lang-en .payout-hd small,
+html.lang-en .arc-hd .sub,
+html.lang-en .appendix-head small,
+html.lang-en .appendix-table th small{display:none !important;}
+
+/* الخط الإنجليزي أنسب للنص اللاتيني */
+html.lang-en body,
+html.lang-en .btn,
+html.lang-en .arc-menu-item,
+html.lang-en .asb-btn,
+html.lang-en .acd-btn{font-family:'Montserrat','Cairo',sans-serif;}
+html.lang-en .login-box h2,
+html.lang-en .doc-hd h1,
+html.lang-en .sec-title,
+html.lang-en .arc-hd h2{letter-spacing:.1px;}
+
+/* ── تصحيحات اتجاه LTR ── */
+html[dir="ltr"] .login-field,
+html[dir="ltr"] .login-field input,
+html[dir="ltr"] .doc-hd-txt,
+html[dir="ltr"] .inv-table td,
+html[dir="ltr"] .inv-table input,
+html[dir="ltr"] .refund-table th,
+html[dir="ltr"] table.arc td.arc-ref,
+html[dir="ltr"] .arc-menu-item{text-align:left;}
+html[dir="ltr"] .tb-user{text-align:right;}
+html[dir="ltr"] .refund-table th:last-child,
+html[dir="ltr"] .inv-table th{text-align:center;}
+html[dir="ltr"] .arc-time-pop::before{right:auto;left:24px;}
+html[dir="ltr"] .arc-approval-status.approved::after{right:auto;left:3px;}
+html[dir="ltr"] .arc-approval-status.pending .hourglass{right:auto;left:2px;}
+/* فواصل أعمدة الجدول تتعكس */
+html[dir="ltr"] table.arc .arc-group-row th+th{border-right:none;border-left:2px solid #d3e0ea;}
+html[dir="ltr"] table.arc thead tr:not(.arc-group-row) th:nth-child(4),
+html[dir="ltr"] table.arc tbody td:nth-child(4),
+html[dir="ltr"] table.arc thead tr:not(.arc-group-row) th:nth-child(5),
+html[dir="ltr"] table.arc tbody td:nth-child(5),
+html[dir="ltr"] table.arc thead tr:not(.arc-group-row) th:nth-child(6),
+html[dir="ltr"] table.arc tbody td:nth-child(6),
+html[dir="ltr"] table.arc thead tr:not(.arc-group-row) th:nth-child(9),
+html[dir="ltr"] table.arc tbody td:nth-child(9){border-right:none;}
+html[dir="ltr"] .appendix-table th{border-left:none;border-right:1px solid #d9e2ec;}
+html[dir="ltr"] .appendix-table td{border-left:none;border-right:1px solid #e8edf3;}
+html[dir="ltr"] .arc-time-pop::before{border-left:none;border-right:1px solid #d9e4ef;}
+/* عمود المبالغ يفضل LTR في الحالتين */
+html[dir="ltr"] table.arc td.arc-amount::before{direction:ltr;}
+
+/* عند الطباعة النسخة دايماً عربي + إنجليزي */
+@media print{
+  html.printing-bilingual .en,
+  html.printing-bilingual small{display:revert !important;}
+  .tb-lang{display:none !important;}
+}
+
+/* زر اللغة على شاشة الدخول */
+.login-lang{position:absolute;top:14px;inset-inline-start:14px;display:inline-flex;align-items:center;gap:5px;
+  background:#F1F5F9;border:1.5px solid #DCE4EE;color:var(--indigo);border-radius:999px;padding:5px 10px 5px 8px;
+  font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.6px;line-height:1;cursor:pointer;transition:background .15s,border-color .15s;}
+.login-lang svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.login-lang:hover{background:#E7EEF6;border-color:#C7D3E1;}
+/* عمود «النوع» أعرض شوية في الإنجليزي عشان الكلمة تظهر كاملة */
+html.lang-en table.arc colgroup col:nth-child(2){width:8% !important;}
+html.lang-en table.arc colgroup col:nth-child(4){width:17% !important;}
+html.lang-en table.arc tbody td:nth-child(2) .badge{font-size:9.5px;padding:3px 7px;}
+/* في الوضع الإنجليزي: العناصر المعلَّمة dir="rtl" داخل النماذج تتحوّل LTR */
+html.lang-en [dir="rtl"]{direction:ltr;}
+html.lang-en .doc,
+html.lang-en .doc input,
+html.lang-en .doc textarea{direction:ltr;}
+html.lang-en .doc input[dir="ltr"],
+html.lang-en .amt-input,
+html.lang-en .arc-amount{direction:ltr;}
