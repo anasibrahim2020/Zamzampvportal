@@ -939,7 +939,10 @@ async function signDisbAccounts(){ return signAccountsFor('disb'); }
 /* ══════════════════════════════════════════
    REQUEST PDF (attachments stay separate)
 ══════════════════════════════════════════ */
-async function generateRequestPDF(docId='doc-disb'){
+async function generateRequestPDF(docId='doc-disb', opts={}){
+  const captureScale = opts.scale || 3;                    // دقة الالتقاط
+  const imgFormat = (opts.format || 'PNG').toUpperCase();  // PNG للطباعة، JPEG لتصغير حجم الملف
+  const imgQuality = opts.quality || 0.92;
   commitValuesForPrint();
   await document.fonts.ready;
   const el=document.getElementById(docId);
@@ -960,7 +963,6 @@ async function generateRequestPDF(docId='doc-disb'){
   el.style.boxShadow = 'none';
   el.style.borderRadius = '0';
   el.style.transform = 'none';
-  const captureScale = 3;
   let canvas;
   try{
     await new Promise(requestAnimationFrame);
@@ -979,7 +981,7 @@ async function generateRequestPDF(docId='doc-disb'){
     el.style.borderRadius = originalStyles.borderRadius;
     el.style.transform = originalStyles.transform;
   }
-  const img = canvas.toDataURL('image/png');
+  const img = imgFormat === 'JPEG' ? canvas.toDataURL('image/jpeg', imgQuality) : canvas.toDataURL('image/png');
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p','mm','a4');
   const pw = pdf.internal.pageSize.getWidth();
@@ -994,7 +996,7 @@ async function generateRequestPDF(docId='doc-disb'){
   const totalPages = Math.ceil(imgH / ph);
   for(let pageIndex = 0; pageIndex < totalPages; pageIndex++){
     if(pageIndex > 0) pdf.addPage();
-    pdf.addImage(img, 'PNG', offsetX, -ph * pageIndex, imgW, imgH);
+    pdf.addImage(img, imgFormat, offsetX, -ph * pageIndex, imgW, imgH);
   }
   return pdf.output('arraybuffer');
 }
@@ -1321,7 +1323,10 @@ const ARC_ICONS = {
   hourglass:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h12"></path><path d="M6 22h12"></path><path d="M7 2v6l5 4 5-4V2"></path><path d="M7 22v-6l5-4 5 4v6"></path></svg>',
   more:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle></svg>',
   sign:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>',
-  trash:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M6 6l1 16h10l1-16"></path></svg>'
+  trash:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M6 6l1 16h10l1-16"></path></svg>',
+  layers:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5z"></path><path d="m3 12 9 5 9-5"></path><path d="m3 16.5 9 5 9-5"></path></svg>',
+  doc:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"></path><path d="M9 9h6"></path><path d="M9 13h6"></path><path d="M9 17h4"></path></svg>',
+  list:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg>'
 };
 function setArcTab(t){
   if(t === 'cancelled' && (!CURRENT || CURRENT.role !== 'accountant')) t = 'all';
@@ -1712,21 +1717,31 @@ async function deleteComment(i, id){
 
 function showArchiveAttachmentsMenu(btn, rowIndex){
   const row = (window._arcRows||[])[rowIndex];
+  if(!row) return;
   const atts = getArchiveRowAttachments(row);
-  if(!atts.length) return;
-  const mergedActions = `
-    ${archiveMenuButton('تنزيل الكل PDF', ARC_ICONS.download, `downloadArchiveAttachmentsMerged(${rowIndex})`)}
-    ${archiveMenuButton('طباعة الكل PDF', ARC_ICONS.print, `printArchiveAttachmentsMerged(${rowIndex})`)}
-    <div class="arc-menu-sep"></div>
+  // تنزيل نسخة الطلب نفسه PDF — متاح دائماً حتى لو الطلب بدون مرفقات
+  let html = `
+    <div class="arc-time-row"><span>الطلب</span><b>Request</b></div>
+    ${archiveMenuButton('تنزيل الطلب PDF', ARC_ICONS.doc, `downloadRequestPdfFromArchive(${rowIndex})`)}
   `;
-  const html = mergedActions + atts.map((_, ai)=>`
-    ${ai>0?'<div class="arc-menu-sep"></div>':''}
-    <div class="arc-time-row"><span>مرفق ${ai+1}</span><b>Attachment ${ai+1}</b></div>
-    ${archiveMenuButton('معاينة', ARC_ICONS.view, `openAttachment(${rowIndex}, ${ai})`)}
-    ${archiveMenuButton('تنزيل', ARC_ICONS.download, `downloadArchiveAttachment(${rowIndex}, ${ai})`)}
-    ${archiveMenuButton('طباعة', ARC_ICONS.print, `printArchiveAttachment(${rowIndex}, ${ai})`)}
-  `).join('');
-  showArchiveMenu(btn, 'المرفقات', `${atts.length} file${atts.length>1?'s':''}`, html);
+  if(atts.length){
+    html += `
+      ${archiveMenuButton('تنزيل الطلب + المرفقات', ARC_ICONS.download, `downloadRequestWithAttachments(${rowIndex})`)}
+      <div class="arc-menu-sep"></div>
+      <div class="arc-time-row"><span>كل المرفقات</span><b>All Attachments</b></div>
+      ${archiveMenuButton('تنزيل الكل PDF', ARC_ICONS.download, `downloadArchiveAttachmentsMerged(${rowIndex})`)}
+      ${archiveMenuButton('طباعة الكل PDF', ARC_ICONS.print, `printArchiveAttachmentsMerged(${rowIndex})`)}
+    `;
+    html += atts.map((_, ai)=>`
+      <div class="arc-menu-sep"></div>
+      <div class="arc-time-row"><span>مرفق ${ai+1}</span><b>Attachment ${ai+1}</b></div>
+      ${archiveMenuButton('معاينة', ARC_ICONS.view, `openAttachment(${rowIndex}, ${ai})`)}
+      ${archiveMenuButton('تنزيل', ARC_ICONS.download, `downloadArchiveAttachment(${rowIndex}, ${ai})`)}
+      ${archiveMenuButton('طباعة', ARC_ICONS.print, `printArchiveAttachment(${rowIndex}, ${ai})`)}
+    `).join('');
+  }
+  const subtitle = atts.length ? `${atts.length} file${atts.length>1?'s':''}` : 'No attachments';
+  showArchiveMenu(btn, 'الطلب والمرفقات', subtitle, html);
 }
 function showArchiveActionsMenu(btn, rowIndex){
   const x = (window._arcRows||[])[rowIndex];
@@ -1764,6 +1779,8 @@ function startArchiveAutoRefresh(){
     if(!document.getElementById('page-arc')?.classList.contains('on')) return;       // فقط عند فتح الأرشيف
     // لا تحدّث أثناء فتح قائمة أو نافذة حتى لا تتكسر أو تُغلق
     if(document.getElementById('app-comments-overlay') || document.getElementById('app-confirm-overlay')) return;
+    if(document.getElementById('app-group-overlay') || document.getElementById('app-busy-overlay')) return;
+    if(ARC_SELECT_MODE) return;   // لا تحدّث أثناء تحديد طلبات التحويل المجمّع
     if(document.getElementById('arc-menu-pop')?.classList.contains('on')) return;
     if(document.getElementById('arc-time-pop')?.classList.contains('on')) return;
     loadArchive(true);   // تحديث صامت
@@ -1776,6 +1793,12 @@ async function loadArchive(silent=false){
   closeArchiveMenu();
   note.innerHTML='';
   const isAcc = CURRENT && CURRENT.role==='accountant';
+  if(!isAcc && ARC_SELECT_MODE) exitTransferSelectMode();   // وضع التحويل المجمّع للمحاسب فقط
+  const bulkBtn = document.getElementById('arc-bulk-btn');
+  if(bulkBtn){
+    bulkBtn.style.display = isAcc ? '' : 'none';
+    bulkBtn.classList.toggle('on', !!ARC_SELECT_MODE);
+  }
   // من يرى كل الطلبات (شامل الملغية): المحاسب + حساب العرض فقط
   const canSeeAll = isAcc || (CURRENT && CURRENT.role==='viewer');
   const cancelledTab = document.getElementById('atab-cancelled');
@@ -1792,6 +1815,7 @@ async function loadArchive(silent=false){
   }
   if(!silent) body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">جاري التحميل...</td></tr>`;
   try{
+    await ensureTransferColumns();   // أعمدة التحويل المجمّع موجودة؟ (فحص مرة واحدة لكل جلسة)
     let qy = sb.from('requests').select('*').order('id',{ascending:false}).limit(200);
     if(ARC_TAB==='cancelled') qy = qy.eq('cancelled', true);
     else if(ARC_TAB!=='all') qy = qy.eq('doc_type', ARC_TAB);
@@ -1804,7 +1828,11 @@ async function loadArchive(silent=false){
     const submittedRange = getArchiveSubmittedDateRange();
     if(submittedRange) qy = qy.gte('created_at', submittedRange.start).lt('created_at', submittedRange.end);
     const search=document.getElementById('arc-search').value.trim();
-    if(search) qy = qy.or(`name.ilike.*${search}*,created_by.ilike.*${search}*,signed_by.ilike.*${search}*,req_no.ilike.*${search}*,beneficiary.ilike.*${search}*,supplier_invoices.ilike.*${search}*`);
+    if(search){
+      const orParts = [`name.ilike.*${search}*`,`created_by.ilike.*${search}*`,`signed_by.ilike.*${search}*`,`req_no.ilike.*${search}*`,`beneficiary.ilike.*${search}*`,`supplier_invoices.ilike.*${search}*`];
+      if(TRANSFER_COLS_OK) orParts.push(`transfer_group.ilike.*${search}*`);   // البحث برقم مجموعة التحويل
+      qy = qy.or(orParts.join(','));
+    }
     const { data:rows, error } = await qy;
     if(error){ 
       console.error(error); 
@@ -1823,6 +1851,8 @@ async function loadArchive(silent=false){
       .sort((a,b)=> (reqNum(b)-reqNum(a)) || ((b.id||0)-(a.id||0)));   // ترتيب حسب الرقم: الأجدد فوق والأقدم تحت
     if(list.length===0){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">لا توجد طلبات</td></tr>`; return; }
     window._arcRows = list;
+    await loadTransferGroupsFor(list);          // بيانات مجموعات التحويل الظاهرة في القائمة
+    renderTransferGroupNote(note, search);      // لافتة ملخّص عند فلترة مجموعة تحويل
     body.innerHTML=list.map((x,i)=>{
       const type=x.doc_type==='cancel'
         ?'<span class="badge cancel-doc">إلغاء</span>'
@@ -1845,21 +1875,27 @@ async function loadArchive(silent=false){
         // الطلب معتمد: المحاسب يضغط على القلم لإلغاء الاعتماد
         accCol = `<button class="arc-approval-status approved clickable" onclick="revokeApproval(${i})" title="${escAttr(accTitle)} - اضغط لإلغاء الاعتماد" aria-label="${escAttr(accTitle)} - اضغط لإلغاء الاعتماد">${ARC_ICONS.sign}</button>`;
       }
-      // عمود إثبات التحويل
+      // عمود إثبات التحويل — يتحوّل لمربع تحديد أثناء وضع «التحويل المجمّع»
+      const groupId = x.transfer_group || '';
+      const groupInfo = groupId ? (window._arcGroups||{})[groupId] : null;
+      const groupCount = groupInfo ? groupInfo.rows.length : (groupId ? 1 : 0);
       let imgCol = '';
-      if(x.transfer_image){
+      if(ARC_SELECT_MODE && isTransferSelectable(x)){
+        const checked = ARC_SELECTED.has(x.id) ? ' checked' : '';
+        imgCol = `<label class="arc-sel-check" title="تحديد الطلب لتحويل مجمّع"><input type="checkbox"${checked} onchange="toggleTransferSelection(${x.id}, this.checked, this)" aria-label="تحديد الطلب لتحويل مجمّع"><span></span></label>`;
+      } else if(x.transfer_image){
         // الضغط على الأيقونة يفتح قائمة: معاينة / تنزيل / حذف (الحذف للمحاسب)
-        imgCol = `<button class="arc-mini icon-only transferred arc-menu-btn" onclick="showTransferProofMenu(this, ${i})" title="إثبات التحويل — تم التحويل" aria-label="إثبات التحويل — تم التحويل">${ARC_ICONS.file}</button>`;
+        imgCol = groupId
+          ? `<button class="arc-mini arc-file-pill transferred arc-menu-btn" onclick="showTransferProofMenu(this, ${i})" title="تحويل مجمّع ${escAttr(groupId)} — ${groupCount} طلبات بإثبات واحد" aria-label="تحويل مجمّع ${escAttr(groupId)}">${ARC_ICONS.layers}<b>${groupCount}</b></button>`
+          : `<button class="arc-mini icon-only transferred arc-menu-btn" onclick="showTransferProofMenu(this, ${i})" title="إثبات التحويل — تم التحويل" aria-label="إثبات التحويل — تم التحويل">${ARC_ICONS.file}</button>`;
       } else if(isAcc && x.accounts_signed_by && !x.cancelled){
         imgCol = `<button class="arc-mini icon-only" onclick="uploadTransferImage(${i})" title="رفع إثبات التحويل" aria-label="رفع إثبات التحويل">${ARC_ICONS.upload}</button>`;
       } else {
           imgCol = '<span class="arc-empty-mark">—</span>';
       }
-      // عمود المرفقات (PDF): ملخص هادئ بدل أزرار كثيرة داخل الصف
+      // عمود المرفقات (PDF): يظهر دائماً — منه يتحمّل الطلب نفسه حتى لو بدون مرفقات
       const atts = getArchiveRowAttachments(x);
-      const attachCol = atts.length
-        ? `<button class="arc-mini arc-file-pill arc-menu-btn" onclick="showArchiveAttachmentsMenu(this, ${i})" title="عرض المرفقات" aria-label="عرض ${atts.length} من المرفقات">${ARC_ICONS.paperclip}<b>${atts.length}</b></button>`
-        : '<span class="arc-empty-mark">—</span>';
+      const attachCol = `<button class="arc-mini ${atts.length?'arc-file-pill':'icon-only'} arc-menu-btn" onclick="showArchiveAttachmentsMenu(this, ${i})" title="تنزيل الطلب والمرفقات" aria-label="تنزيل الطلب والمرفقات${atts.length?' ('+atts.length+')':''}">${ARC_ICONS.paperclip}${atts.length?`<b>${atts.length}</b>`:''}</button>`;
       // عمود التعليقات: أيقونة فقط (مع عدّاد التعليقات الظاهرة للمستخدم الحالي)
       const visComments = getVisibleComments(x);
       const commentCol = `<button class="arc-mini ${visComments.length?'arc-file-pill':'icon-only'}" onclick="openCommentsDialog(${i})" title="تعليقات الطلب" aria-label="تعليقات الطلب${visComments.length?' ('+visComments.length+')':''}">${ARC_ICONS.comment}${visComments.length?`<b>${visComments.length}</b>`:''}</button>`;
@@ -1882,9 +1918,20 @@ async function loadArchive(silent=false){
       const submittedAt = formatArchiveDateTime(x.created_at || x.signed_at || x.req_date);
       const approvedAt = x.accounts_signed_at ? formatArchiveDateTime(x.accounts_signed_at) : 'لم يعتمد بعد';
       const timeBtn = `<button class="arc-mini icon-only arc-time-btn" onclick="showArchiveTimePopover(this, '${escAttr(submittedAt)}', '${escAttr(approvedAt)}')" title="عرض توقيت الطلب" aria-label="عرض توقيت الطلب">${ARC_ICONS.clock}</button>`;
-      const rowClass = (x.transfer_image && !x.cancelled) ? ' class="arc-transferred"' : '';
-      return `<tr${rowClass}${x.cancelled?' style="opacity:.55"':''}>
-        <td data-label="رقم الطلب"><b style="color:var(--indigo);font-size:13px">${displayRequestNo(x.req_no)||'—'}</b></td>
+      const rowCls = [];
+      if(x.transfer_image && !x.cancelled) rowCls.push('arc-transferred');
+      if(groupId && !x.cancelled) rowCls.push('arc-grouped');
+      if(ARC_SELECT_MODE && ARC_SELECTED.has(x.id)) rowCls.push('arc-row-selected');
+      const rowClass = rowCls.length ? ` class="${rowCls.join(' ')}"` : '';
+      const rowStyles = [];
+      if(groupId) rowStyles.push(`--grp:${transferGroupColor(groupId)}`);
+      if(x.cancelled) rowStyles.push('opacity:.55');
+      const rowStyle = rowStyles.length ? ` style="${rowStyles.join(';')}"` : '';
+      const groupChip = (groupId && !x.cancelled)
+        ? `<button class="arc-group-chip" onclick="filterByTransferGroup('${escAttr(groupId)}')" title="تحويل مجمّع — اضغط لعرض طلبات المجموعة" aria-label="تحويل مجمّع ${escAttr(groupId)}">${ARC_ICONS.layers}<span>${escAttr(groupId)}</span></button>`
+        : '';
+      return `<tr${rowClass}${rowStyle}>
+        <td data-label="رقم الطلب"><b style="color:var(--indigo);font-size:13px">${displayRequestNo(x.req_no)||'—'}</b>${groupChip}</td>
         <td data-label="النوع">${type}</td>
         <td data-label="التاريخ">${x.req_date||'—'}</td>
         <td class="arc-ref" data-label="رقم الفاتورة / المورّد">${ref}</td>
@@ -1898,6 +1945,8 @@ async function loadArchive(silent=false){
         <td class="arc-time-cell" data-label="التوقيت">${timeBtn}</td>
       </tr>`;
     }).join('');
+    pruneTransferSelection(list);
+    updateTransferSelectUI();
   }catch(e){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">خطأ اتصال</td></tr>`; }
 }
 
@@ -2001,18 +2050,28 @@ async function uploadTransferImage(i){
   inp.click();
 }
 
-// قائمة إثبات التحويل: معاينة / تنزيل / حذف (الحذف للمحاسب فقط)
+// قائمة إثبات التحويل: معاينة / تنزيل / طلبات المجموعة / حذف (الحذف للمحاسب فقط)
 function showTransferProofMenu(btn, rowIndex){
   const x = (window._arcRows||[])[rowIndex];
   if(!x || !x.transfer_image) return;
   const isAcc = CURRENT && CURRENT.role==='accountant';
+  const gid = x.transfer_group || '';
+  const info = gid ? (window._arcGroups||{})[gid] : null;
   let html = archiveMenuButton('معاينة', ARC_ICONS.view, `openAttachmentByRow(${rowIndex}, 'transfer_image')`)
     + archiveMenuButton('تنزيل', ARC_ICONS.download, `downloadTransferImage(${rowIndex})`);
+  if(gid){
+    html += '<div class="arc-menu-sep"></div>'
+      + `<div class="arc-time-row"><span>عدد الطلبات</span><b>${info ? info.rows.length : 1}</b></div>`
+      + `<div class="arc-time-row"><span>إجمالي المجموعة</span><b>${info ? formatMoney(info.total) : '—'}</b></div>`
+      + (x.transfer_group_note ? `<div class="arc-time-row"><span>مرجع التحويل</span><b>${escapeHtml(x.transfer_group_note)}</b></div>` : '')
+      + archiveMenuButton('عرض طلبات المجموعة', ARC_ICONS.list, `filterByTransferGroup('${escAttr(gid)}')`);
+  }
   if(isAcc && !x.cancelled){
     html += '<div class="arc-menu-sep"></div>'
-      + archiveMenuButton('حذف', ARC_ICONS.trash, `deleteTransferImage(${rowIndex})`, true);
+      + archiveMenuButton(gid ? 'حذف الإثبات من هذا الطلب' : 'حذف', ARC_ICONS.trash, `deleteTransferImage(${rowIndex})`, true);
+    if(gid) html += archiveMenuButton('حذف الإثبات من كل المجموعة', ARC_ICONS.trash, `deleteTransferGroup('${escAttr(gid)}')`, true);
   }
-  showArchiveMenu(btn, 'إثبات التحويل', 'Transfer Proof', html);
+  showArchiveMenu(btn, gid ? `تحويل مجمّع · ${gid}` : 'إثبات التحويل', gid ? 'Grouped Transfer' : 'Transfer Proof', html);
 }
 
 // تنزيل إثبات التحويل
@@ -2032,13 +2091,22 @@ async function deleteTransferImage(rowIndex){
   if(!x || !x.transfer_image || !SB_ON) return;
   const ok = await showConfirmDialog({
     title:'حذف إثبات التحويل',
-    message:'هل تريد حذف إثبات التحويل الحالي؟ سيمكنك بعدها رفع إثبات جديد.',
-    details:[{ label:'رقم الطلب', value: displayRequestNo(x.req_no)||'—', ltr:true }],
+    message: x.transfer_group
+      ? 'هل تريد حذف إثبات التحويل من هذا الطلب فقط؟ سيخرج الطلب من مجموعة التحويل، وباقي طلبات المجموعة تفضل كما هي.'
+      : 'هل تريد حذف إثبات التحويل الحالي؟ سيمكنك بعدها رفع إثبات جديد.',
+    details:[
+      { label:'رقم الطلب', value: displayRequestNo(x.req_no)||'—', ltr:true },
+      ...(x.transfer_group ? [{ label:'مجموعة التحويل', value:x.transfer_group, ltr:true }] : [])
+    ],
     confirmText:'حذف', cancelText:'رجوع', danger:true
   });
   if(!ok) return;
   try{
-    const { error } = await sb.from('requests').update({ transfer_image:null, transfer_seen:false }).eq('id', x.id);
+    // أعمدة المجموعة تتصفّر فقط لو موجودة في قاعدة البيانات (توافق مع النسخ قبل تشغيل الـSQL)
+    const patch = TRANSFER_COLS_OK
+      ? { transfer_image:null, transfer_seen:false, transfer_group:null, transfer_group_at:null, transfer_group_note:null }
+      : { transfer_image:null, transfer_seen:false };
+    const { error } = await sb.from('requests').update(patch).eq('id', x.id);
     if(error){ console.error(error); await showMessageDialog({ title:'تعذّر الحذف', message:'حصل خطأ أثناء الحذف. حاول مرة أخرى.', confirmText:'حسنًا' }); return; }
     loadArchive();
     await showMessageDialog({ title:'تم الحذف ✅', message:'تم حذف إثبات التحويل. يمكنك الآن رفع إثبات جديد.', confirmText:'تم' });
@@ -2453,3 +2521,492 @@ function commitValuesForPrint(){
   });
 }
 window.addEventListener('beforeprint', commitValuesForPrint);
+
+/* ══════════════════════════════════════════
+   تنزيل الطلب PDF مباشرة من إدارة الطلبات
+   (نفس مسار توليد PDF المستخدم في الطباعة)
+══════════════════════════════════════════ */
+function showBusyOverlay(text){
+  hideBusyOverlay();
+  const ov = document.createElement('div');
+  ov.id = 'app-busy-overlay';
+  ov.dir = 'rtl';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(15,19,33,.55);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);';
+  ov.innerHTML = `
+    <style>
+      @keyframes abzSpin{to{transform:rotate(360deg)}}
+      #app-busy-overlay .abz-card{background:#fff;border-radius:18px;padding:24px 30px;display:flex;align-items:center;gap:14px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;color:#1B2233;box-shadow:0 20px 50px -14px rgba(20,24,46,.4);}
+      #app-busy-overlay .abz-spin{width:22px;height:22px;border-radius:50%;border:3px solid #DCE4EE;border-top-color:#2C8B8E;animation:abzSpin .8s linear infinite;}
+    </style>
+    <div class="abz-card"><span class="abz-spin"></span><span>${escapeHtml(text||'جاري التجهيز...')}</span></div>`;
+  document.body.appendChild(ov);
+}
+function hideBusyOverlay(){
+  document.getElementById('app-busy-overlay')?.remove();
+}
+async function mergePdfBuffers(buffers){
+  if(!window.PDFLib || !window.PDFLib.PDFDocument) throw new Error('مكتبة دمج ملفات PDF غير متاحة.');
+  const merged = await PDFLib.PDFDocument.create();
+  for(const buf of buffers){
+    const src = await PDFLib.PDFDocument.load(buf, { ignoreEncryption:true });
+    const pages = await merged.copyPages(src, src.getPageIndices());
+    pages.forEach(p=>merged.addPage(p));
+  }
+  return await merged.save();
+}
+// هل في بيانات مكتوبة في النموذج ولسه متحفظتش؟ (تحذير قبل استخدام الشاشة لتوليد PDF)
+function hasUnsavedDraft(kind){
+  if(EDIT_ID) return false;
+  if(kind==='cancel'){
+    if(SIGNED.cancel) return true;
+    return [...document.querySelectorAll('#page-cancel input[type=text],#page-cancel input[type=tel],#page-cancel textarea')]
+      .some(inp=>inp.id!=='c-reqno' && (inp.value||'').trim());
+  }
+  if(SIGNED.disb) return true;
+  if((document.getElementById('d-project')?.value||'').trim()) return true;
+  if(parseAmt(document.getElementById('d-amt')?.value||0) > 0) return true;
+  return [...document.querySelectorAll('#supplier-rows tr input, #client-rows tr input')]
+    .some(inp=>(inp.value||'').trim());
+}
+// توليد PDF لطلب من الأرشيف: يحمّل الطلب في الشاشة مؤقتاً ثم يرجّع الأرشيف ويصفّي النموذج
+async function buildRequestPdfBytes(x){
+  const kind = x.doc_type==='cancel' ? 'cancel' : 'disb';
+  const docId = kind==='cancel' ? 'doc-cancel' : 'doc-disb';
+  const tmpStyle = document.createElement('style');
+  tmpStyle.textContent = '#doc-disb tr.print-main-overflow{display:none !important;}';
+  VIEW_ONLY = true;
+  if(kind==='cancel') loadCancelFromRow(x); else loadDisbFromRow(x);
+  showPage(kind);
+  document.head.appendChild(tmpStyle);
+  try{
+    let hasAppendix = false;
+    if(kind==='disb'){
+      prepareDisbPrintAppendix();
+      hasAppendix = !!document.getElementById('disb-appendix')?.classList.contains('on');
+    }
+    commitValuesForPrint();
+    await document.fonts.ready;
+    await new Promise(r=>setTimeout(r, 280));
+    const PDF_OPTS = { scale:2, format:'JPEG', quality:0.94 };   // حجم ملف أخف للتنزيل والمشاركة
+    const main = await generateRequestPDF(docId, PDF_OPTS);
+    if(hasAppendix){
+      const extra = await generateRequestPDF('disb-appendix', PDF_OPTS);
+      return await mergePdfBuffers([main, extra]);
+    }
+    return new Uint8Array(main);
+  } finally {
+    tmpStyle.remove();
+    if(kind==='disb') clearDisbPrintAppendix();
+    VIEW_ONLY = false;
+    if(kind==='cancel') clearCancel(); else clearDisb();
+    showPage('arc');
+  }
+}
+async function confirmDraftOverwrite(kind){
+  if(!hasUnsavedDraft(kind)) return true;
+  return await showConfirmDialog({
+    title:'تنبيه — بيانات غير محفوظة',
+    message:'تجهيز نسخة PDF من الطلب بيستخدم شاشة النموذج مؤقتاً، وده هيمسح البيانات المكتوبة حالياً في النموذج وغير المحفوظة.',
+    note:'احفظ أو قدّم طلبك أولاً لو محتاج تحتفظ بالبيانات.',
+    confirmText:'متابعة التنزيل', cancelText:'رجوع', danger:true
+  });
+}
+async function downloadRequestPdfFromArchive(rowIndex){
+  const x = (window._arcRows||[])[rowIndex];
+  if(!x){ alert('تعذّر فتح الطلب.'); return; }
+  const kind = x.doc_type==='cancel' ? 'cancel' : 'disb';
+  if(!(await confirmDraftOverwrite(kind))) return;
+  const reqNo = displayRequestNo(x.req_no) || 'request';
+  showBusyOverlay('جاري تجهيز نسخة الطلب PDF...');
+  try{
+    const bytes = await buildRequestPdfBytes(x);
+    dl(new Blob([bytes], { type:'application/pdf' }), `${reqNo}.pdf`);
+  }catch(e){
+    console.error(e);
+    await showMessageDialog({ title:'تعذّر التنزيل', message:'حصل خطأ أثناء تجهيز نسخة الطلب PDF. حاول مرة أخرى.', confirmText:'حسنًا' });
+  } finally { hideBusyOverlay(); }
+}
+async function downloadRequestWithAttachments(rowIndex){
+  const x = (window._arcRows||[])[rowIndex];
+  if(!x){ alert('تعذّر فتح الطلب.'); return; }
+  const kind = x.doc_type==='cancel' ? 'cancel' : 'disb';
+  if(!(await confirmDraftOverwrite(kind))) return;
+  const reqNo = displayRequestNo(x.req_no) || 'request';
+  showBusyOverlay('جاري تجهيز الطلب مع المرفقات...');
+  try{
+    const attBytes = await mergeArchiveAttachmentBytes(rowIndex);   // قبل تحميل الطلب في الشاشة
+    const reqBytes = await buildRequestPdfBytes(x);
+    const merged = await mergePdfBuffers([reqBytes, attBytes]);
+    dl(new Blob([merged], { type:'application/pdf' }), `${reqNo}_مع_المرفقات.pdf`);
+  }catch(e){
+    console.error(e);
+    await showMessageDialog({ title:'تعذّر التنزيل', message:'حصل خطأ أثناء دمج الطلب مع المرفقات. تأكد أن المرفقات PDF أو صور مدعومة.', confirmText:'حسنًا' });
+  } finally { hideBusyOverlay(); }
+}
+
+/* ══════════════════════════════════════════
+   التحويل المجمّع — إثبات تحويل واحد لعدة طلبات
+══════════════════════════════════════════ */
+let ARC_SELECT_MODE = false;
+let TRANSFER_COLS_OK = null;                 // هل أعمدة المجموعة موجودة في قاعدة البيانات؟
+const ARC_SELECTED = new Set();              // ids الطلبات المحددة
+const ARC_SELECTED_DATA = new Map();         // id → بيانات مختصرة (تفضل محفوظة رغم تغيّر الفلاتر)
+const TRANSFER_GROUP_SQL = 'ALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_group TEXT;\nALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_group_at TIMESTAMPTZ;\nALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_group_note TEXT;';
+
+function formatMoney(n){
+  const v = Number(n)||0;
+  return v.toLocaleString('en-US',{ minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function transferGroupColor(gid){
+  const palette = ['#2C8B8E','#3E3A72','#C9A24B','#1E9E78','#7A5CB8','#D97706','#0F766E','#BE185D'];
+  const n = parseInt(String(gid||'').replace(/\D/g,''),10) || 0;
+  return palette[n % palette.length];
+}
+// الطلب صالح للتحويل المجمّع: معتمد من الحسابات، غير ملغي، ولسه مرفعلوش إثبات
+function isTransferSelectable(x){
+  return !!(x && x.id && x.accounts_signed_by && !x.cancelled && !x.transfer_image);
+}
+async function ensureTransferColumns(){
+  if(TRANSFER_COLS_OK !== null) return TRANSFER_COLS_OK;
+  if(!SB_ON){ TRANSFER_COLS_OK = false; return false; }
+  try{
+    const { error } = await sb.from('requests').select('transfer_group').limit(1);
+    TRANSFER_COLS_OK = !error;
+  }catch(e){ TRANSFER_COLS_OK = false; }
+  return TRANSFER_COLS_OK;
+}
+async function loadTransferGroupsFor(list){
+  window._arcGroups = {};
+  if(!SB_ON || !TRANSFER_COLS_OK) return;
+  const gids = [...new Set((list||[]).map(r=>r.transfer_group).filter(Boolean))];
+  if(!gids.length) return;
+  try{
+    const { data, error } = await sb.from('requests')
+      .select('id,req_no,doc_type,amount,created_by,transfer_group,transfer_group_at,transfer_group_note,cancelled')
+      .in('transfer_group', gids).limit(500);
+    if(error) throw error;
+    (data||[]).filter(r=>!r.cancelled).forEach(r=>{
+      const g = window._arcGroups[r.transfer_group] || (window._arcGroups[r.transfer_group] = { rows:[], total:0, note:'', at:null });
+      g.rows.push(r);
+      g.total += Number(r.amount)||0;
+      if(!g.note && r.transfer_group_note) g.note = r.transfer_group_note;
+      if(!g.at && r.transfer_group_at) g.at = r.transfer_group_at;
+    });
+  }catch(e){ console.warn('تعذّر تحميل بيانات مجموعات التحويل', e); }
+}
+function renderTransferGroupNote(noteSlot, search){
+  if(!noteSlot) return;
+  const gid = String(search||'').trim().toUpperCase();
+  if(!/^TRF-\d+$/.test(gid)) return;
+  const info = (window._arcGroups||{})[gid];
+  if(!info) return;
+  noteSlot.innerHTML = `<div class="arc-note arc-group-note" style="--grp:${transferGroupColor(gid)}">
+      <div class="agn-txt">
+        <b>مجموعة تحويل ${escapeHtml(gid)}</b>
+        <span>${info.rows.length} طلبات · إجمالي ${formatMoney(info.total)} ر.ق${info.at?' · '+formatArchiveDateTime(info.at):''}${info.note?' · مرجع: '+escapeHtml(info.note):''}</span>
+      </div>
+      <button class="arc-group-clear" onclick="clearArchiveSearch()">إلغاء الفلتر</button>
+    </div>`;
+}
+function filterByTransferGroup(gid){
+  closeArchiveMenu();
+  const input = document.getElementById('arc-search');
+  if(!input) return;
+  input.value = gid;
+  if(ARC_TAB !== 'all'){ setArcTab('all'); return; }
+  loadArchive();
+}
+function clearArchiveSearch(){
+  const input = document.getElementById('arc-search');
+  if(input) input.value = '';
+  loadArchive();
+}
+
+/* ── وضع التحديد ── */
+function toggleTransferSelectMode(){
+  if(!CURRENT || CURRENT.role!=='accountant'){
+    showMessageDialog({ title:'غير مسموح', message:'التحويل المجمّع متاح للمحاسب فقط.', confirmText:'حسنًا' });
+    return;
+  }
+  if(TRANSFER_COLS_OK === false){
+    showMessageDialog({
+      title:'الميزة تحتاج تجهيز قاعدة البيانات',
+      subtitle:'Setup Required',
+      message:'أعمدة التحويل المجمّع غير موجودة في جدول requests. شغّل الأوامر دي مرة واحدة في Supabase > SQL Editor:\n\n'+TRANSFER_GROUP_SQL,
+      confirmText:'حسنًا'
+    });
+    return;
+  }
+  ARC_SELECT_MODE = !ARC_SELECT_MODE;
+  if(!ARC_SELECT_MODE){ ARC_SELECTED.clear(); ARC_SELECTED_DATA.clear(); }
+  loadArchive();
+}
+function exitTransferSelectMode(){
+  ARC_SELECT_MODE = false;
+  ARC_SELECTED.clear();
+  ARC_SELECTED_DATA.clear();
+  const bulkBtn = document.getElementById('arc-bulk-btn');
+  if(bulkBtn) bulkBtn.classList.remove('on');
+  updateTransferSelectUI();
+}
+function cancelTransferSelectMode(){
+  exitTransferSelectMode();
+  loadArchive();
+}
+function toggleTransferSelection(id, checked, el){
+  const x = (window._arcRows||[]).find(r=>r.id===id);
+  if(checked){
+    ARC_SELECTED.add(id);
+    if(x) ARC_SELECTED_DATA.set(id, { id, req_no:displayRequestNo(x.req_no), amount:Number(x.amount)||0, created_by:x.created_by, doc_type:x.doc_type });
+  } else {
+    ARC_SELECTED.delete(id);
+    ARC_SELECTED_DATA.delete(id);
+  }
+  // تلوين الصف المحدد بدون إعادة تحميل الجدول
+  el?.closest('tr')?.classList.toggle('arc-row-selected', !!checked);
+  updateTransferSelectUI();
+}
+function selectAllTransferCandidates(on){
+  (window._arcRows||[]).filter(isTransferSelectable).forEach(r=>{
+    if(on){
+      ARC_SELECTED.add(r.id);
+      ARC_SELECTED_DATA.set(r.id, { id:r.id, req_no:displayRequestNo(r.req_no), amount:Number(r.amount)||0, created_by:r.created_by, doc_type:r.doc_type });
+    } else {
+      ARC_SELECTED.delete(r.id);
+      ARC_SELECTED_DATA.delete(r.id);
+    }
+  });
+  loadArchive();
+}
+// إزالة أي تحديد لطلب بقى غير صالح (اتلغى أو اترفعله إثبات من جهاز تاني)
+function pruneTransferSelection(list){
+  if(!ARC_SELECT_MODE) return;
+  (list||[]).forEach(r=>{
+    if(ARC_SELECTED.has(r.id) && !isTransferSelectable(r)){
+      ARC_SELECTED.delete(r.id);
+      ARC_SELECTED_DATA.delete(r.id);
+    }
+  });
+}
+function updateTransferSelectUI(){
+  const bar = document.getElementById('arc-select-bar');
+  if(!bar) return;
+  const isAcc = CURRENT && CURRENT.role==='accountant';
+  if(!isAcc || !ARC_SELECT_MODE){
+    bar.classList.remove('on');
+    bar.innerHTML = '';
+    document.body.classList.remove('arc-selecting');
+    return;
+  }
+  const picked = [...ARC_SELECTED_DATA.values()];
+  const total = picked.reduce((s,r)=>s+(Number(r.amount)||0), 0);
+  const candidates = (window._arcRows||[]).filter(isTransferSelectable);
+  const allOn = candidates.length>0 && candidates.every(r=>ARC_SELECTED.has(r.id));
+  bar.innerHTML = `
+    <div class="asb-info">
+      <b>${picked.length}</b>
+      <span>طلب محدد · إجمالي <b class="asb-total">${formatMoney(total)}</b> ر.ق</span>
+    </div>
+    <div class="asb-actions">
+      ${candidates.length ? `<button class="asb-btn ghost" onclick="selectAllTransferCandidates(${allOn?'false':'true'})">${allOn?'إلغاء تحديد الكل':'تحديد كل المعروض'}</button>` : ''}
+      <button class="asb-btn ghost" onclick="cancelTransferSelectMode()">إنهاء</button>
+      <button class="asb-btn go"${picked.length<2?' disabled':''} onclick="startGroupTransfer()">رفع إثبات تحويل مجمّع</button>
+    </div>`;
+  bar.classList.add('on');
+  document.body.classList.add('arc-selecting');
+}
+
+/* ── نافذة رفع الإثبات المجمّع ── */
+function showGroupTransferDialog(rows, total){
+  return new Promise(resolve=>{
+    document.getElementById('app-group-overlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'app-group-overlay';
+    overlay.dir = 'rtl';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,19,33,.55);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);';
+    overlay.innerHTML = `
+      <style>
+        @keyframes agdFade{from{opacity:0}to{opacity:1}}
+        @keyframes agdPop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+        #app-group-overlay{animation:agdFade .18s ease both;}
+        #app-group-overlay .agd-card{width:min(520px,100%);max-height:88vh;display:flex;flex-direction:column;background:#fff;border-radius:20px;box-shadow:0 18px 48px -12px rgba(20,24,46,.32),0 40px 80px -24px rgba(20,24,46,.22);overflow:hidden;font-family:'Cairo','Montserrat',sans-serif;animation:agdPop .26s cubic-bezier(.2,.8,.25,1) both;}
+        #app-group-overlay .agd-head{padding:20px 24px 18px;background:linear-gradient(120deg,#2F817C 0%,#326F82 48%,#3E3A72 100%);color:#fff;}
+        #app-group-overlay .agd-title{font-size:17px;font-weight:800;}
+        #app-group-overlay .agd-cap{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;opacity:.72;margin-top:3px;}
+        #app-group-overlay .agd-body{padding:18px 24px 8px;overflow:auto;}
+        #app-group-overlay .agd-list{border:1px solid #E8EEF5;border-radius:14px;background:#F7FAFD;overflow:hidden;max-height:210px;overflow-y:auto;}
+        #app-group-overlay .agd-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid #EAF0F6;}
+        #app-group-overlay .agd-row:last-child{border-bottom:none;}
+        #app-group-overlay .agd-no{font-size:12.5px;font-weight:800;color:#3E3A72;direction:ltr;}
+        #app-group-overlay .agd-by{font-size:10.5px;font-weight:700;color:#8494a8;}
+        #app-group-overlay .agd-amt{font-size:12.5px;font-weight:800;color:#1E9E78;direction:ltr;}
+        #app-group-overlay .agd-total{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:12px 14px;border-radius:12px;background:#ECF6F2;border:1px solid #cdeadd;}
+        #app-group-overlay .agd-total span{font-size:12px;font-weight:800;color:#33607a;}
+        #app-group-overlay .agd-total b{font-size:15px;font-weight:800;color:#1E9E78;direction:ltr;}
+        #app-group-overlay .agd-field{margin-top:14px;}
+        #app-group-overlay .agd-field label{display:block;font-size:11px;font-weight:800;color:#64748B;margin-bottom:6px;}
+        #app-group-overlay .agd-field input[type=text]{width:100%;border:1.5px solid #DCE4EE;border-radius:11px;padding:10px 12px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;color:#1B2233;outline:none;}
+        #app-group-overlay .agd-field input[type=text]:focus{border-color:#2C8B8E;}
+        #app-group-overlay .agd-file{margin-top:14px;border:1.6px dashed #bcd0e2;border-radius:14px;background:#F7FAFD;padding:16px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
+        #app-group-overlay .agd-file:hover{border-color:#2C8B8E;background:#f2f9fa;}
+        #app-group-overlay .agd-file b{display:block;font-size:13px;font-weight:800;color:#3E3A72;}
+        #app-group-overlay .agd-file small{display:block;margin-top:4px;font-size:11px;color:#7d8ca1;font-weight:700;}
+        #app-group-overlay .agd-file.picked{border-style:solid;border-color:#1E9E78;background:#ECF6F2;}
+        #app-group-overlay .agd-foot{display:flex;gap:10px;padding:16px 24px 20px;}
+        #app-group-overlay .agd-btn{border:none;border-radius:12px;padding:11px 22px;font-family:'Cairo',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer;}
+        #app-group-overlay .agd-confirm{background:#2C8B8E;color:#fff;box-shadow:0 10px 22px -6px rgba(44,139,142,.28);}
+        #app-group-overlay .agd-confirm:disabled{background:#c6d2dd;box-shadow:none;cursor:not-allowed;}
+        #app-group-overlay .agd-cancel{background:#fff;border:1.5px solid #DCE4EE;color:#3E3A72;}
+      </style>
+      <div class="agd-card" role="dialog" aria-modal="true">
+        <div class="agd-head">
+          <div class="agd-title">تحويل مجمّع — إثبات واحد لعدة طلبات</div>
+          <div class="agd-cap">Grouped Transfer</div>
+        </div>
+        <div class="agd-body">
+          <div class="agd-list">
+            ${rows.map(r=>`<div class="agd-row">
+              <div><div class="agd-no">${escapeHtml(r.req_no||'—')}</div><div class="agd-by">${escapeHtml(r.created_by||'—')}</div></div>
+              <div class="agd-amt">${formatMoney(r.amount)}</div>
+            </div>`).join('')}
+          </div>
+          <div class="agd-total"><span>إجمالي المبلغ المحوّل (${rows.length} طلبات)</span><b>${formatMoney(total)} QAR</b></div>
+          <div class="agd-field">
+            <label>مرجع التحويل / ملاحظة (اختياري)</label>
+            <input type="text" id="agd-note" placeholder="مثال: تحويل بنكي رقم 123456" maxlength="80"/>
+          </div>
+          <div class="agd-file" id="agd-file-box">
+            <b>اضغط لاختيار إثبات التحويل</b>
+            <small>صورة أو PDF — بحد أقصى 2 ميجابايت</small>
+          </div>
+          <input type="file" id="agd-file" accept="image/*,application/pdf" style="display:none"/>
+        </div>
+        <div class="agd-foot">
+          <button class="agd-btn agd-cancel" data-action="cancel">رجوع</button>
+          <button class="agd-btn agd-confirm" data-action="confirm" disabled>رفع الإثبات للكل</button>
+        </div>
+      </div>`;
+    const fileInput = overlay.querySelector('#agd-file');
+    const fileBox = overlay.querySelector('#agd-file-box');
+    const confirmBtn = overlay.querySelector('[data-action="confirm"]');
+    fileBox.addEventListener('click', ()=>fileInput.click());
+    fileInput.addEventListener('change', ()=>{
+      const f = fileInput.files[0];
+      if(!f) return;
+      if(f.size > 2*1024*1024){
+        fileBox.classList.remove('picked');
+        fileBox.innerHTML = '<b style="color:#d9415f">الملف أكبر من 2 ميجابايت</b><small>اختر ملفاً أصغر</small>';
+        fileInput.value = '';
+        confirmBtn.disabled = true;
+        return;
+      }
+      fileBox.classList.add('picked');
+      fileBox.innerHTML = `<b>${escapeHtml(f.name)}</b><small>${(f.size/1024).toFixed(0)} KB — اضغط للتغيير</small>`;
+      confirmBtn.disabled = false;
+    });
+    const close = value => { document.removeEventListener('keydown', onKey); overlay.remove(); resolve(value); };
+    const onKey = e=>{ if(e.key==='Escape') close(null); };
+    overlay.addEventListener('click', e=>{ if(e.target===overlay) close(null); });
+    overlay.querySelector('[data-action="cancel"]').addEventListener('click', ()=>close(null));
+    confirmBtn.addEventListener('click', ()=>{
+      const f = fileInput.files[0];
+      if(!f) return;
+      close({ file:f, note:(overlay.querySelector('#agd-note').value||'').trim() });
+    });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(overlay);
+  });
+}
+async function getNextTransferGroupNo(){
+  const { data, error } = await sb.from('requests')
+    .select('transfer_group').not('transfer_group','is',null).limit(2000);
+  if(error) throw error;
+  let max = 0;
+  (data||[]).forEach(r=>{
+    const m = String(r.transfer_group||'').match(/^TRF-(\d+)$/i);
+    if(m){ const n = parseInt(m[1],10)||0; if(n>max) max = n; }
+  });
+  return `TRF-${String(max+1).padStart(4,'0')}`;
+}
+async function startGroupTransfer(){
+  if(!CURRENT || CURRENT.role!=='accountant'){ await showMessageDialog({ title:'غير مسموح', message:'التحويل المجمّع متاح للمحاسب فقط.', confirmText:'حسنًا' }); return; }
+  if(!SB_ON){ await showMessageDialog({ title:'الأرشيف غير مفعّل', message:'لا يمكن رفع إثبات التحويل بدون اتصال بقاعدة البيانات.', confirmText:'حسنًا' }); return; }
+  const picked = [...ARC_SELECTED_DATA.values()];
+  if(picked.length < 2){
+    await showMessageDialog({ title:'اختر طلبين على الأقل', message:'التحويل المجمّع بيربط أكتر من طلب بإثبات تحويل واحد. حدّد طلبين أو أكتر.', confirmText:'حسنًا' });
+    return;
+  }
+  const total = picked.reduce((s,r)=>s+(Number(r.amount)||0), 0);
+  const result = await showGroupTransferDialog(picked, total);
+  if(!result) return;
+  showBusyOverlay('جاري رفع إثبات التحويل وربط الطلبات...');
+  try{
+    const path = await uploadFileToStorage(result.file, 'transfer-images');
+    const gid = await getNextTransferGroupNo();
+    const ids = picked.map(r=>r.id);
+    const { error } = await sb.from('requests').update({
+      transfer_image: path,
+      transfer_seen: false,
+      transfer_group: gid,
+      transfer_group_at: new Date().toISOString(),
+      transfer_group_note: result.note || null
+    }).in('id', ids);
+    if(error) throw error;
+    exitTransferSelectMode();
+    loadArchive();
+    hideBusyOverlay();
+    await showMessageDialog({
+      title:'تم إنشاء التحويل المجمّع ✅',
+      subtitle:'Grouped Transfer Created',
+      message:'تم ربط الطلبات المحددة بإثبات تحويل واحد، وأُرسل إشعار لأصحاب الطلبات.',
+      details:[
+        { label:'رقم المجموعة', value:gid, ltr:true },
+        { label:'عدد الطلبات', value:String(picked.length), ltr:true },
+        { label:'إجمالي المبلغ', value:formatMoney(total)+' QAR', ltr:true },
+        ...(result.note ? [{ label:'مرجع التحويل', value:result.note }] : [])
+      ],
+      confirmText:'تم'
+    });
+  }catch(e){
+    console.error(e);
+    hideBusyOverlay();
+    const msg = String(e?.message||'');
+    await showMessageDialog({
+      title:'تعذّر إتمام التحويل المجمّع',
+      message: /column|transfer_group/i.test(msg)
+        ? 'أعمدة التحويل المجمّع غير موجودة. شغّل الأوامر دي في Supabase > SQL Editor:\n\n'+TRANSFER_GROUP_SQL
+        : 'حصل خطأ أثناء رفع الإثبات أو ربط الطلبات. تحقّق من الاتصال وحاول مرة أخرى.',
+      confirmText:'حسنًا'
+    });
+  } finally { hideBusyOverlay(); }
+}
+async function deleteTransferGroup(gid){
+  if(!CURRENT || CURRENT.role!=='accountant'){ await showMessageDialog({ title:'غير مسموح', message:'هذه الخاصية للمحاسب فقط.', confirmText:'حسنًا' }); return; }
+  if(!gid || !SB_ON) return;
+  const info = (window._arcGroups||{})[gid];
+  const ok = await showConfirmDialog({
+    title:'حذف التحويل المجمّع',
+    message:'هيتم حذف إثبات التحويل من كل طلبات المجموعة وفك ارتباطها ببعض. الطلبات نفسها مش هتتأثر، وتقدر ترفع إثبات جديد بعدها.',
+    details:[
+      { label:'رقم المجموعة', value:gid, ltr:true },
+      { label:'عدد الطلبات', value:String(info ? info.rows.length : '—'), ltr:true }
+    ],
+    confirmText:'حذف المجموعة', cancelText:'رجوع', danger:true
+  });
+  if(!ok) return;
+  showBusyOverlay('جاري حذف التحويل المجمّع...');
+  try{
+    const { error } = await sb.from('requests').update({
+      transfer_image:null, transfer_seen:false,
+      transfer_group:null, transfer_group_at:null, transfer_group_note:null
+    }).eq('transfer_group', gid);
+    if(error) throw error;
+    loadArchive();
+    hideBusyOverlay();
+    await showMessageDialog({ title:'تم الحذف ✅', message:'تم حذف إثبات التحويل من كل طلبات المجموعة.', confirmText:'تم' });
+  }catch(e){
+    console.error(e);
+    hideBusyOverlay();
+    await showMessageDialog({ title:'تعذّر الحذف', message:'حصل خطأ أثناء حذف المجموعة. حاول مرة أخرى.', confirmText:'حسنًا' });
+  } finally { hideBusyOverlay(); }
+}

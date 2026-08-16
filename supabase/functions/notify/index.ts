@@ -8,6 +8,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import nodemailer from "npm:nodemailer@6.9.16";
+import webpush from "npm:web-push@3.6.7";
 import { Buffer } from "node:buffer";
 
 type User = { email: string; phone: string; wa_apikey: string; role: "accountant" | "sales" | "viewer" };
@@ -20,12 +21,22 @@ const DIRECTORY: Record<string, User> = {
 };
 const ACCOUNTANTS = Object.values(DIRECTORY).filter((u) => u.role === "accountant");
 const VIEWERS     = Object.values(DIRECTORY).filter((u) => u.role === "viewer");
+const ACCOUNTANT_NAMES = Object.entries(DIRECTORY).filter(([_, u]) => u.role === "accountant").map(([n]) => n);
+const VIEWER_NAMES     = Object.entries(DIRECTORY).filter(([_, u]) => u.role === "viewer").map(([n]) => n);
 
 const WEBHOOK_SECRET     = Deno.env.get("WEBHOOK_SECRET") ?? "";
 const GMAIL_USER         = Deno.env.get("GMAIL_USER") ?? "";
 const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD") ?? "";
 const EMAIL_FROM_NAME    = Deno.env.get("EMAIL_FROM_NAME") ?? "Zamzam Hajj & Umrah";
 const PORTAL_URL         = Deno.env.get("PORTAL_URL") ?? "https://zamzamportal.netlify.app/";
+// ── Web Push (VAPID) ──
+const VAPID_PUBLIC  = Deno.env.get("VAPID_PUBLIC") ?? "";
+const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE") ?? "";
+const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "mailto:portal.zamzam@gmail.com";
+const PUSH_ON = !!(VAPID_PUBLIC && VAPID_PRIVATE);
+if (PUSH_ON) { try { webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE); } catch (e) { console.error("VAPID setup:", e); } }
+const SB_URL     = Deno.env.get("SUPABASE_URL") ?? "";
+const SB_SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const LOGO_URL           = "https://zamzamportal.netlify.app/assets/images/image-5fa147e6c3d5.png";
 // شريط تدرّج زمزم — PNG مدمج (يظهر فورًا بدون استضافة ولا حجب)
 const BANNER_B64 = "iVBORw0KGgoAAAANSUhEUgAABLAAAAAuCAIAAAC3YHe4AAAExUlEQVR42u3X504UURgAUN7IigoLiL0rKvbee6MtZatPLmQ3YZm5zHwTc/+d5LzEmToy7DQzyKbfzajXwNGmutl0ehnt5LSdzVY/o80GjjXVzmZjkNF6TmvZrA4zWmngeCN/cvr9N6Nf/+dnwI+RYdmJSd8DvgV8LRsUfQn4vOdkrU8V+mMfAz4EvE+YLnu3q1fjbcCbgNcF3bJTr2JeBryo0Bl7HvDsgNNJT2Oe7NR7HPCoypmRhwXbaQ8ClgPuH2Zr372xmQp3Y5Zqbc7cCbidNjvpVsDNSe1D3Qi4HnCt3UrYOOBqzJWAy7XWW5eK5souBlyIOT+yVuVcjfldiwFnk1aLFgLmA+b2LSSs7GkFzCZMCaEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQCqEQpkL4D3EF7kA1l3qWAAAAAElFTkSuQmCC";
@@ -94,6 +105,38 @@ async function sendWhatsApp(phone: string, apikey: string, body: string) {
   if (!res.ok) console.error("CallMeBot error:", res.status, await res.text());
 }
 
+// ── Web Push: إشعار يظهر على الموبايل حتى والتطبيق مقفول (باللوجو) ──
+type PushSub = { endpoint: string; p256dh: string; auth: string };
+async function getSubscriptions(userName: string): Promise<PushSub[]> {
+  if (!SB_URL || !SB_SERVICE || !userName) return [];
+  try {
+    const url = `${SB_URL}/rest/v1/push_subscriptions?user_name=eq.${encodeURIComponent(userName)}&select=endpoint,p256dh,auth`;
+    const r = await fetch(url, { headers: { apikey: SB_SERVICE, Authorization: `Bearer ${SB_SERVICE}` } });
+    if (!r.ok) { console.error("subs fetch:", r.status); return []; }
+    return await r.json();
+  } catch (e) { console.error("subs error:", e); return []; }
+}
+async function deleteSubscription(endpoint: string) {
+  try {
+    await fetch(`${SB_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}`,
+      { method: "DELETE", headers: { apikey: SB_SERVICE, Authorization: `Bearer ${SB_SERVICE}` } });
+  } catch (_e) { /* ignore */ }
+}
+async function sendPush(userName: string, title: string, body: string, url?: string) {
+  if (!PUSH_ON || !userName) return;
+  const subs = await getSubscriptions(userName);
+  const payload = JSON.stringify({ title, body, url: url || PORTAL_URL });
+  await Promise.allSettled(subs.map(async (s) => {
+    try {
+      await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload);
+    } catch (e: any) {
+      const code = e?.statusCode;
+      if (code === 404 || code === 410) await deleteSubscription(s.endpoint);   // اشتراك منتهي
+      else console.error("push error:", code, e?.body || e);
+    }
+  }));
+}
+
 // قالب الإيميل: لوجو + شريط تدرّج زمزم + عنوان + محتوى + زر
 function buildEmail(title: string, lines: string[]) {
   const btn = PORTAL_URL
@@ -149,6 +192,8 @@ Deno.serve(async (req) => {
       if (acc.email) tasks.push(sendEmail(acc.email, subject, mail.html, mail.text));
       tasks.push(sendWhatsApp(acc.phone, acc.wa_apikey, wa));
     }
+    const pushBody = `طلب ${reqNo} من ${creator}${supplier ? ` — ${supplier}` : ""} — ${amount} ر.ق بانتظار اعتمادك`;
+    for (const n of ACCOUNTANT_NAMES) tasks.push(sendPush(n, "🔔 طلب صرف جديد", pushBody));
   }
 
   // 2) رفع إثبات التحويل → صاحب الطلب
@@ -168,6 +213,8 @@ Deno.serve(async (req) => {
         + (supplier ? `\nSupplier: ${supplier}` : "") + `\nRequest No: ${reqNo}\nAmount: ${amount} QAR\nThe transfer proof is available in Requests Management.\n\n${PORTAL_URL}`;
       if (user.email) tasks.push(sendEmail(user.email, subject, mail.html, mail.text));
       tasks.push(sendWhatsApp(user.phone, user.wa_apikey, wa));
+      const pushBody = `طلب ${reqNo}${supplier ? ` — ${supplier}` : ""} — ${amount} ر.ق تم تحويله ✅`;
+      tasks.push(sendPush(record.created_by, "✅ تم تحويل طلبك", pushBody));
     }
   }
 
@@ -185,6 +232,8 @@ Deno.serve(async (req) => {
     for (const v of VIEWERS) {
       if (v.email) tasks.push(sendEmail(v.email, subject, mail.html, mail.text));
     }
+    const pushBody = `طلب ${reqNo} اعتمده ${record.accounts_signed_by}${supplier ? ` — ${supplier}` : ""} — ${amount} ر.ق`;
+    for (const n of VIEWER_NAMES) tasks.push(sendPush(n, "📝 طلب معتمد جاهز للتحويل", pushBody));
   }
 
   await Promise.allSettled(tasks);
