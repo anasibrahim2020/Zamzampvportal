@@ -880,6 +880,7 @@ function signDoc(kind){
   document.getElementById(kind+'-sig-stamp').classList.add('on');
   document.getElementById(kind+'-sig-mono').textContent = initials(CURRENT.name);
   document.getElementById(kind+'-sig-name').textContent = personName(CURRENT.name);
+  document.getElementById(kind+'-sign-btn')?.classList.add('signed');
   document.getElementById(kind+'-sig-meta').textContent = dt;
   showMessageDialog({
     title:t('تم التوقيع الإلكتروني'),
@@ -1312,7 +1313,8 @@ async function saveDisbDoc(){
    ARCHIVE
 ══════════════════════════════════════════ */
 let ARC_TAB='all';
-const ARC_COLS = 12;
+const ARC_COLS = 11;
+let ARC_STATUS = null;   // فلتر الحالة من شريط الملخّص
 const ARC_ICONS = {
   comment:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>',
   view:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>',
@@ -1744,6 +1746,7 @@ function showArchiveActionsMenu(btn, rowIndex){
   // عرض الطلب (قراءة فقط) + طباعة الطلب متاحان دائماً
   html += archiveMenuButton(t('عرض الطلب'), ARC_ICONS.view, `viewFromArchive(${rowIndex})`);
   html += archiveMenuButton(t('طباعة الطلب'), ARC_ICONS.print, `reprintFromArchive(${rowIndex})`);
+  html += archiveMenuButton(t('سجل التوقيت'), ARC_ICONS.clock, `showArchiveTimeFromMenu(this, ${rowIndex})`);
   // تعديل الطلب ثم إلغاء الطلب (لمن يملك صلاحية التعديل فقط)
   if(canEdit){
     html += '<div class="arc-menu-sep"></div>';
@@ -1838,10 +1841,17 @@ async function loadArchive(silent=false){
     if(!Array.isArray(rows)||rows.length===0){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('لا توجد طلبات')}</td></tr>`; return; }
     // الطلبات الملغية تظهر في تبويب «الملغاة / المسحوبة» فقط؛ باقي التبويبات تستثنيها
     const reqNum = r => extractRequestNoNumber(r.doc_type==='cancel' ? 'cancel' : 'disb', r.req_no);
-    const list = (ARC_TAB==='cancelled' ? rows.filter(x=>x.cancelled) : rows.filter(x=>!x.cancelled))
+    let list = (ARC_TAB==='cancelled' ? rows.filter(x=>x.cancelled) : rows.filter(x=>!x.cancelled))
       .slice()
       .sort((a,b)=> (reqNum(b)-reqNum(a)) || ((b.id||0)-(a.id||0)));   // ترتيب حسب الرقم: الأجدد فوق والأقدم تحت
-    if(list.length===0){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('لا توجد طلبات')}</td></tr>`; return; }
+    renderArchiveSummary(list);
+    const shown = !ARC_STATUS ? list : list.filter(r=>{
+      const k = requestStatus(r).key;
+      return ARC_STATUS==='review' ? (k==='pending'||k==='unsigned') : k===ARC_STATUS;
+    });
+    renderArchiveCount(shown.length, list.length, rows.length);
+    if(shown.length===0){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('لا توجد طلبات')}</td></tr>`; window._arcRows=[]; return; }
+    list = shown;
     await loadTransferGroupsFor(list);          // بيانات مجموعات التحويل الظاهرة في القائمة
     sortTransferGroupsTogether(list, reqNum);   // طلبات التحويل الواحد تفضل ورا بعض ككتلة واحدة
     window._arcRows = list;
@@ -1850,11 +1860,14 @@ async function loadArchive(silent=false){
       const type=x.doc_type==='cancel'
         ?`<span class="badge cancel-doc">${t('إلغاء')}</span>`
         :`<span class="badge disb-doc">${t('صرف')}</span>`;
-      // حالة التوقيع (مقدم الطلب فقط)
-      let sig = x.signed_by
-        ?`<span class="badge signed"><span class="ok-mark">✓</span>${personName(x.signed_by)}</span>`
-        :t('<span class="badge unsigned">غير موقّع</span>');
-      if(x.cancelled) sig += ` <span class="badge cancel-doc">${t('ملغى')}</span>`;
+      // عمود «الحالة»: مرحلة واحدة واضحة بدل قراءة ثلاثة أعمدة
+      const st = requestStatus(x);
+      const stTip = [
+        t('الحالة')+': '+t(st.label),
+        x.signed_by ? t('الموقّع')+': '+personName(x.signed_by) : '',
+        x.accounts_signed_by ? t('معتمد بواسطة')+': '+personName(x.accounts_signed_by) : ''
+      ].filter(Boolean).join('\n');
+      const sig = `<span class="arc-status ${st.cls}" title="${escAttr(stTip)}"><i></i>${t(st.label)}</span>`;
       // عمود الاعتماد
       const accTitle = x.accounts_signed_by
         ? `${t('الحالة: معتمد من الحسابات')}\n${t('بواسطة:')} ${personName(x.accounts_signed_by)}${x.accounts_signed_at ? `\n${t('التوقيت:')} ${formatArchiveDateTime(x.accounts_signed_at)}` : ''}`
@@ -1957,7 +1970,6 @@ async function loadArchive(silent=false){
         <td style="text-align:center" data-label="${t('إثبات التحويل')}">${imgCol}</td>
         <td class="arc-files-cell" data-label="${t('المرفقات')}">${attachCol}</td>
         <td data-label="${t('إجراءات')}"><div class="arc-act">${act}</div></td>
-        <td class="arc-time-cell" data-label="${t('التوقيت')}">${timeBtn}</td>
       </tr>` + gapAfter;
     }).join('');
     pruneTransferSelection(list);
@@ -2405,6 +2417,7 @@ function clearCancel(){
   SIGNED.cancel=null;
   document.getElementById('cancel-sig-stamp').classList.remove('on');
   document.getElementById('cancel-sig-ph').style.display='block';
+  document.getElementById('cancel-sign-btn')?.classList.remove('signed');
   // إعادة ضبط اعتماد الحسابات
   setAccSign('cancel', null);
   document.getElementById('cancel-acc-stamp').classList.remove('on');
@@ -2434,6 +2447,7 @@ function clearDisb(){
   SIGNED.disb=null;
   document.getElementById('disb-sig-stamp').classList.remove('on');
   document.getElementById('disb-sig-ph').style.display='block';
+  document.getElementById('disb-sign-btn')?.classList.remove('signed');
   // إعادة ضبط اعتماد الحسابات
   setAccSign('disb', null);
   document.getElementById('disb-acc-stamp').classList.remove('on');
@@ -3005,4 +3019,59 @@ function refreshDynamicUI(){
     if(document.getElementById('page-arc')?.classList.contains('on') && typeof loadArchive === 'function') loadArchive();
     if(typeof updateTransferSelectUI === 'function') updateTransferSelectUI();
   }catch(e){ console.warn('refreshDynamicUI', e); }
+}
+
+/* ══════════════════════════════════════════
+   حالة الطلب + شريط الملخّص + عدّاد النتائج
+══════════════════════════════════════════ */
+// مرحلة واحدة واضحة بدل قراءة ثلاثة أعمدة
+function requestStatus(x){
+  if(!x) return { key:'unsigned', label:'بانتظار التوقيع', cls:'st-unsigned' };
+  if(x.cancelled)          return { key:'cancelled',   label:'ملغى',                 cls:'st-cancelled' };
+  if(x.transfer_image)     return { key:'transferred', label:'تم التحويل',            cls:'st-transferred' };
+  if(x.accounts_signed_by) return { key:'approved',    label:'معتمد',                 cls:'st-approved' };
+  if(x.signed_by)          return { key:'pending',     label:'بانتظار الاعتماد',       cls:'st-pending' };
+  return                          { key:'unsigned',    label:'بانتظار التوقيع',        cls:'st-unsigned' };
+}
+
+// شريط الملخّص: عدد ومبلغ كل مرحلة، والضغط يفلتر الجدول
+function renderArchiveSummary(list){
+  const box = document.getElementById('arc-summary');
+  if(!box) return;
+  const live = (list||[]).filter(r=>!r.cancelled);
+  const sum = rows => rows.reduce((a,r)=>a+(Number(r.amount)||0), 0);
+  const review    = live.filter(r=>!r.accounts_signed_by);
+  const approved  = live.filter(r=>r.accounts_signed_by && !r.transfer_image);
+  const done      = live.filter(r=>r.transfer_image);
+  const cards = [
+    { key:null,          label:'كل الطلبات',           rows:live,     cls:'sm-all' },
+    { key:'review',      label:'قيد المراجعة',          rows:review,   cls:'sm-review' },
+    { key:'approved',    label:'معتمد — بانتظار التحويل', rows:approved, cls:'sm-approved' },
+    { key:'transferred', label:'تم التحويل',            rows:done,     cls:'sm-done' },
+  ];
+  box.innerHTML = cards.map(c=>`
+    <button class="arc-sm ${c.cls}${ (ARC_STATUS===c.key || (c.key==='review' && (ARC_STATUS==='pending'||ARC_STATUS==='unsigned'))) ? ' on':''}"
+            onclick="setArchiveStatusFilter(${c.key===null?'null':`'${c.key}'`})">
+      <span class="sm-lbl">${t(c.label)}</span>
+      <span class="sm-val"><b>${c.rows.length}</b><em>${formatMoney(sum(c.rows))} ${t('ر.ق')}</em></span>
+    </button>`).join('');
+}
+function setArchiveStatusFilter(key){
+  ARC_STATUS = (ARC_STATUS===key) ? null : key;
+  loadArchive();
+}
+function renderArchiveCount(shown, afterTab, fetched){
+  const el = document.getElementById('arc-count');
+  if(!el) return;
+  const capped = fetched >= 200;
+  el.innerHTML = `${t('عرض')} <b>${shown}</b> ${t('من')} <b>${afterTab}</b> ${t('طلب')}`
+    + (capped ? ` · <span class="arc-count-warn">${t('الحد الأقصى للعرض 200 طلب — استخدم البحث أو فلتر التاريخ')}</span>` : '');
+}
+// سجل التوقيت من قائمة الإجراءات
+function showArchiveTimeFromMenu(btn, rowIndex){
+  const x = (window._arcRows||[])[rowIndex];
+  if(!x) return;
+  closeArchiveMenu();
+  showArchiveTimePopover(btn, formatArchiveDateTime(x.created_at || x.signed_at || x.req_date),
+    x.accounts_signed_at ? formatArchiveDateTime(x.accounts_signed_at) : t('لم يعتمد بعد'));
 }

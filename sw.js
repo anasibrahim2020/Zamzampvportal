@@ -2,13 +2,14 @@
 // نسخة بسيطة: تخلّي التطبيق قابل للتثبيت، وتسرّع فتح الملفات الثابتة.
 // ملاحظة: البيانات (Supabase) دايمًا من النت — مابنعملهاش cache.
 
-const CACHE = 'zamzam-v22';
+const CACHE = 'zamzam-v25';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './assets/css/styles.css',
   './assets/css/cost-center-toggle.css',
+  './assets/fonts/inter-latin.woff2',
   './assets/js/i18n.js',
   './assets/js/script-1.js',
   './assets/js/script-2.js',

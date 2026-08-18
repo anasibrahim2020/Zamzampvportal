@@ -467,6 +467,20 @@ const I18N_EN = {
 
   'توقيت اعتماد الحسابات':'Accounts approval',
 
+  'الحالة':'Status',
+  'معتمد':'Approved',
+  'بانتظار التوقيع':'Awaiting signature',
+  'بانتظار الاعتماد':'Awaiting approval',
+  'معتمد — بانتظار التحويل':'Approved — awaiting transfer',
+  'تم التحويل':'Transferred',
+  'كل الطلبات':'All requests',
+  'قيد المراجعة':'Under review',
+  'سجل التوقيت':'Timeline',
+  'عرض':'Showing',
+  'من':'of',
+  'طلب':'requests',
+  'الحد الأقصى للعرض 200 طلب — استخدم البحث أو فلتر التاريخ':'Showing the first 200 — use search or the date filter to narrow down',
+
   /* ── زر اللغة ── */
   'English':'العربية',
 };
