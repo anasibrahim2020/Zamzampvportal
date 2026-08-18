@@ -1821,9 +1821,24 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
 ══════════════════════════════════════════════════════════ */
 #doc-disb .inv-table .amt-cell,#doc-disb .inv-total-row .amt-cell,
 #doc-cancel .inv-table .amt-cell,#doc-cancel .inv-total-row .amt-cell{
-  text-align:left !important;
+  text-align:right !important;
+  font-variant-numeric:tabular-nums;
   padding-left:14px !important;padding-right:14px !important;}
 #doc-disb .inv-table .amt-cell input,#doc-cancel .inv-table .amt-cell input{
-  text-align:left !important;
+  text-align:right !important;
+  font-variant-numeric:tabular-nums;
   padding-left:0 !important;padding-right:0 !important;
   width:100% !important;}
+
+/* الطباعة: بلوكاتها بتفرض حشو 8px للخلية و4px للـinput بـ!important،
+   فالأرقام كانت بتتزحلق عن بعض في الورق كمان. المحاذاة لليمين مع
+   تصفير حشو الـinput بتخلي الحافة اليمنى واحدة في الحالتين. */
+@media print{
+  #doc-disb .inv-table .amt-cell,#doc-disb .inv-total-row .amt-cell,
+  #doc-cancel .inv-table .amt-cell,#doc-cancel .inv-total-row .amt-cell{
+    text-align:right !important;font-variant-numeric:tabular-nums !important;
+    padding-right:8px !important;}
+  #doc-disb .inv-table .amt-cell input,#doc-cancel .inv-table .amt-cell input{
+    text-align:right !important;font-variant-numeric:tabular-nums !important;
+    padding-right:0 !important;padding-left:0 !important;}
+}

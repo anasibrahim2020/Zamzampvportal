@@ -947,6 +947,18 @@ function stampDate(d){
   return `${dd}/${mm}/${yy} · ${p(h)}:${min} ${ap}`;
 }
 
+// المبلغ يتكتب زي ما هو، ولما تسيب الحقل يتنسّق لخانتين عشريتين
+// عشان يبقى على نفس صيغة الإجمالي (3,333 → 3,333.00).
+document.addEventListener('blur', (e)=>{
+  const el = e.target;
+  if(!el || !el.classList) return;
+  if(!el.classList.contains('s-amt') && !el.classList.contains('c-amt')) return;
+  const raw = String(el.value||'').replace(/,/g,'').trim();
+  if(raw === '') return;
+  const n = Number(raw);
+  if(!isFinite(n)) return;
+  el.value = n.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
+}, true);
 function signDoc(kind){
   if(!CURRENT) return;
   if(CURRENT.role==='viewer'){
