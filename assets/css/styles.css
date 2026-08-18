@@ -1549,3 +1549,55 @@ table.arc tbody tr.arc-grp-head td,
 @media print{ #pav-tip{display:none !important;} }
 /* عنوان «مقدّم الطلب» يتوسّط فوق الأفاتار زيّه بالظبط */
 .rl-head .rl-who{text-align:center;justify-self:stretch;}
+
+/* عمود الإجراءات كان auto فبياخد عرضه من طول نص الزرار،
+   وأي اختلاف فيه كان بيزحلق كل الأعمدة اللي قبله. */
+.hrow{grid-template-columns:150px minmax(0,1fr) 56px 132px 92px 128px 148px !important;}
+@media (min-width:820px) and (max-width:900px){
+  .hrow{grid-template-columns:126px minmax(0,1fr) 48px 108px 76px 104px 128px !important;}
+}
+.hrow-act{justify-self:end;width:100%;display:flex;justify-content:flex-end;}
+.hrow-act .hbtn{width:100%;justify-content:center;white-space:nowrap;}
+@media (max-width:819px){
+  .hrow-act{width:auto;}
+  .hrow-act .hbtn{width:auto;}
+}
+
+/* الموبايل: عمود الإجراءات كان auto كمان، فعرض العمود المرن كان
+   بيتغيّر من صف لصف حسب الأزرار الموجودة. */
+@media (max-width:819px){
+  .rl-row{grid-template-columns:minmax(0,1fr) 88px !important;}
+  .rl-act{justify-self:end !important;width:88px;display:flex;justify-content:flex-end;gap:6px;}
+  .hrow{grid-template-columns:minmax(0,1fr) 132px !important;}
+  .hrow-act{justify-self:end !important;width:132px;display:flex;justify-content:flex-end;}
+  .hrow-act .hbtn{width:100%;justify-content:center;}
+}
+
+/* ══════════════════════════════════════════════════════════
+   ثبات التنسيق: كل خلية تملأ عمودها، والمحتوى يتحاذى جوّاها.
+   قبل كده كانت الخلايا تتقلّص على محتواها فبتتحرّك مع طوله.
+══════════════════════════════════════════════════════════ */
+.rl-head > *,.rl-row > *,.hrow > *{justify-self:stretch !important;min-width:0;}
+.rl-st,.rl-who,.hrow-st,.hrow-age,.hrow-who{display:flex;align-items:center;}
+.rl-st,.hrow-st,.hrow-age{justify-content:flex-start;}
+.rl-who,.hrow-who{justify-content:center;}
+.rl-amt,.hrow-amt{display:flex;align-items:center;justify-content:flex-start;
+  direction:ltr;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.rl-act,.hrow-act{display:flex;align-items:center;justify-content:flex-end;gap:6px;}
+.rl-head .rl-amt{justify-content:flex-start;}
+
+/* الموبايل: المبلغ الطويل (9,876,543.21) محتاج 100px مش 88 */
+@media (max-width:819px){
+  .rl-row{grid-template-columns:minmax(0,1fr) 124px !important;}
+  .rl-act{width:auto;}
+  .hrow{grid-template-columns:minmax(0,1fr) 132px !important;}
+  .hrow-act,.rl-act{justify-content:flex-end;}
+  .rl-amt,.hrow-amt{justify-content:flex-end;}
+}
+/* stretch لوحده ما كفاش — الخلايا كانت لسه بتتقلّص على محتواها */
+.rl-head > *,.rl-row > *,.hrow > *{width:100% !important;max-width:100%;}
+/* المدى المتوسط: عمود المبلغ 104px ما كانش بيسع 9,876,543.21 */
+@media (min-width:820px) and (max-width:900px){
+  .hrow{grid-template-columns:118px minmax(0,1fr) 44px 104px 72px 124px 120px !important;}
+  .rl-head,.rl-row{grid-template-columns:120px minmax(0,1fr) 44px 86px 124px 96px 58px !important;}
+}

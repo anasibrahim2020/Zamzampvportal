@@ -2,7 +2,7 @@
 // نسخة بسيطة: تخلّي التطبيق قابل للتثبيت، وتسرّع فتح الملفات الثابتة.
 // ملاحظة: البيانات (Supabase) دايمًا من النت — مابنعملهاش cache.
 
-const CACHE = 'zamzam-v69';
+const CACHE = 'zamzam-v74';
 const ASSETS = [
   './',
   './index.html',
