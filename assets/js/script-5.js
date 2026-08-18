@@ -2495,7 +2495,7 @@ function formatMoney(n){
 }
 function transferGroupColor(gid){
   // لون واحد لكل المجموعات — هوية المجموعة رقمها وإطارها مش لونها
-  return '#2C8B8E';
+  return '#287E80';
 }
 // مزج لون المجموعة بالأبيض (k = نسبة اللون) لإنتاج درجات فاتحة
 function mixWithWhite(hex, k){
