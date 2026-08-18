@@ -1934,3 +1934,42 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
 ══════════════════════════════════════════════════════════ */
 #doc-disb .doc-ftr .l,#doc-cancel .doc-ftr .l,
 .doc-ftr .l{color:#fff !important;font-weight:700 !important;letter-spacing:.2px;}
+
+/* ══════════════════════════════════════════════════════════
+   المرفقات والتعليقات إجراءات مش بيانات — مكانها مع باقي
+   الإجراءات في آخر الصف بموضع ثابت، مش عايمة في عمود المورّد.
+══════════════════════════════════════════════════════════ */
+.rl-head,.rl-row{
+  grid-template-columns:150px minmax(0,1fr) 56px 112px 124px 120px 152px !important;}
+@media (min-width:820px) and (max-width:900px){
+  .rl-head,.rl-row{
+    grid-template-columns:120px minmax(0,1fr) 44px 86px 124px 96px 136px !important;}
+}
+.rl-act{display:flex;align-items:center;justify-content:flex-end;gap:6px;}
+.rl-act .rl-counts{display:flex;align-items:center;gap:5px;margin-inline-end:2px;}
+.rl-cnt{
+  display:inline-flex;align-items:center;gap:3px;
+  height:26px;padding:0 8px;border-radius:var(--r-pill);
+  border:1px solid var(--n3);background:var(--n0);
+  font-family:inherit;font-size:11px;font-weight:700;color:var(--n6);
+  cursor:pointer;transition:border-color .12s,color .12s,background .12s;}
+.rl-cnt:hover{border-color:var(--indigo);color:var(--indigo);background:var(--indigo-t);}
+.rl-cnt svg{width:12px;height:12px;stroke:currentColor;stroke-width:2;fill:none;}
+/* عمود المورّد بقى لاسم المورّد بس */
+.rl-party{display:block;}
+.rl-sup{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media (max-width:819px){
+  .rl-act{justify-content:flex-end;flex-wrap:nowrap;}
+  .rl-act .rl-counts{gap:4px;}
+  .rl-cnt{height:24px;padding:0 7px;font-size:10px;}
+}
+/* العدّادات مرتكزة على بداية خانة الإجراءات والأزرار على نهايتها،
+   فالاتنين ليهم حافة ثابتة مهما اختلف محتوى الصف */
+.rl-act{justify-content:flex-start !important;}
+.rl-act .rl-counts{margin-inline-end:auto;}
+/* الرقاقة بعرض ثابت وأرقام متساوية عشان ما تتغيّرش مع العدد */
+.rl-cnt{font-variant-numeric:tabular-nums;min-width:42px;justify-content:center;}
+/* حاوية العدّادات بعرض محجوز، فالرقائق تبدأ من حافة ثابتة
+   وتمتد جوّاها زي رقاقة التقادم والمبلغ بالظبط */
+.rl-act .rl-counts{width:92px;flex:0 0 92px;justify-content:flex-start;}
+@media (max-width:819px){ .rl-act .rl-counts{width:auto;flex:0 0 auto;} }

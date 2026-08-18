@@ -2006,16 +2006,16 @@ async function loadArchive(silent=false){
         </span>
         <span class="rl-c rl-party">
           <span class="rl-sup">${escapeHtml(x.doc_type==='cancel' ? (x.invoice_ref||'—') : (x.beneficiary||'—'))}</span>
-          <span class="rl-counts">
-            ${atts.length?`<button class="rl-cnt" onclick="event.stopPropagation();showArchiveAttachmentsMenu(this, ${i})" title="${escAttr(t('المرفقات'))}">${ARC_ICONS.paperclip}${atts.length}</button>`:''}
-            ${visComments.length?`<button class="rl-cnt" onclick="event.stopPropagation();openCommentsDialog(${i})" title="${escAttr(t('تعليقات'))}">${ARC_ICONS.comment}${visComments.length}</button>`:''}
-          </span>
         </span>
         <span class="rl-c rl-who">${personAvatar(x.created_by)}</span>
         <span class="rl-c rl-date"><span class="rl-dt">${x.req_date||'—'}</span><em class="rl-age ${showAge?ageCls:'is-blank'}">${showAge?(days===0?t('اليوم'):days===1?t('من يوم'):t('من {n} يوم').replace('{n}',days)):''}</em></span>
         <span class="rl-c rl-amt">${x.amount?formatMoney(x.amount):'—'}</span>
         <span class="rl-c rl-st"><span class="arc-status ${st.cls}"><i></i>${t(st.label)}</span></span>
-        <span class="rl-c rl-act">${actIcon}
+        <span class="rl-c rl-act">
+          <span class="rl-counts">
+            ${atts.length?`<button class="rl-cnt" onclick="event.stopPropagation();showArchiveAttachmentsMenu(this, ${i})" title="${escAttr(t('المرفقات'))}">${ARC_ICONS.paperclip}${atts.length}</button>`:''}
+            ${visComments.length?`<button class="rl-cnt" onclick="event.stopPropagation();openCommentsDialog(${i})" title="${escAttr(t('تعليقات'))}">${ARC_ICONS.comment}${visComments.length}</button>`:''}
+          </span>${actIcon}
           <button class="rl-more" onclick="event.stopPropagation();showArchiveActionsMenu(this, ${i})" title="${escAttr(t('إجراءات'))}">${ARC_ICONS.more}</button>
         </span>
       </div>` + (isBlockLast ? '<div class="rl-gend"'+style+'></div>' : '');
