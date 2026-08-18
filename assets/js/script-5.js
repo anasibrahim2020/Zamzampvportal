@@ -860,6 +860,46 @@ function dottedInitials(parts){
   return [parts[0]&&parts[0][0], parts[1]&&parts[1][0]]
     .filter(Boolean).map(c=>c.toUpperCase()).join('.');
 }
+// ═══ أفاتار الموظف: أحرف أولى + تلميح باسمه الكامل عند المرور ═══
+// التلميح عنصر واحد في body لأن .arc-wrap عليها overflow:hidden وكان هيتقص.
+function personAvatar(name){
+  const full = personName(name || '') || '—';
+  return `<span class="pav" data-name="${escAttr(full)}" role="img" aria-label="${escAttr(full)}">${escapeHtml(initials(name))}</span>`;
+}
+let PAV_TIP = null;
+function pavTip(){
+  if(!PAV_TIP){
+    PAV_TIP = document.createElement('div');
+    PAV_TIP.id = 'pav-tip';
+    document.body.appendChild(PAV_TIP);
+  }
+  return PAV_TIP;
+}
+function showPavTip(el){
+  const name = el.getAttribute('data-name'); if(!name) return;
+  const tip = pavTip();
+  tip.textContent = name;
+  tip.classList.add('on');
+  const r = el.getBoundingClientRect();
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let left = r.left + r.width/2 - w/2;
+  left = Math.max(8, Math.min(left, innerWidth - w - 8));
+  let top = r.top - h - 8;
+  if(top < 8) top = r.bottom + 8;              // لو مفيش مكان فوق، تحت
+  tip.style.left = left + 'px';
+  tip.style.top  = top + 'px';
+}
+function hidePavTip(){ if(PAV_TIP) PAV_TIP.classList.remove('on'); }
+document.addEventListener('mouseover', e=>{
+  const a = e.target.closest && e.target.closest('.pav');
+  if(a) showPavTip(a);
+});
+document.addEventListener('mouseout', e=>{
+  if(e.target.closest && e.target.closest('.pav')) hidePavTip();
+});
+document.addEventListener('focusin',  e=>{ const a=e.target.closest&&e.target.closest('.pav'); if(a) showPavTip(a); });
+document.addEventListener('focusout', hidePavTip);
+window.addEventListener('scroll', hidePavTip, true);
 function initials(name){
   const key = String(name||'').trim();
   if(INITIALS_MAP[key]) return INITIALS_MAP[key];
@@ -1807,7 +1847,8 @@ async function loadArchive(silent=false){
     renderTransferGroupNote(note, search);      // لافتة ملخّص عند فلترة مجموعة تحويل
     const headHtml = `<div class="rl-head">
       <span class="rl-c rl-no">${t('رقم الطلب')}</span>
-      <span class="rl-c rl-party">${t('المورّد / مقدّم الطلب')}</span>
+      <span class="rl-c rl-party">${t('المورّد')}</span>
+      <span class="rl-c rl-who">${t('مقدّم الطلب')}</span>
       <span class="rl-c rl-date">${t('التاريخ')}</span>
       <span class="rl-c rl-amt">${t('المبلغ')}</span>
       <span class="rl-c rl-st">${t('الحالة')}</span>
@@ -1863,12 +1904,12 @@ async function loadArchive(silent=false){
         </span>
         <span class="rl-c rl-party">
           <span class="rl-sup">${escapeHtml(x.doc_type==='cancel' ? (x.invoice_ref||'—') : (x.beneficiary||'—'))}</span>
-          <span class="rl-by">${escapeHtml(personName(x.created_by||'—'))}</span>
           <span class="rl-counts">
             ${atts.length?`<button class="rl-cnt" onclick="event.stopPropagation();showArchiveAttachmentsMenu(this, ${i})" title="${escAttr(t('المرفقات'))}">${ARC_ICONS.paperclip}${atts.length}</button>`:''}
             ${visComments.length?`<button class="rl-cnt" onclick="event.stopPropagation();openCommentsDialog(${i})" title="${escAttr(t('تعليقات'))}">${ARC_ICONS.comment}${visComments.length}</button>`:''}
           </span>
         </span>
+        <span class="rl-c rl-who">${personAvatar(x.created_by)}</span>
         <span class="rl-c rl-date">${x.req_date||'—'}${showAge?`<em class="rl-age ${ageCls}">${days===0?t('اليوم'):days===1?t('من يوم'):t('من {n} يوم').replace('{n}',days)}</em>`:''}</span>
         <span class="rl-c rl-amt">${x.amount?formatMoney(x.amount):'—'}</span>
         <span class="rl-c rl-st"><span class="arc-status ${st.cls}"><i></i>${t(st.label)}</span></span>
@@ -2988,13 +3029,12 @@ function homeRow(x, primary){
   const st = requestStatus(x);
   const atts = getArchiveRowAttachments(x).length;
   return `<div class="hrow" onclick="reviewFromHome(${x.id})" role="button" tabindex="0">
-    <div class="hrow-main">
-      <div class="hrow-top"><b>${displayRequestNo(x.req_no)||'—'}</b>
-        <span class="arc-status ${st.cls}"><i></i>${t(st.label)}</span>${ageChip(x)}</div>
-      <div class="hrow-sub">${escapeHtml(x.doc_type==='cancel' ? (x.invoice_ref||'—') : (x.beneficiary||'—'))}
-        <span class="dot">·</span>${escapeHtml(personName(x.created_by||''))}
-        ${atts?`<span class="dot">·</span><span class="hrow-att">${ARC_ICONS.paperclip}${atts}</span>`:''}</div>
-    </div>
+    <b class="hrow-no">${displayRequestNo(x.req_no)||'—'}</b>
+    <div class="hrow-party"><span class="hrow-sup">${escapeHtml(x.doc_type==='cancel' ? (x.invoice_ref||'—') : (x.beneficiary||'—'))}</span>
+      ${atts?`<span class="hrow-att">${ARC_ICONS.paperclip}${atts}</span>`:''}</div>
+    <div class="hrow-who">${personAvatar(x.created_by)}</div>
+    <div class="hrow-st"><span class="arc-status ${st.cls}"><i></i>${t(st.label)}</span></div>
+    <div class="hrow-age">${ageChip(x)}</div>
     <div class="hrow-amt">${x.amount?formatMoney(x.amount):'—'} <em>${t('ر.ق')}</em></div>
     <div class="hrow-act">${primary||''}</div>
   </div>`;

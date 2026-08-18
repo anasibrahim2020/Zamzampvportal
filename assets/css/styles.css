@@ -1450,3 +1450,102 @@ table.arc tbody tr.arc-grp-head td,
   .rl-st{justify-self:start !important;margin-top:0 !important;}
   .rl-amt{justify-self:end !important;}
 }
+
+/* صف الرئيسية: أعمدة حقيقية بدل flex كان بيزق المبلغ لأقصى الناحية
+   ويسيب ~63% من الصف فراغ ميت. نفس منطق إدارة الطلبات. */
+.hrow{
+  display:grid !important;
+  grid-template-columns:150px minmax(0,1fr) 132px 92px 128px auto;
+  align-items:center;gap:12px;}
+.hrow-no{font-size:13px;font-weight:700;color:var(--indigo);
+  direction:ltr;text-align:start;white-space:nowrap;}
+.hrow-party{font-size:12px;font-weight:600;color:var(--txt-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.hrow-party .dot{margin:0 6px;color:var(--n4);}
+.hrow-st,.hrow-age{justify-self:start;}
+.hrow-amt{justify-self:end;}
+.hrow-act{justify-self:end;}
+
+@media (max-width:819px){
+  .hrow{
+    grid-template-columns:1fr auto !important;
+    grid-template-areas:
+      'no    act'
+      'party party'
+      'age   amt'
+      'st    st' !important;
+    gap:6px 12px;}
+  .hrow-no{grid-area:no;}
+  .hrow-party{grid-area:party;white-space:normal;}
+  .hrow-st{grid-area:st;justify-self:start;}
+  .hrow-age{grid-area:age;justify-self:start;}
+  .hrow-amt{grid-area:amt;justify-self:end;}
+  .hrow-act{grid-area:act;justify-self:end;width:auto;}
+  .hrow-act .hbtn{width:auto;}
+}
+
+/* المدى المتوسط (فولد مفتوح ≈884px): أعمدة أضيق بدل التكديس */
+@media (min-width:820px) and (max-width:900px){
+  .hrow{grid-template-columns:126px minmax(0,1fr) 112px 78px 104px auto !important;
+    grid-template-areas:none !important;gap:10px;}
+  .hrow>*{grid-area:auto !important;}
+  .hrow-st,.hrow-age{justify-self:start !important;}
+  .hrow-amt,.hrow-act{justify-self:end !important;}
+}
+
+/* ══════════════════════════════════════════════════════════
+   أفاتار مقدّم الطلب — عمود مستقل بموضع ثابت
+   قبل كده كان الاسم جنب اسم المورّد فبيتحرّك مع طوله.
+══════════════════════════════════════════════════════════ */
+.pav{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;flex:0 0 28px;border-radius:50%;
+  background:var(--indigo-t);color:var(--indigo-d);
+  border:1px solid var(--indigo-l);
+  font-size:10px;font-weight:700;letter-spacing:.2px;
+  direction:ltr;user-select:none;cursor:default;}
+.rl-who,.hrow-who{justify-self:center;}
+.rl-head .rl-who{justify-self:center;}
+
+/* عرض الأعمدة: زوّدنا عمود للموظف */
+.rl-head,.rl-row{
+  grid-template-columns:150px minmax(0,1fr) 56px 112px 124px 120px 70px !important;}
+@media (min-width:820px) and (max-width:900px){
+  .rl-head,.rl-row{
+    grid-template-columns:128px minmax(0,1fr) 48px 92px 106px 100px 62px !important;}
+}
+.hrow{grid-template-columns:150px minmax(0,1fr) 56px 132px 92px 128px auto !important;}
+@media (min-width:820px) and (max-width:900px){
+  .hrow{grid-template-columns:126px minmax(0,1fr) 48px 108px 76px 104px auto !important;}
+}
+/* اسم المورّد ياخد العمود كله دلوقتي */
+.rl-sup,.hrow-sup{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;display:block;}
+
+/* الموبايل: الأفاتار جنب رقم الطلب */
+@media (max-width:819px){
+  .rl-row{grid-template-areas:
+      'no    act'
+      'party party'
+      'date  amt'
+      'st    who' !important;}
+  .rl-who{grid-area:who !important;justify-self:end !important;}
+  .hrow{grid-template-areas:
+      'no    act'
+      'party party'
+      'age   amt'
+      'st    who' !important;}
+  .hrow-who{grid-area:who !important;justify-self:end !important;}
+}
+
+/* التلميح المشترك — في body عشان ما يتقصّش */
+#pav-tip{
+  position:fixed;z-index:9999;pointer-events:none;
+  background:var(--chrome);color:#fff;
+  font-size:11px;font-weight:600;line-height:1.4;
+  padding:6px 10px;border-radius:8px;white-space:nowrap;
+  box-shadow:var(--sh-2);opacity:0;transform:translateY(2px);
+  transition:opacity .12s ease,transform .12s ease;}
+#pav-tip.on{opacity:1;transform:translateY(0);}
+@media print{ #pav-tip{display:none !important;} }
+/* عنوان «مقدّم الطلب» يتوسّط فوق الأفاتار زيّه بالظبط */
+.rl-head .rl-who{text-align:center;justify-self:stretch;}
