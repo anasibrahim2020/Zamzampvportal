@@ -1426,7 +1426,9 @@ table.arc tbody tr.arc-grp-head td,
 
 /* عمود الإجراءات كان auto فبياخد عرضه من طول نص الزرار،
    وأي اختلاف فيه كان بيزحلق كل الأعمدة اللي قبله. */
-.hrow{grid-template-columns:150px minmax(0,1fr) 56px 132px 92px 128px 148px !important;}
+@media (min-width:820px){
+  .hrow{grid-template-columns:150px minmax(0,1fr) 56px 132px 92px 128px 148px !important;}
+}
 @media (min-width:820px) and (max-width:900px){
   .hrow{grid-template-columns:126px minmax(0,1fr) 48px 108px 76px 104px 128px !important;}
 }
@@ -1802,8 +1804,10 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
    المرفقات والتعليقات إجراءات مش بيانات — مكانها مع باقي
    الإجراءات في آخر الصف بموضع ثابت، مش عايمة في عمود المورّد.
 ══════════════════════════════════════════════════════════ */
-.rl-head,.rl-row{
-  grid-template-columns:150px minmax(0,1fr) 56px 112px 124px 120px 152px !important;}
+@media (min-width:820px){
+  .rl-head,.rl-row{
+    grid-template-columns:150px minmax(0,1fr) 56px 112px 124px 120px 152px !important;}
+}
 @media (min-width:820px) and (max-width:900px){
   .rl-head,.rl-row{
     grid-template-columns:120px minmax(0,1fr) 44px 86px 124px 96px 136px !important;}
@@ -1903,3 +1907,22 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
 .rl-cnt::after{content:'';position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%);width:100%;height:44px;min-width:44px;}
 @media print{ .rl-cnt::after{content:none;} }
+
+/* تأكيد نهائي: تخطيط الموبايل هو الأخير فما ينفعش يتغلب عليه */
+@media (max-width:819px){
+  .rl-head{display:none !important;}
+  .rl-row{
+    grid-template-columns:30px minmax(0,1fr) 88px !important;
+    grid-template-areas:
+      'no    no    act'
+      'who   party party'
+      'date  date  amt'
+      'st    st    st' !important;}
+  .hrow{
+    grid-template-columns:30px minmax(0,1fr) 132px !important;
+    grid-template-areas:
+      'no    no    act'
+      'who   party party'
+      'age   age   amt'
+      'st    st    st' !important;}
+}

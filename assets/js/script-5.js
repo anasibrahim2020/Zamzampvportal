@@ -1096,10 +1096,8 @@ function collectCancel(){
     doc_type:'cancel',
     req_no: document.getElementById('c-reqno').value,
     req_date: document.getElementById('c-date').value||null,
-    customer_no: document.getElementById('c-custno')?.value||null,
     mobile: document.getElementById('c-mobile').value||null,
     invoice_ref: document.getElementById('c-invref').value||null,
-    name: document.getElementById('c-custname')?.value||null,
     allocation: alloc.join(', '),
     full_invoice: document.getElementById('c-fullinv').checked,
     amount: parseAmt(document.getElementById('refund-total').textContent)||null,
@@ -2284,10 +2282,8 @@ function loadCancelFromRow(x){
   const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value = v==null?'':v; };
   set('c-reqno', displayRequestNo(x.req_no));
   set('c-date',  x.req_date);
-  set('c-custno', x.customer_no);
   set('c-mobile', x.mobile);
   set('c-invref', x.invoice_ref);
-  set('c-custname', x.name);
   set('c-notes', fitPrintText(x.notes, 85));
   document.getElementById('c-fullinv').checked = !!x.full_invoice;
   // الأنصبة (allocation)
