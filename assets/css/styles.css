@@ -774,3 +774,58 @@ html[dir="rtl"] .tb-chip{padding:3px;}
 .tb-logo{height:50px;padding:4px 9px;border-radius:10px;}
 @media (max-width:760px){ .tb-logo{height:40px;padding:3px 7px;border-radius:9px;} }
 @media (max-width:430px){ .tb-logo{height:36px;padding:3px 6px;} }
+
+/* ══════════════════════════════════════════
+   ترويسة الوثيقة — لوجو أكبر وتسلسل واضح
+══════════════════════════════════════════ */
+.doc-hd{
+  padding:26px var(--px) 20px !important;
+  align-items:flex-start !important;
+  border-bottom:none !important;
+  border-image:none !important;
+  position:relative !important;}
+/* الخط الملوّن الفاصل */
+.doc-hd::before{
+  content:'';position:absolute;inset-inline:var(--px);bottom:0;height:3px;border-radius:3px;
+  background:linear-gradient(90deg,var(--green),var(--teal) 45%,#5B54B0);}
+
+/* اللوجو أكبر بكتير */
+.doc-hd .logo{height:86px !important;padding:0 !important;background:transparent !important;
+  display:flex;align-items:center;}
+.doc-hd .logo img{height:100%;width:auto;display:block;}
+
+/* تسلسل العنوان */
+.doc-hd-txt h1{
+  font-size:26px !important;font-weight:700 !important;color:var(--ink) !important;
+  line-height:1.2 !important;letter-spacing:-.4px;}
+.doc-hd-txt .en{
+  font-size:11px !important;font-weight:600 !important;color:var(--teal) !important;
+  letter-spacing:2.4px !important;text-transform:uppercase;margin-top:5px !important;}
+.doc-hd-txt .co{
+  font-size:12px !important;font-weight:600 !important;color:#93A1B2 !important;margin-top:9px !important;
+  padding-top:8px;border-top:1px solid var(--line-2,#EEF2F7);display:inline-block;}
+
+/* عناوين الأقسام جوه الوثيقة — أوضح */
+.sec-title .ar{font-size:14px !important;font-weight:700 !important;color:var(--ink) !important;}
+.sec-title .en{font-size:9.5px !important;letter-spacing:1.6px !important;color:var(--teal) !important;}
+.sec-title{border-bottom:1px solid var(--border) !important;padding-bottom:8px !important;}
+
+/* تسميات الحقول — تباين أعلى */
+.f label .ar{font-size:12px !important;font-weight:700 !important;color:var(--ink) !important;}
+.f label .en{font-size:9px !important;letter-spacing:1.3px !important;color:#93A1B2 !important;}
+.f input,.f textarea{font-size:13px !important;font-weight:600;color:var(--ink);}
+.dm-lbl{font-size:10px !important;font-weight:700 !important;color:#93A1B2 !important;letter-spacing:.3px;}
+.dm-item input{font-size:14px !important;font-weight:700 !important;color:var(--indigo) !important;}
+
+/* رؤوس جداول الوثيقة */
+.inv-table th,.refund-table th{font-size:11px !important;font-weight:700 !important;color:var(--ink) !important;
+  background:#F7FAFD !important;}
+.inv-table th small,.refund-table th small{font-size:8.5px !important;color:#93A1B2 !important;letter-spacing:1px;}
+.inv-table td,.refund-table td{font-size:12.5px !important;}
+
+@media (max-width:760px){
+  .doc-hd{padding:18px 16px 16px !important;}
+  .doc-hd .logo{height:60px !important;}
+  .doc-hd-txt h1{font-size:19px !important;}
+  .doc-hd-txt .en{font-size:9.5px !important;letter-spacing:1.8px !important;}
+}
