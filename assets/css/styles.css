@@ -2008,3 +2008,20 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
   #doc-disb .doc-hd,#doc-cancel .doc-hd{
     background:linear-gradient(180deg,#FFFFFF 0%,#F7FBFB 100%) !important;}
 }
+
+/* ══════════════════════════════════════════════════════════
+   توحيد الخط جوّه الوثيقتين
+   الأزرار والحقول مابترثش font-family فكانت بتاخد Arial،
+   و«فاتورة عامة» كانت بتطلب Cairo وهو متشال من المشروع أصلاً.
+   العربي: PlexAr · اللاتيني الصريح (.en): Inter — والاتنين محليين.
+══════════════════════════════════════════════════════════ */
+#doc-disb, #doc-cancel,
+#doc-disb *:not(.en):not(.sig-mono), #doc-cancel *:not(.en):not(.sig-mono){
+  font-family:'PlexAr','Inter',sans-serif;}
+#doc-disb button,#doc-cancel button,
+#doc-disb input,#doc-cancel input,
+#doc-disb select,#doc-cancel select,
+#doc-disb textarea,#doc-cancel textarea{
+  font-family:'PlexAr','Inter',sans-serif !important;}
+/* التسميات الإنجليزية تفضل Inter — ده مقصود مش تضارب */
+#doc-disb .en,#doc-cancel .en{font-family:'Inter',sans-serif;}

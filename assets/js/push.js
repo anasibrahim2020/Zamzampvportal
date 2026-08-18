@@ -68,7 +68,7 @@
       'display:inline-flex', 'align-items:center', 'gap:8px',
       'background:linear-gradient(115deg,#2F817C 0%,#326F82 46%,#3E3A72 100%)',
       'color:#fff', 'border:none', 'border-radius:999px',
-      'padding:12px 18px', 'font-family:Cairo,sans-serif', 'font-size:13px', 'font-weight:800',
+      'padding:12px 18px', "font-family:'PlexAr','Inter',sans-serif", 'font-size:13px', 'font-weight:800',
       'box-shadow:0 10px 28px rgba(46,58,114,.32)', 'cursor:pointer'
     ].join(';');
     bell.onclick = function () {
