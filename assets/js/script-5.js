@@ -503,6 +503,34 @@ function getDisbClientRows(){
     tr
   }));
 }
+// «طلب جديد» لازم يبدأ من نموذج فاضي — قبل كده كان بيفتح الصفحة
+// بس فبيسيب بيانات آخر طلب اتفتح، وده خطر في نظام مالي.
+// التنقّل من الشريط العلوي: «طلب صرف» معناها «عايز أعمل طلب صرف».
+// لو النموذج شايل طلب محفوظ (EDIT_ID) نبدأ جديد — الطلب محفوظ في الأرشيف
+// ومش هنخسر حاجة. لو شايل مسوّدة مش محفوظة نسيبها زي ما هي.
+function goToForm(kind){
+  if(EDIT_ID) startNewRequest(kind);
+  else showPage(kind === 'cancel' ? 'cancel' : 'disb');
+}
+// لافتة توضّح وضع النموذج: تعديل طلب قائم / عرض فقط / (فاضي = طلب جديد)
+function updateFormMode(kind){
+  const bar = document.getElementById(kind + '-mode');
+  if(!bar) return;
+  if(VIEW_ONLY && EDIT_REQUEST){
+    bar.className = 'form-mode view on';
+    bar.textContent = t('عرض فقط') + ' — ' + (displayRequestNo(EDIT_REQUEST.req_no) || '');
+  } else if(EDIT_ID && EDIT_REQUEST){
+    bar.className = 'form-mode edit on';
+    bar.textContent = t('تعديل طلب قائم') + ' — ' + (displayRequestNo(EDIT_REQUEST.req_no) || '');
+  } else {
+    bar.className = 'form-mode';
+    bar.textContent = '';
+  }
+}
+function startNewRequest(kind){
+  if(kind === 'cancel'){ clearCancel(); showPage('cancel'); }
+  else { clearDisb(); showPage('disb'); }
+}
 function clearDisbPrintAppendix(){
   document.getElementById('doc-disb')?.classList.remove('has-appendix','short-disb');
   document.querySelectorAll('#supplier-rows tr, #client-rows tr').forEach(tr=>tr.classList.remove('print-main-overflow'));
@@ -824,6 +852,7 @@ function setDocumentLocked(kind, locked){
   if(kind === 'disb' && typeof updateCostCenterDisabledUI === 'function') updateCostCenterDisabledUI();
 }
 function applyArchiveEditLock(kind, request){
+  updateFormMode(kind);
   const locked = VIEW_ONLY || !!(request && !canCurrentEditRequest(request));
   setDocumentLocked(kind, locked);
   if(VIEW_ONLY){
@@ -2379,6 +2408,7 @@ function clearCancel(){
   if(cRow) cRow.style.display='none';
   EDIT_ID=null;
   EDIT_REQUEST=null;
+  updateFormMode('cancel');
   refreshNextRequestNo('cancel');
 }
 function clearDisb(){
@@ -2409,6 +2439,7 @@ function clearDisb(){
   if(row) row.style.display = (CURRENT && CURRENT.role==='accountant') ? 'flex' : 'none';
   EDIT_ID=null;
   EDIT_REQUEST=null;
+  updateFormMode('disb');
   refreshNextRequestNo('disb');
 }
 
@@ -3055,8 +3086,8 @@ async function loadHome(){
   greet.textContent = `${t('أهلاً')} ${personName(CURRENT.name)}`;
   sub.textContent   = personName(CURRENT.dept||'');
   acts.innerHTML = isViewer ? '' :
-    `<button class="hbtn ghost" onclick="showPage('cancel')">${ARC_ICONS.file}${t('طلب إلغاء')}</button>
-     <button class="hbtn primary" onclick="showPage('disb')">${ARC_ICONS.plus}${t('طلب صرف جديد')}</button>`;
+    `<button class="hbtn ghost" onclick="startNewRequest('cancel')">${ARC_ICONS.file}${t('طلب إلغاء')}</button>
+     <button class="hbtn primary" onclick="startNewRequest('disb')">${ARC_ICONS.plus}${t('طلب صرف جديد')}</button>`;
   if(!SB_ON){ body.innerHTML = homeEmpty(ARC_ICONS.file,'الأرشيف غير مفعّل','—'); return; }
   body.innerHTML = `<div class="h-loading">${t('جاري التحميل...')}</div>`;
   try{
