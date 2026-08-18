@@ -391,8 +391,17 @@ async function loadSupplierNames(){
 /* ══════════════════════════════════════════
    NAVIGATION
 ══════════════════════════════════════════ */
-function showPage(p){
-  ['home','cancel','disb','arc'].forEach(x=>{
+const APP_PAGES = ['home','cancel','disb','arc'];
+// الصفحة الأم لكل شاشة — الرجوع بيوديك لها.
+// الرئيسية مالهاش أم، فالرجوع منها بيخرج من التطبيق زي ما هو متوقّع.
+let PAGE_PARENT = { home:null, disb:'home', cancel:'home', arc:'home' };
+function setFormParent(parent){ PAGE_PARENT.disb = parent; PAGE_PARENT.cancel = parent; }
+function currentPage(){
+  return APP_PAGES.find(x=>document.getElementById('page-'+x)?.classList.contains('on')) || 'home';
+}
+function showPage(p, opts){
+  if(APP_PAGES.indexOf(p) < 0) p = 'home';
+  APP_PAGES.forEach(x=>{
     document.getElementById('page-'+x).classList.toggle('on', x===p);
     document.getElementById('nav-'+(x==='arc'?'arc':x)).classList.toggle('on', x===p);
   });
@@ -402,7 +411,44 @@ function showPage(p){
   if (p==='arc') loadArchive();
   if (p==='home') loadHome();
   window.scrollTo(0,0);
+  if(!(opts && opts.fromHistory)){
+    try{
+      if((history.state && history.state.page) !== p) history.pushState({page:p}, '', '#'+p);
+    }catch(e){}
+  }
 }
+// الرجوع (زرار المتصفح أو السحب من الحافة)
+window.addEventListener('popstate', ()=>{
+  // ① نافذة مفتوحة؟ تتقفل ونفضل مكاننا
+  const ov = document.querySelector('#app-confirm-overlay,#app-comments-overlay,#app-group-overlay');
+  if(ov){
+    ov.remove();
+    const shown = currentPage();
+    try{ history.pushState({page:shown}, '', '#'+shown); }catch(e){}
+    return;
+  }
+  // ② قايمة منبثقة مفتوحة؟ تتقفل
+  const pop = document.getElementById('arc-menu-pop');
+  if(pop && pop.classList.contains('on')){
+    closeArchiveMenu();
+    const shown = currentPage();
+    try{ history.pushState({page:shown}, '', '#'+shown); }catch(e){}
+    return;
+  }
+  // ③ الرجوع للصفحة الأم
+  const shown  = currentPage();
+  const parent = PAGE_PARENT[shown];
+  if(!parent) return;                    // الرئيسية: نسيب المتصفح يخرج
+  showPage(parent, {fromHistory:true});
+  try{ history.pushState({page:parent}, '', '#'+parent); }catch(e){}
+});
+(function initHistory(){
+  try{
+    const h = (location.hash||'').replace('#','');
+    const p = APP_PAGES.indexOf(h)>=0 ? h : 'home';
+    history.replaceState({page:p}, '', '#'+p);
+  }catch(e){}
+})();
 
 /* ══════════════════════════════════════════
    DATES
@@ -509,6 +555,7 @@ function getDisbClientRows(){
 // لو النموذج شايل طلب محفوظ (EDIT_ID) نبدأ جديد — الطلب محفوظ في الأرشيف
 // ومش هنخسر حاجة. لو شايل مسوّدة مش محفوظة نسيبها زي ما هي.
 function goToForm(kind){
+  setFormParent('home');
   if(EDIT_ID) startNewRequest(kind);
   else showPage(kind === 'cancel' ? 'cancel' : 'disb');
 }
@@ -528,6 +575,7 @@ function updateFormMode(kind){
   }
 }
 function startNewRequest(kind){
+  setFormParent('home');
   if(kind === 'cancel'){ clearCancel(); showPage('cancel'); }
   else { clearDisb(); showPage('disb'); }
 }
@@ -1966,6 +2014,7 @@ function openFromArchive(i){
     alert(t('هذا الطلب معتمد من الحسابات، متاح للطباعة فقط ولا يمكن تعديله.'));
     return;
   }
+  setFormParent('arc');                       // الرجوع يرجّعك للأرشيف
   if(x.doc_type==='cancel'){ loadCancelFromRow(x); showPage('cancel'); }
   else { loadDisbFromRow(x); showPage('disb'); }
 }
