@@ -875,6 +875,21 @@ function applyArchiveEditLock(kind, request){
 
 // أول حرفين من الاسم (مونوغرام التوقيع)
 // خريطة الاسم (عربي أو إنجليزي) → الحروف الأولى بالإنجليزي (للإمضاء بخط اليد)
+// تحويل أول حرف عربي لما يقابله لاتينيًا — التوقيع لاتيني دائمًا
+const AR2LAT = {
+  'ا':'A','أ':'A','إ':'I','آ':'A','ء':'A','ع':'A',
+  'ب':'B','ت':'T','ث':'T','ط':'T','ظ':'Z',
+  'ج':'J','ح':'H','خ':'K','ه':'H','ة':'H',
+  'د':'D','ذ':'D','ض':'D','ر':'R','ز':'Z',
+  'س':'S','ش':'S','ص':'S','غ':'G','ف':'F','ق':'Q',
+  'ك':'K','ل':'L','م':'M','ن':'N','و':'W','ي':'Y','ى':'Y'
+};
+function latinInitial(ch){
+  if(!ch) return '';
+  if(AR2LAT[ch]) return AR2LAT[ch];
+  const up = String(ch).toUpperCase();
+  return /^[A-Z]$/.test(up) ? up : '';
+}
 const INITIALS_MAP = (function(){
   const m = {};
   Object.values(USER_MAP).forEach(u=>{
@@ -888,7 +903,7 @@ const INITIALS_MAP = (function(){
 // الحرفان الأولان مفصولان بنقطة: مثال "Anas Ibrahim" → "A.I"
 function dottedInitials(parts){
   return [parts[0]&&parts[0][0], parts[1]&&parts[1][0]]
-    .filter(Boolean).map(c=>c.toUpperCase()).join('.');
+    .filter(Boolean).map(latinInitial).filter(Boolean).join('.');
 }
 // ═══ أفاتار الموظف: أحرف أولى + تلميح باسمه الكامل عند المرور ═══
 // التلميح عنصر واحد في body لأن .arc-wrap عليها overflow:hidden وكان هيتقص.
