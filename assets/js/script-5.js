@@ -981,21 +981,30 @@ function signAccFromPad(kind){
 }
 // حالة الخانات: نضيف صنف يوضّح إن الضغط متاح دلوقتي أو لأ
 function refreshPadStates(){
+  const PEN   = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>';
+  const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>';
+  const paint = (pad, ready, icon, label) => {
+    if(!pad) return;
+    pad.classList.toggle('pad-ready', !!ready);
+    let cta = pad.querySelector('.pad-cta');
+    if(!ready){ if(cta) cta.remove(); return; }
+    if(!cta){
+      cta = document.createElement('span');
+      cta.className = 'pad-cta no-print';
+      pad.appendChild(cta);
+    }
+    cta.innerHTML = icon + '<b></b>';
+    cta.querySelector('b').textContent = label;
+  };
   ['disb','cancel'].forEach(k=>{
-    const sig = document.getElementById(k+'-sig-pad');
-    const acc = document.getElementById(k+'-acc-pad');
     const doc = document.getElementById(k === 'cancel' ? 'doc-cancel' : 'doc-disb');
     const locked = doc && doc.dataset.locked === '1';
-    if(sig){
-      const can = !locked && !SIGNED[k] && CURRENT && CURRENT.role !== 'viewer';
-      sig.classList.toggle('pad-ready', !!can);
-      sig.setAttribute('data-cta', t('اضغط للتوقيع'));
-    }
-    if(acc){
-      const can = !ACC_SIGN[k] && CURRENT && CURRENT.role === 'accountant';
-      acc.classList.toggle('pad-ready', !!can);
-      acc.setAttribute('data-cta', t('اضغط للاعتماد'));
-    }
+    paint(document.getElementById(k+'-sig-pad'),
+          !locked && !SIGNED[k] && CURRENT && CURRENT.role !== 'viewer',
+          PEN, t('اضغط للتوقيع'));
+    paint(document.getElementById(k+'-acc-pad'),
+          !ACC_SIGN[k] && CURRENT && CURRENT.role === 'accountant',
+          CHECK, t('اضغط للاعتماد'));
   });
 }
 function signFromPad(kind){

@@ -1907,15 +1907,18 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
 .sig-pad.pad-ready:active{transform:translateY(1px);}
 .sig-pad.pad-ready:focus-visible{outline:2px solid var(--indigo);outline-offset:2px;}
 /* الدعوة نفسها — واضحة */
-.sig-pad.pad-ready::after{
-  content:attr(data-cta);
-  position:absolute;inset-block-end:8px;inset-inline:0;
-  text-align:center;
+.pad-cta{
+  position:absolute;inset-block-end:9px;inset-inline:0;
+  display:flex;align-items:center;justify-content:center;gap:6px;
   font-size:11.5px;font-weight:700;letter-spacing:.2px;
   color:var(--indigo-d);pointer-events:none;}
-.sig-pad.pad-ready .placeholder{opacity:.45;transform:translateY(-7px);}
+.pad-cta svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;
+  fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.sig-pad.pad-ready:hover .pad-cta svg{transform:rotate(-8deg);}
+.pad-cta svg{transition:transform .14s;}
+.sig-pad.pad-ready .placeholder{opacity:.4;transform:translateY(-8px);}
 @media print{
-  .sig-pad.pad-ready::after{content:none !important;}
+  .pad-cta{display:none !important;}
   .sig-pad.pad-ready{border:1.5px dashed var(--border) !important;
     background:transparent !important;}
   .sig-pad.pad-ready .placeholder{opacity:1 !important;transform:none !important;}
