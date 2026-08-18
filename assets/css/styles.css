@@ -1200,3 +1200,22 @@ html[dir="rtl"] .arc-sel-f{padding:0 12px 0 34px;background-position:left 11px c
   font-size:10px !important;font-weight:700 !important;color:var(--txt-3) !important;
   letter-spacing:.5px;text-transform:uppercase;}
 .rl-head .rl-amt{justify-content:flex-end;}
+
+/* ══════════════════════════════════════════
+   فصل الشريط الإحصائي عن رؤوس الأعمدة
+   الرأس بقى جزء من الجدول مش شريط ثالث
+══════════════════════════════════════════ */
+.arc-summary{margin:0 18px 22px;}
+.rl-head{
+  background:transparent;
+  border:none;
+  border-bottom:1.5px solid var(--border);
+  border-radius:0;
+  padding:0 14px 9px;
+  margin-bottom:2px;}
+/* أول صف يبعد شوية عن الرأس */
+.rl-head + .rl-row,
+.rl-head + .rl-ghead{margin-top:2px;}
+@media (max-width:760px){
+  .arc-summary{margin:0 14px 16px;}
+}
