@@ -1759,3 +1759,30 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
   .hrow-who .pav{width:26px;height:26px;flex:0 0 26px;font-size:9px;}
   .hrow-party{grid-area:party !important;}
 }
+
+/* ══════════════════════════════════════════════════════════
+   شريط إجراءات النموذج:
+   «مسح» معزول بعيد عن الأساسي، والتسلسل بينتهي بـ«تقديم الطلب».
+   طباعة بقت ثانوية — زرار أساسي واحد بس في الشاشة.
+══════════════════════════════════════════════════════════ */
+.doc-actions [data-actions-gap]{margin-inline-start:auto;}
+.btn-print{background:var(--n0) !important;color:var(--n7) !important;
+  border:1px solid var(--n4) !important;box-shadow:none !important;}
+.btn-print:hover{background:var(--n1) !important;border-color:var(--n5) !important;}
+/* التوقيع خطوة لازمة قبل التقديم → ثانوي مميّز بلون العلامة */
+.btn-sign{background:var(--n0) !important;color:var(--indigo-d) !important;
+  border:1px solid var(--indigo-l) !important;}
+.btn-sign:hover{background:var(--indigo-t) !important;border-color:var(--indigo) !important;}
+/* مسح: نصّي هادي، بيتلوّن أحمر عند الاقتراب منه بس */
+.btn-clear{background:transparent !important;color:var(--n6) !important;
+  border:1px solid transparent !important;}
+.btn-clear:hover{background:var(--stop-bg) !important;color:var(--stop) !important;
+  border-color:var(--stop-line) !important;}
+/* أولوية أعلى من قاعدة الأزرار الثانوية العامة */
+#app .doc-actions .btn-sign{background:var(--n0) !important;color:var(--indigo-d) !important;
+  border:1px solid var(--indigo-l) !important;}
+#app .doc-actions .btn-sign:hover{background:var(--indigo-t) !important;border-color:var(--indigo) !important;}
+#app .doc-actions .btn-clear{background:transparent !important;color:var(--n6) !important;
+  border:1px solid transparent !important;}
+#app .doc-actions .btn-clear:hover{background:var(--stop-bg) !important;color:var(--stop) !important;
+  border-color:var(--stop-line) !important;}
