@@ -293,6 +293,7 @@ function enterApp(){
   const isViewer = CURRENT.role==='viewer';
   // الأرشيف متاح للجميع: المبيعات يشوف طلباته (عرض فقط)، المحاسب يشوف الكل ويتحكّم
   document.getElementById('nav-arc').style.display = '';
+  showPage('home');
   // حساب العرض فقط (إبراهيم): يدخل إدارة الطلبات كاملة بدون إنشاء أو تعديل
   document.getElementById('nav-disb').style.display   = isViewer ? 'none' : '';
   document.getElementById('nav-cancel').style.display = isViewer ? 'none' : '';
@@ -391,7 +392,7 @@ async function loadSupplierNames(){
    NAVIGATION
 ══════════════════════════════════════════ */
 function showPage(p){
-  ['cancel','disb','arc'].forEach(x=>{
+  ['home','cancel','disb','arc'].forEach(x=>{
     document.getElementById('page-'+x).classList.toggle('on', x===p);
     document.getElementById('nav-'+(x==='arc'?'arc':x)).classList.toggle('on', x===p);
   });
@@ -399,6 +400,7 @@ function showPage(p){
   document.getElementById('nav-disb').classList.toggle('on', p==='disb');
   document.getElementById('nav-arc').classList.toggle('on', p==='arc');
   if (p==='arc') loadArchive();
+  if (p==='home') loadHome();
   window.scrollTo(0,0);
 }
 
@@ -1326,6 +1328,7 @@ const ARC_ICONS = {
   paperclip:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg>',
   clock:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>',
   hourglass:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h12"></path><path d="M6 22h12"></path><path d="M7 2v6l5 4 5-4V2"></path><path d="M7 22v-6l5-4 5 4v6"></path></svg>',
+  plus:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>',
   more:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle></svg>',
   sign:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>',
   trash:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M6 6l1 16h10l1-16"></path></svg>',
@@ -3103,3 +3106,116 @@ function closeUserMenu(){
 }
 document.addEventListener('click', e=>{ if(!e.target.closest('#tb-menu') && !e.target.closest('#tb-chip')) closeUserMenu(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeUserMenu(); });
+
+/* ══════════════════════════════════════════
+   الشاشة الرئيسية — طابور شغل حسب الدور
+══════════════════════════════════════════ */
+// كام يوم عدّى على الطلب؟ (التقادم — أهم مؤشر في أداة مالية)
+function requestAgeDays(x){
+  const d = new Date(x.created_at || x.signed_at || x.req_date);
+  if(Number.isNaN(d.getTime())) return 0;
+  return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+}
+function ageChip(x){
+  const d = requestAgeDays(x);
+  const lvl = d>=7 ? 'age-late' : d>=3 ? 'age-warn' : 'age-ok';
+  const txt = d===0 ? t('اليوم') : d===1 ? t('من يوم') : t('من {n} يوم').replace('{n}', d);
+  return `<span class="age ${lvl}">${ARC_ICONS.clock}${txt}</span>`;
+}
+function homeRow(x, primary){
+  const st = requestStatus(x);
+  return `<div class="hrow">
+    <div class="hrow-main">
+      <div class="hrow-top"><b>${displayRequestNo(x.req_no)||'—'}</b>
+        <span class="arc-status ${st.cls}"><i></i>${t(st.label)}</span>${ageChip(x)}</div>
+      <div class="hrow-sub">${escapeHtml(x.doc_type==='cancel' ? (x.invoice_ref||'—') : (x.beneficiary||'—'))}
+        <span class="dot">·</span>${escapeHtml(personName(x.created_by||''))}</div>
+    </div>
+    <div class="hrow-amt">${x.amount?formatMoney(x.amount):'—'} <em>${t('ر.ق')}</em></div>
+    <div class="hrow-act">${primary||''}</div>
+  </div>`;
+}
+function homeEmpty(icon, title, sub){
+  return `<div class="h-empty">${icon}<b>${t(title)}</b><span>${t(sub)}</span></div>`;
+}
+async function loadHome(){
+  const greet=document.getElementById('home-greet'), sub=document.getElementById('home-sub');
+  const acts=document.getElementById('home-actions'), body=document.getElementById('home-body');
+  if(!body || !CURRENT) return;
+  const isAcc = CURRENT.role==='accountant', isViewer = CURRENT.role==='viewer';
+  greet.textContent = `${t('أهلاً')} ${personName(CURRENT.name)}`;
+  sub.textContent   = personName(CURRENT.dept||'');
+  acts.innerHTML = isViewer ? '' :
+    `<button class="hbtn ghost" onclick="showPage('cancel')">${ARC_ICONS.file}${t('طلب إلغاء')}</button>
+     <button class="hbtn primary" onclick="showPage('disb')">${ARC_ICONS.plus}${t('طلب صرف جديد')}</button>`;
+  if(!SB_ON){ body.innerHTML = homeEmpty(ARC_ICONS.file,'الأرشيف غير مفعّل','—'); return; }
+  body.innerHTML = `<div class="h-loading">${t('جاري التحميل...')}</div>`;
+  try{
+    let qy = sb.from('requests').select('*').order('id',{ascending:false}).limit(200);
+    if(CURRENT.role==='sales'){
+      const names = Object.values(USER_MAP).filter(u=>u.role==='sales').map(u=>u.name);
+      qy = qy.in('created_by', names);
+    }
+    const { data, error } = await qy;
+    if(error) throw error;
+    const live = (data||[]).filter(r=>!r.cancelled);
+    const byAge = (a,b)=> requestAgeDays(b)-requestAgeDays(a);
+    let html='';
+    if(isAcc){
+      const pending  = live.filter(r=>!r.accounts_signed_by).sort(byAge);
+      const toPay    = live.filter(r=>r.accounts_signed_by && !r.transfer_image).sort(byAge);
+      const payTotal = toPay.reduce((a,r)=>a+(Number(r.amount)||0),0);
+      html += homeSection('مطلوب منك', 'بانتظار اعتمادك', pending.length,
+        pending.length ? pending.slice(0,6).map(x=>homeRow(x,
+          `<button class="hbtn sm primary" onclick="approveFromHome(${x.id})">${t('اعتماد')}</button>`)).join('')
+        : homeEmpty(ARC_ICONS.sign,'مفيش طلبات مستنية اعتمادك','كل حاجة تمام 👌'), pending.length>6);
+      html += homeSection('جاهز للتحويل', 'معتمد ولم يُحوّل', toPay.length,
+        toPay.length ? `<div class="h-paybar"><span>${t('إجمالي جاهز للتحويل')}</span>
+             <b>${formatMoney(payTotal)} ${t('ر.ق')}</b>
+             <button class="hbtn primary" onclick="startBatchFromHome()">${ARC_ICONS.layers}${t('تحويل مجمّع')}</button></div>`
+            + toPay.slice(0,5).map(x=>homeRow(x,
+              `<button class="hbtn sm ghost" onclick="uploadProofFromHome(${x.id})">${t('إثبات')}</button>`)).join('')
+        : homeEmpty(ARC_ICONS.upload,'مفيش طلبات جاهزة للتحويل','هتظهر هنا بعد الاعتماد'), toPay.length>5);
+    } else {
+      const mine = live.filter(r=>r.created_by===CURRENT.name).sort((a,b)=>(b.id||0)-(a.id||0));
+      const waiting = mine.filter(r=>!r.transfer_image);
+      html += homeSection('طلباتي', 'قيد التنفيذ', waiting.length,
+        waiting.length ? waiting.slice(0,8).map(x=>homeRow(x,'')).join('')
+        : homeEmpty(ARC_ICONS.doc,'مفيش طلبات قيد التنفيذ','ابدأ بطلب صرف جديد'), waiting.length>8);
+      const done = mine.filter(r=>r.transfer_image).slice(0,4);
+      if(done.length) html += homeSection('تم تحويلها', 'آخر التحويلات', done.length,
+        done.map(x=>homeRow(x,'')).join(''), false);
+    }
+    body.innerHTML = html;
+  }catch(e){ console.error(e); body.innerHTML = homeEmpty(ARC_ICONS.file,'خطأ اتصال','حاول مرة أخرى'); }
+}
+function homeSection(title, sub, count, inner, more){
+  return `<section class="h-sec">
+    <div class="h-sec-hd"><b>${t(title)}</b><span>${t(sub)}</span>
+      ${count?`<em class="h-count">${count}</em>`:''}
+      ${more?`<button class="h-all" onclick="showPage('arc')">${t('عرض الكل')}</button>`:''}</div>
+    <div class="h-sec-body">${inner}</div></section>`;
+}
+// أفعال مباشرة من الرئيسية
+async function approveFromHome(id){
+  const i = await openArchiveRowById(id); if(i<0) return;
+  await approveFromArchive(i); loadHome();
+}
+async function uploadProofFromHome(id){
+  const i = await openArchiveRowById(id); if(i<0) return;
+  await uploadTransferImage(i); loadHome();
+}
+function startBatchFromHome(){
+  showPage('arc');
+  setTimeout(()=>{ if(!ARC_SELECT_MODE) toggleTransferSelectMode(); }, 700);
+}
+// نجيب صفوف الأرشيف عشان نعيد استخدام نفس الأفعال
+async function openArchiveRowById(id){
+  if(!(window._arcRows||[]).some(r=>r.id===id)){
+    try{
+      const { data } = await sb.from('requests').select('*').order('id',{ascending:false}).limit(200);
+      window._arcRows = (data||[]).filter(r=>!r.cancelled);
+    }catch(e){ return -1; }
+  }
+  return (window._arcRows||[]).findIndex(r=>r.id===id);
+}
