@@ -1973,3 +1973,24 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
    وتمتد جوّاها زي رقاقة التقادم والمبلغ بالظبط */
 .rl-act .rl-counts{width:92px;flex:0 0 92px;justify-content:flex-start;}
 @media (max-width:819px){ .rl-act .rl-counts{width:auto;flex:0 0 auto;} }
+
+/* ══════════════════════════════════════════════════════════
+   التاريخ ورقم الطلب توأم في رأس الوثيقة — نفس المعاملة
+   (كان 13px/400/كحلي مقابل 15px/700/تركوازي)
+══════════════════════════════════════════════════════════ */
+#d-date,#c-date,#doc-disb input[type="date"],#doc-cancel input[type="date"]{
+  font-size:15px !important;font-weight:700 !important;
+  color:var(--indigo) !important;letter-spacing:.3px !important;
+  font-variant-numeric:tabular-nums;}
+#d-date::-webkit-calendar-picker-indicator,
+#c-date::-webkit-calendar-picker-indicator{
+  opacity:.45;cursor:pointer;transition:opacity .12s;}
+#d-date:hover::-webkit-calendar-picker-indicator,
+#c-date:hover::-webkit-calendar-picker-indicator{opacity:.8;}
+@media print{
+  #d-date,#c-date,#doc-disb input[type="date"],#doc-cancel input[type="date"]{
+    font-size:13px !important;font-weight:700 !important;
+    color:var(--indigo) !important;}
+  #d-date::-webkit-calendar-picker-indicator,
+  #c-date::-webkit-calendar-picker-indicator{display:none !important;}
+}
