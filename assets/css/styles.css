@@ -2025,3 +2025,13 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
   font-family:'PlexAr','Inter',sans-serif !important;}
 /* التسميات الإنجليزية تفضل Inter — ده مقصود مش تضارب */
 #doc-disb .en,#doc-cancel .en{font-family:'Inter',sans-serif;}
+
+/* ══════════════════════════════════════════════════════════
+   خط التوقيع SignatureHand لاتيني فقط — مالوش حروف عربية.
+   لما الأحرف الأولى تطلع عربية كان بيقع على خط النظام
+   (Segoe Script على ويندوز، غيره على ماك) فالتوقيع المطبوع
+   بيختلف من جهاز لجهاز. الاحتياطي بقى PlexAr — خط بنشحنه
+   إحنا، فالنتيجة واحدة على كل جهاز.
+══════════════════════════════════════════════════════════ */
+.sig-mono,#doc-disb .sig-mono,#doc-cancel .sig-mono{
+  font-family:'SignatureHand','PlexAr','Inter',cursive !important;}
