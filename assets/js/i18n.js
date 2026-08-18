@@ -8,6 +8,9 @@ let LANG = 'ar';
 try{ LANG = localStorage.getItem(LANG_KEY) || 'ar'; }catch(e){ LANG = 'ar'; }
 
 const I18N_EN = {
+  'هذا الطلب من إنشاء موظف آخر — متاح للعرض والطباعة والاعتماد فقط، ولا يمكن تعديله.': 'This request was created by another employee — view, print and approve only; it cannot be edited.',
+  'هذا الطلب من إنشاء موظف آخر ولا يمكن تعديله. يمكنك عرضه وطباعته واعتماده فقط.': 'This request was created by another employee and cannot be edited. You may view, print and approve it.',
+  'هذا الطلب ملغي — متاح للعرض والطباعة فقط.': 'This request is cancelled — view and print only.',
   /* ── تسجيل الدخول والهيدر ── */
   'زمزم للحج والعمرة · Zamzam':'Zamzam Hajj & Umrah',
   'زمزم للحج والعمرة':'Zamzam Hajj & Umrah',

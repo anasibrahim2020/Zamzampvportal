@@ -795,10 +795,11 @@ function isApprovedRequest(x){ return !!(x && x.accounts_signed_by); }
 function isOwnRequest(x){ return !!(CURRENT && x && x.created_by === CURRENT.name); }
 function canCurrentEditRequest(x){
   if(CURRENT && CURRENT.role === 'viewer') return false;   // حساب العرض فقط
-  if(!x) return true;
-  if(x.cancelled) return false;
-  if(CURRENT && CURRENT.role === 'accountant') return true;
-  return isOwnRequest(x) && !isApprovedRequest(x);
+  if(!x) return true;                                      // طلب جديد
+  if(x.cancelled) return false;                            // ملغي = مقفول للجميع
+  if(!isOwnRequest(x)) return false;                       // مش صاحب الطلب = مقفول (المحاسب كمان)
+  if(isApprovedRequest(x)) return false;                   // معتمد = مقفول حتى لصاحبه
+  return true;                                             // صاحبه وقبل الاعتماد = يعدّل
 }
 function setDocumentLocked(kind, locked){
   const doc = document.getElementById(kind === 'cancel' ? 'doc-cancel' : 'doc-disb');
@@ -806,6 +807,9 @@ function setDocumentLocked(kind, locked){
     doc.dataset.locked = locked ? '1' : '0';
     doc.querySelectorAll('input, textarea, select, button').forEach(el=>{
       if(el.classList.contains('no-lock')) return;
+      // الاعتماد والطباعة شغّالين دايمًا حتى لو الطلب مقفول للتعديل
+      if(/-acc-btn$/.test(el.id || '')) return;
+      if(el.classList.contains('btn-print')) return;
       el.disabled = !!locked;
     });
     doc.querySelectorAll('.attach-zone').forEach(el=>{
@@ -827,10 +831,14 @@ function applyArchiveEditLock(kind, request){
     if(status) status.textContent = t('أنت تعرض الطلب للقراءة فقط — اختر «تعديل الطلب» من الأرشيف للتعديل عليه.');
     return;
   }
-  if(locked && CURRENT && CURRENT.role !== 'accountant'){
-    if(kind === 'disb'){
-      const status = document.getElementById('disb-pdf-status');
-      if(status) status.textContent = t('هذا الطلب معتمد من الحسابات، متاح للطباعة فقط ولا يمكن تعديله.');
+  if(locked && request){
+    const status = document.getElementById(kind + '-pdf-status');
+    if(status){
+      status.textContent = request.cancelled
+        ? t('هذا الطلب ملغي — متاح للعرض والطباعة فقط.')
+        : (!isOwnRequest(request)
+            ? t('هذا الطلب من إنشاء موظف آخر — متاح للعرض والطباعة والاعتماد فقط، ولا يمكن تعديله.')
+            : t('هذا الطلب معتمد من الحسابات، متاح للطباعة فقط ولا يمكن تعديله.'));
     }
   }
 }
@@ -1362,7 +1370,7 @@ function showConfirmDialog({ title, message, details=[], note='', confirmText=t(
     overlay.id = 'app-confirm-overlay';
     overlay.dir = 'rtl';
     overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,19,33,.55);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);';
-    const accent = danger ? '#E0526B' : '#2C8B8E';
+    const accent = danger ? '#B34A63' : '#2C8B8E';
     const accentSoft = danger ? 'rgba(224,82,107,.28)' : 'rgba(44,139,142,.28)';
     const caption = subtitle !== undefined ? subtitle : (showCancel ? 'Confirmation' : 'Notification');
     const detailsHtml = details.length ? `<div class="acd-details">${details.map((d, idx)=>`
@@ -1676,21 +1684,28 @@ function showArchiveActionsMenu(btn, rowIndex){
   const x = (window._arcRows||[])[rowIndex];
   if(!x) return;
   const isAcc = CURRENT && CURRENT.role==='accountant';
-  const canEdit = isAcc || canCurrentEditRequest(x);
+  // التعديل لصاحب الطلب قبل الاعتماد فقط — المحاسب يعتمد ويطبع ولا يعدّل
+  const canEdit   = canCurrentEditRequest(x);
+  const canRevoke = isAcc && x.accounts_signed_by && !x.cancelled;
+  const canCancel = !x.cancelled && (isAcc || canEdit);
   let html = '';
   // عرض الطلب (قراءة فقط) + طباعة الطلب متاحان دائماً
   html += archiveMenuButton(t('عرض الطلب'), ARC_ICONS.view, `viewFromArchive(${rowIndex})`);
   html += archiveMenuButton(t('طباعة الطلب'), ARC_ICONS.print, `reprintFromArchive(${rowIndex})`);
   html += archiveMenuButton(t('سجل التوقيت'), ARC_ICONS.clock, `showArchiveTimeFromMenu(this, ${rowIndex})`);
   // تعديل الطلب ثم إلغاء الطلب (لمن يملك صلاحية التعديل فقط)
-  if(canEdit){
+  if(canEdit || canRevoke || canCancel){
     html += '<div class="arc-menu-sep"></div>';
-    html += archiveMenuButton(t('تعديل الطلب'), ARC_ICONS.sign, `editFromArchive(${rowIndex})`);
+    if(canEdit){
+      html += archiveMenuButton(t('تعديل الطلب'), ARC_ICONS.sign, `editFromArchive(${rowIndex})`);
+    }
     // إلغاء الاعتماد: للمحاسب فقط على الطلبات المعتمدة غير الملغاة — يرجّع الطلب «غير معتمد»
-    if(isAcc && x.accounts_signed_by && !x.cancelled){
+    if(canRevoke){
       html += archiveMenuButton(t('إلغاء الاعتماد'), ARC_ICONS.sign, `revokeApproval(${rowIndex})`, true);
     }
-    html += archiveMenuButton(t('إلغاء الطلب'), ARC_ICONS.trash, `cancelRequest(${rowIndex})`, true);
+    if(canCancel){
+      html += archiveMenuButton(t('إلغاء الطلب'), ARC_ICONS.trash, `cancelRequest(${rowIndex})`, true);
+    }
   }
   showArchiveMenu(btn, t('إجراءات الطلب'), escAttr(displayRequestNo(x.req_no) || 'Request'), html);
 }
@@ -1880,12 +1895,14 @@ function viewFromArchive(i){
 async function editFromArchive(i){
   const x = (window._arcRows||[])[i];
   if(!x){ alert(t('تعذّر فتح الطلب.')); return; }
-  if(CURRENT && CURRENT.role !== 'accountant' && !canCurrentEditRequest(x)){
+  if(!canCurrentEditRequest(x)){
     showMessageDialog({
       title:t('تعذّر التعديل'),
       message: x.cancelled
         ? t('هذا الطلب ملغي ولا يمكن تعديله.')
-        : t('هذا الطلب معتمد من إدارة الحسابات، متاح للطباعة فقط ولا يمكن تعديله.'),
+        : (!isOwnRequest(x)
+            ? t('هذا الطلب من إنشاء موظف آخر ولا يمكن تعديله. يمكنك عرضه وطباعته واعتماده فقط.')
+            : t('هذا الطلب معتمد من إدارة الحسابات، متاح للطباعة فقط ولا يمكن تعديله.')),
       confirmText:t('حسنًا')
     });
     return;
@@ -2477,9 +2494,8 @@ function formatMoney(n){
   return v.toLocaleString('en-US',{ minimumFractionDigits:2, maximumFractionDigits:2 });
 }
 function transferGroupColor(gid){
-  const palette = ['#2C8B8E','#3E3A72','#C9A24B','#1E9E78','#7A5CB8','#D97706','#0F766E','#BE185D'];
-  const n = parseInt(String(gid||'').replace(/\D/g,''),10) || 0;
-  return palette[n % palette.length];
+  // لون واحد لكل المجموعات — هوية المجموعة رقمها وإطارها مش لونها
+  return '#2C8B8E';
 }
 // مزج لون المجموعة بالأبيض (k = نسبة اللون) لإنتاج درجات فاتحة
 function mixWithWhite(hex, k){
