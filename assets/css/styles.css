@@ -1336,10 +1336,12 @@ html[dir="rtl"] .arc-sel-f{padding:0 12px 0 32px;background-position:left 11px c
 .btn:not(.btn-primary):not(.btn-danger):hover,.btn-ghost:hover,.btn-sign:hover,
 .btn-acc:hover,.arc-refresh-btn:hover,.arc-bulk-btn:hover,.btn-clear:hover{
   background:var(--n1) !important;border-color:var(--n5) !important;}
-/* نصّي */
-.btn-text,.add-row-btn{background:transparent !important;background-image:none !important;
+/* «إضافة صف» فقط — .btn-text دي span بتلفّ نص الزرار مش نوع زرار */
+.add-row-btn{background:transparent !important;background-image:none !important;
   color:var(--indigo) !important;border:1px dashed var(--n4) !important;box-shadow:none !important;}
-.btn-text:hover,.add-row-btn:hover{background:var(--indigo-t) !important;border-color:var(--indigo) !important;}
+.add-row-btn:hover{background:var(--indigo-t) !important;border-color:var(--indigo) !important;}
+.btn-text{background:transparent !important;border:0 !important;box-shadow:none !important;
+  color:inherit !important;padding:0 !important;}
 /* خطر — أحمر للإتلاف فقط */
 .btn-danger{background:var(--n0) !important;color:var(--stop) !important;
   border:1px solid var(--stop-line) !important;background-image:none !important;}
