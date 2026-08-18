@@ -769,3 +769,8 @@ html[dir="rtl"] .tb-chip{padding:3px;}
   .rq-go{font-size:11.5px;padding:0 12px;}
   .rq-ghead{padding:9px 13px;}
 }
+
+/* اللوجو أكبر — الحشو أقل عشان العلامة نفسها تملا المساحة */
+.tb-logo{height:50px;padding:4px 9px;border-radius:10px;}
+@media (max-width:760px){ .tb-logo{height:40px;padding:3px 7px;border-radius:9px;} }
+@media (max-width:430px){ .tb-logo{height:36px;padding:3px 6px;} }
