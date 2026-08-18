@@ -464,7 +464,7 @@ document.querySelectorAll('#c-alloc .chk input').forEach(cb=>{
 function recalcRefund(){
   let t=0;
   document.querySelectorAll('#refund-rows .r-amt').forEach(i=> t+=parseAmt(i.value));
-  document.getElementById('refund-total').textContent = t.toLocaleString('en-US',{minimumFractionDigits:2});
+  document.getElementById('refund-total').textContent = docAmount(t);
 }
 
 /* ══════════════════════════════════════════
@@ -629,7 +629,7 @@ function handleSupplierAmt(el){
 function recalcSupplier(){
   let t=0;
   document.querySelectorAll('#supplier-rows .s-amt').forEach(i=> t+=parseAmt(i.value));
-  document.getElementById('supplier-total').textContent = t.toLocaleString('en-US',{minimumFractionDigits:2});
+  document.getElementById('supplier-total').textContent = docAmount(t);
   if(typeof updateMatch==='function') updateMatch();
 }
 addSupplierRow(); // start with one row
@@ -655,7 +655,7 @@ function handleClientAmt(el){
 function recalcClient(){
   let t=0;
   document.querySelectorAll('#client-rows .c-amt').forEach(i=> t+=parseAmt(i.value));
-  document.getElementById('client-total').textContent = t.toLocaleString('en-US',{minimumFractionDigits:2});
+  document.getElementById('client-total').textContent = docAmount(t);
   updateMatch();
 }
 function isCostCenterDisabled(){
@@ -853,6 +853,7 @@ function setDocumentLocked(kind, locked){
 }
 function applyArchiveEditLock(kind, request){
   updateFormMode(kind);
+  setTimeout(refreshPadStates,0);
   const locked = VIEW_ONLY || !!(request && !canCurrentEditRequest(request));
   setDocumentLocked(kind, locked);
   if(VIEW_ONLY){
@@ -952,13 +953,57 @@ function stampDate(d){
 document.addEventListener('blur', (e)=>{
   const el = e.target;
   if(!el || !el.classList) return;
-  if(!el.classList.contains('s-amt') && !el.classList.contains('c-amt')) return;
+  if(!el.classList.contains('s-amt') && !el.classList.contains('c-amt')
+     && !el.classList.contains('r-amt') && !el.classList.contains('amt-input')) return;
   const raw = String(el.value||'').replace(/,/g,'').trim();
   if(raw === '') return;
   const n = Number(raw);
   if(!isFinite(n)) return;
-  el.value = n.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
+  el.value = docAmount(n);
 }, true);
+// التوقيع من خانة التوقيع نفسها — الفعل بيحصل في مكان النتيجة.
+// بنتجاهل الضغط لو الوثيقة مقفولة أو الطلب موقّع بالفعل.
+// نص الدعوة للضغط بيتحط كسمة data عشان ما يدخلش في نص الوثيقة المطبوع
+function refreshSigHints(){
+  refreshPadStates();
+  ['disb','cancel'].forEach(k=>{
+    const ph = document.getElementById(k+'-sig-ph');
+    if(ph) ph.setAttribute('data-hint', t('اضغط للتوقيع'));
+  });
+}
+// اعتماد الحسابات من الخانة نفسها — نفس منطق التوقيع
+function signAccFromPad(kind){
+  if(!CURRENT || CURRENT.role !== 'accountant') return;
+  const doc = document.getElementById(kind === 'cancel' ? 'doc-cancel' : 'doc-disb');
+  if(doc && doc.dataset.locked === '1' && !EDIT_ID) return;
+  if(ACC_SIGN[kind]) return;
+  signAccountsFor(kind);
+}
+// حالة الخانات: نضيف صنف يوضّح إن الضغط متاح دلوقتي أو لأ
+function refreshPadStates(){
+  ['disb','cancel'].forEach(k=>{
+    const sig = document.getElementById(k+'-sig-pad');
+    const acc = document.getElementById(k+'-acc-pad');
+    const doc = document.getElementById(k === 'cancel' ? 'doc-cancel' : 'doc-disb');
+    const locked = doc && doc.dataset.locked === '1';
+    if(sig){
+      const can = !locked && !SIGNED[k] && CURRENT && CURRENT.role !== 'viewer';
+      sig.classList.toggle('pad-ready', !!can);
+      sig.setAttribute('data-cta', t('اضغط للتوقيع'));
+    }
+    if(acc){
+      const can = !ACC_SIGN[k] && CURRENT && CURRENT.role === 'accountant';
+      acc.classList.toggle('pad-ready', !!can);
+      acc.setAttribute('data-cta', t('اضغط للاعتماد'));
+    }
+  });
+}
+function signFromPad(kind){
+  const doc = document.getElementById(kind === 'cancel' ? 'doc-cancel' : 'doc-disb');
+  if(doc && doc.dataset.locked === '1') return;
+  if(SIGNED[kind]) return;
+  signDoc(kind);
+}
 function signDoc(kind){
   if(!CURRENT) return;
   if(CURRENT.role==='viewer'){
@@ -974,6 +1019,7 @@ function signDoc(kind){
   document.getElementById(kind+'-sig-name').textContent = personName(CURRENT.name);
   document.getElementById(kind+'-sign-btn')?.classList.add('signed');
   document.getElementById(kind+'-sig-meta').textContent = dt;
+  refreshPadStates();
   showMessageDialog({
     title:t('تم التوقيع الإلكتروني'),
     message:t('تم تسجيل توقيعك الإلكتروني على الطلب بنجاح.'),
@@ -1000,6 +1046,7 @@ async function signAccountsFor(kind){
   document.getElementById(pfx+'-acc-mono').textContent = initials(CURRENT.name);
   document.getElementById(pfx+'-acc-name').textContent = personName(CURRENT.name);
   document.getElementById(pfx+'-acc-meta').textContent = dt;
+  refreshPadStates();
   if(EDIT_ID && SB_ON){
     const btn=document.getElementById(pfx+'-acc-btn'); const o=btn?btn.innerHTML:'';
     if(btn){ btn.disabled=true; btn.textContent=t('جاري الاعتماد...'); }
@@ -2578,6 +2625,14 @@ const ARC_SELECTED = new Set();              // ids الطلبات المحدد�
 const ARC_SELECTED_DATA = new Map();         // id → بيانات مختصرة (تفضل محفوظة رغم تغيّر الفلاتر)
 const TRANSFER_GROUP_SQL = 'ALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_group TEXT;\nALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_group_at TIMESTAMPTZ;\nALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_group_note TEXT;';
 
+// أرقام الوثيقة: نعرض الكسور لما تكون موجودة بس — 2222 مش 2222.00
+function docAmount(n){
+  const v = Number(n) || 0;
+  const frac = Math.abs(v % 1) > 0.0000001;
+  return v.toLocaleString('en-US', frac
+    ? { minimumFractionDigits:2, maximumFractionDigits:2 }
+    : { minimumFractionDigits:0, maximumFractionDigits:0 });
+}
 function formatMoney(n){
   const v = Number(n)||0;
   return v.toLocaleString('en-US',{ minimumFractionDigits:2, maximumFractionDigits:2 });
