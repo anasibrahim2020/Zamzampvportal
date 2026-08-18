@@ -484,6 +484,7 @@ const I18N_EN = {
   'الحد الأقصى للعرض 200 طلب — استخدم البحث أو فلتر التاريخ':'Showing the first 200 — use search or the date filter to narrow down',
 
   'الرئيسية':'Home',
+  'المورّد / مقدّم الطلب':'Supplier / Requester',
   'كل الأنواع':'All types',
   'الأحدث أولاً':'Newest first',
   'الأقدم أولاً':'Oldest first',

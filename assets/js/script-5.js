@@ -1790,7 +1790,15 @@ async function loadArchive(silent=false){
     sortTransferGroupsTogether(list);   // طلبات التحويل الواحد تفضل ورا بعض ككتلة واحدة
     window._arcRows = list;
     renderTransferGroupNote(note, search);      // لافتة ملخّص عند فلترة مجموعة تحويل
-    body.innerHTML=list.map((x,i)=>{
+    const headHtml = `<div class="rl-head">
+      <span class="rl-c rl-no">${t('رقم الطلب')}</span>
+      <span class="rl-c rl-party">${t('المورّد / مقدّم الطلب')}</span>
+      <span class="rl-c rl-date">${t('التاريخ')}</span>
+      <span class="rl-c rl-amt">${t('المبلغ')}</span>
+      <span class="rl-c rl-st">${t('الحالة')}</span>
+      <span class="rl-c rl-act"></span>
+    </div>`;
+    body.innerHTML = headHtml + list.map((x,i)=>{
       const st = requestStatus(x);
       const groupId = x.transfer_group || '';
       const groupInfo = groupId ? (window._arcGroups||{})[groupId] : null;
@@ -1801,62 +1809,58 @@ async function loadArchive(silent=false){
       const isBlockLast  = !!blockGid && blockGid !== gidAt(i+1);
       const atts = getArchiveRowAttachments(x);
       const visComments = getVisibleComments(x);
+      const days = requestAgeDays(x);
+      const ageCls = days>=7 ? 'age-late' : days>=3 ? 'age-warn' : 'age-ok';
+      // التقادم إشارة فعل — مالوش معنى على طلب اتحوّل أو اتلغى
+      const showAge = !x.cancelled && !x.transfer_image;
 
-      // شارات الصف
-      const chips = [];
-      if(groupId && !x.cancelled) chips.push(`<button class="rq-chip grp" onclick="event.stopPropagation();filterByTransferGroup('${escAttr(groupId)}')" title="${escAttr(t('تحويل مجمّع'))}">${ARC_ICONS.layers}${escAttr(groupId)}</button>`);
-      chips.push(ageChip(x));
-
-      // أفعال الصف — الفعل التالي حسب الحالة
-      let act = '';
+      // الفعل التالي كأيقونة موحّدة المكان
+      let actIcon = '';
       if(isAcc && !x.accounts_signed_by && !x.cancelled)
-        act = `<button class="rq-go primary" onclick="event.stopPropagation();reviewFromHome(${x.id})">${t('مراجعة واعتماد')}</button>`;
+        actIcon = `<button class="rl-go review" onclick="event.stopPropagation();reviewFromHome(${x.id})" title="${escAttr(t('مراجعة واعتماد'))}">${ARC_ICONS.sign}</button>`;
       else if(isAcc && x.accounts_signed_by && !x.transfer_image && !x.cancelled)
-        act = `<button class="rq-go ghost" onclick="event.stopPropagation();uploadTransferImage(${i})">${ARC_ICONS.upload}${t('رفع الإثبات')}</button>`;
+        actIcon = `<button class="rl-go upload" onclick="event.stopPropagation();uploadTransferImage(${i})" title="${escAttr(t('رفع الإثبات'))}">${ARC_ICONS.upload}</button>`;
       else if(x.transfer_image)
-        act = `<button class="rq-go ghost" onclick="event.stopPropagation();showTransferProofMenu(this, ${i})">${ARC_ICONS.file}${t('إثبات التحويل')}</button>`;
+        actIcon = `<button class="rl-go proof" onclick="event.stopPropagation();showTransferProofMenu(this, ${i})" title="${escAttr(t('إثبات التحويل'))}">${ARC_ICONS.file}</button>`;
+      else actIcon = '<span class="rl-go-slot"></span>';
 
-      // مربع تحديد التحويل المجمّع
       const sel = (ARC_SELECT_MODE && isTransferSelectable(x))
         ? `<label class="rq-sel" onclick="event.stopPropagation()"><input type="checkbox"${ARC_SELECTED.has(x.id)?' checked':''} onchange="toggleTransferSelection(${x.id}, this.checked, this)"><span></span></label>` : '';
 
-      const cls = ['rq'];
-      if(blockGid) cls.push('rq-grp');
-      if(isBlockFirst) cls.push('rq-grp-first');
-      if(isBlockLast) cls.push('rq-grp-last');
-      if(x.cancelled) cls.push('rq-cancelled');
-      if(ARC_SELECT_MODE && ARC_SELECTED.has(x.id)) cls.push('rq-selected');
+      const cls=['rl-row'];
+      if(blockGid) cls.push('rl-grp');
+      if(isBlockFirst) cls.push('rl-grp-first');
+      if(isBlockLast) cls.push('rl-grp-last');
+      if(x.cancelled) cls.push('rl-cancelled');
+      if(ARC_SELECT_MODE && ARC_SELECTED.has(x.id)) cls.push('rl-selected');
       const style = groupId ? ` style="${transferGroupVars(groupId)}"` : '';
 
-      const head = isBlockFirst ? `<div class="rq-ghead"${style}>
-          <span class="rq-ghead-t">${ARC_ICONS.layers}<b>${t('تحويل مجمّع')}</b><em>${escAttr(blockGid)}</em></span>
-          <span class="rq-ghead-s">${groupCount} ${t('طلبات')} · ${t('إجمالي')} <b>${formatMoney(groupInfo?groupInfo.total:x.amount)}</b> ${t('ر.ق')}${groupInfo&&groupInfo.note?` · ${t('مرجع:')} ${escapeHtml(groupInfo.note)}`:''}</span>
+      const gHead = isBlockFirst ? `<div class="rl-ghead"${style}>
+          <span class="rl-ghead-t">${ARC_ICONS.layers}<b>${t('تحويل مجمّع')}</b><em>${escAttr(blockGid)}</em></span>
+          <span class="rl-ghead-s">${groupCount} ${t('طلبات')} · ${t('إجمالي')} <b>${formatMoney(groupInfo?groupInfo.total:x.amount)}</b> ${t('ر.ق')}${groupInfo&&groupInfo.note?` · ${t('مرجع:')} ${escapeHtml(groupInfo.note)}`:''}</span>
         </div>` : '';
 
-      return head + `<div class="${cls.join(' ')}"${style} onclick="viewFromArchive(${i})" role="button" tabindex="0">
-        ${sel}
-        <div class="rq-main">
-          <div class="rq-top">
-            <b class="rq-no">${displayRequestNo(x.req_no)||'—'}</b>
-            <span class="rq-type ${x.doc_type==='cancel'?'is-cancel':'is-pay'}">${x.doc_type==='cancel'?t('إلغاء'):t('صرف')}</span>
-            <span class="arc-status ${st.cls}"><i></i>${t(st.label)}</span>
-            ${chips.join('')}
-          </div>
-          <div class="rq-sub">
-            <span>${escapeHtml(x.doc_type==='cancel' ? (x.invoice_ref||'—') : (x.beneficiary||'—'))}</span>
-            <span class="dot">·</span><span>${escapeHtml(personName(x.created_by||'—'))}</span>
-            <span class="dot">·</span><span>${x.req_date||'—'}</span>
-          </div>
-        </div>
-        <div class="rq-amt">${x.amount?formatMoney(x.amount):'—'}<em>${t('ر.ق')}</em></div>
-        <div class="rq-meta">
-          ${atts.length?`<button class="rq-ic" onclick="event.stopPropagation();showArchiveAttachmentsMenu(this, ${i})" title="${escAttr(t('المرفقات'))}">${ARC_ICONS.paperclip}<b>${atts.length}</b></button>`:''}
-          <button class="rq-ic${visComments.length?' has':''}" onclick="event.stopPropagation();openCommentsDialog(${i})" title="${escAttr(t('تعليقات'))}">${ARC_ICONS.comment}${visComments.length?`<b>${visComments.length}</b>`:''}</button>
-        </div>
-        <div class="rq-act">${act}
-          <button class="rq-ic more" onclick="event.stopPropagation();showArchiveActionsMenu(this, ${i})" title="${escAttr(t('إجراءات'))}">${ARC_ICONS.more}</button>
-        </div>
-      </div>` + (isBlockLast ? '<div class="rq-gend"'+style+'></div>' : '');
+      return gHead + `<div class="${cls.join(' ')}"${style} onclick="viewFromArchive(${i})" role="button" tabindex="0">
+        <span class="rl-c rl-no">${sel}
+          <b>${displayRequestNo(x.req_no)||'—'}</b>
+          ${x.doc_type==='cancel'?`<span class="rl-tag is-cancel">${t('إلغاء')}</span>`:''}
+          ${groupId&&!x.cancelled?`<button class="rl-grp-chip" onclick="event.stopPropagation();filterByTransferGroup('${escAttr(groupId)}')" title="${escAttr(t('تحويل مجمّع'))}">${ARC_ICONS.layers}</button>`:''}
+        </span>
+        <span class="rl-c rl-party">
+          <span class="rl-sup">${escapeHtml(x.doc_type==='cancel' ? (x.invoice_ref||'—') : (x.beneficiary||'—'))}</span>
+          <span class="rl-by">${escapeHtml(personName(x.created_by||'—'))}</span>
+          <span class="rl-counts">
+            ${atts.length?`<button class="rl-cnt" onclick="event.stopPropagation();showArchiveAttachmentsMenu(this, ${i})" title="${escAttr(t('المرفقات'))}">${ARC_ICONS.paperclip}${atts.length}</button>`:''}
+            ${visComments.length?`<button class="rl-cnt" onclick="event.stopPropagation();openCommentsDialog(${i})" title="${escAttr(t('تعليقات'))}">${ARC_ICONS.comment}${visComments.length}</button>`:''}
+          </span>
+        </span>
+        <span class="rl-c rl-date">${x.req_date||'—'}${showAge?`<em class="rl-age ${ageCls}">${days===0?t('اليوم'):days===1?t('من يوم'):t('من {n} يوم').replace('{n}',days)}</em>`:''}</span>
+        <span class="rl-c rl-amt">${x.amount?formatMoney(x.amount):'—'}</span>
+        <span class="rl-c rl-st"><span class="arc-status ${st.cls}"><i></i>${t(st.label)}</span></span>
+        <span class="rl-c rl-act">${actIcon}
+          <button class="rl-more" onclick="event.stopPropagation();showArchiveActionsMenu(this, ${i})" title="${escAttr(t('إجراءات'))}">${ARC_ICONS.more}</button>
+        </span>
+      </div>` + (isBlockLast ? '<div class="rl-gend"'+style+'></div>' : '');
     }).join('');
     pruneTransferSelection(list);
     updateTransferSelectUI();
