@@ -1888,6 +1888,11 @@ async function loadArchive(silent=false){
       if(isBlockFirst) cls.push('rl-grp-first');
       if(isBlockLast) cls.push('rl-grp-last');
       if(x.cancelled) cls.push('rl-cancelled');
+      // تظليل خفيف للي لسه محتاج إجراء: غير معتمد أغمق شوية، ومعتمد بدون إثبات أخف
+      if(!x.cancelled){
+        if(!x.accounts_signed_by) cls.push('rl-need-approve');
+        else if(!x.transfer_image) cls.push('rl-need-proof');
+      }
       if(ARC_SELECT_MODE && ARC_SELECTED.has(x.id)) cls.push('rl-selected');
       const style = groupId ? ` style="${transferGroupVars(groupId)}"` : '';
 

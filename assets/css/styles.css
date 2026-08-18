@@ -1603,3 +1603,25 @@ table.arc tbody tr.arc-grp-head td,
   .hrow{grid-template-columns:118px minmax(0,1fr) 44px 104px 72px 124px 120px !important;}
   .rl-head,.rl-row{grid-template-columns:120px minmax(0,1fr) 44px 86px 124px 96px 58px !important;}
 }
+
+/* ══════════════════════════════════════════════════════════
+   تظليل الصفوف اللي لسه محتاجة إجراء — وردي فاتح جدًا
+   غير معتمد   → أغمق شوية
+   بدون إثبات  → أخف
+   الملغي مستثنى (مفيش إجراء مطلوب عليه).
+══════════════════════════════════════════════════════════ */
+:root{
+  --row-need-approve:#FDF7F9;
+  --row-need-approve-h:#FAEBEF;
+  --row-need-proof:#FEFAFB;
+  --row-need-proof-h:#FCF3F6;
+}
+.rl-row.rl-need-approve{background:var(--row-need-approve);}
+.rl-row.rl-need-approve:hover{background:var(--row-need-approve-h);}
+.rl-row.rl-need-proof{background:var(--row-need-proof);}
+.rl-row.rl-need-proof:hover{background:var(--row-need-proof-h);}
+/* الملغي والمحدَّد يغلبوا التظليل */
+.rl-row.rl-cancelled{background:var(--n1);}
+@media print{
+  .rl-row.rl-need-approve,.rl-row.rl-need-proof{background:transparent !important;}
+}
