@@ -484,6 +484,13 @@ const I18N_EN = {
   'الحد الأقصى للعرض 200 طلب — استخدم البحث أو فلتر التاريخ':'Showing the first 200 — use search or the date filter to narrow down',
 
   'الرئيسية':'Home',
+  'كل الأنواع':'All types',
+  'الأحدث أولاً':'Newest first',
+  'الأقدم أولاً':'Oldest first',
+  'الأعلى مبلغاً':'Highest amount',
+  'الأطول انتظاراً':'Longest waiting',
+  'النوع':'Type',
+  'ترتيب':'Sort',
   'أهلاً':'Hi',
   'طلب صرف جديد':'New payment request',
   'مطلوب منك':'Needs your action',

@@ -1339,12 +1339,11 @@ const ARC_ICONS = {
 function setArcTab(t){
   if(t === 'cancelled' && (!CURRENT || CURRENT.role !== 'accountant')) t = 'all';
   ARC_TAB=t;
-  ['all','cancel','disb','cancelled'].forEach(x=>{
-    const tab = document.getElementById('atab-'+x);
-    if(tab) tab.classList.toggle('on',x===t);
-  });
+  const sel=document.getElementById('arc-type'); if(sel && sel.value!==t) sel.value=t;
   loadArchive();
 }
+let ARC_SORT='new';
+function setArcSort(v){ ARC_SORT=v; loadArchive(); }
 function formatArchiveDateTime(value){
   if(!value) return '—';
   const d = new Date(value);
@@ -1372,32 +1371,6 @@ function showConfirmDialog({ title, message, details=[], note='', confirmText=t(
         <b class="acd-row-value" style="direction:${d.ltr?'ltr':'rtl'};">${escapeHtml(d.value || '—')}</b>
       </div>`).join('')}</div>` : '';
     overlay.innerHTML = `
-      <style>
-        @keyframes acdFade{from{opacity:0}to{opacity:1}}
-        @keyframes acdPop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
-        #app-confirm-overlay{animation:acdFade .18s ease both;}
-        #app-confirm-overlay .acd-card{width:min(460px,100%);background:#fff;border-radius:16px;box-shadow:0 24px 56px -20px rgba(20,24,46,.45);overflow:hidden;font-family:'PlexAr','Inter',sans-serif;animation:acdPop .26s cubic-bezier(.2,.8,.25,1) both;}
-        #app-confirm-overlay .acd-head{position:relative;padding:22px 24px 20px;background:linear-gradient(120deg,#2F817C 0%,#326F82 48%,var(--indigo) 100%);color:#fff;}
-        #app-confirm-overlay .acd-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,rgba(255,255,255,.0),rgba(255,255,255,.35),rgba(255,255,255,.0));}
-        #app-confirm-overlay .acd-title{font-size:18px;font-weight:700;line-height:1.45;}
-        #app-confirm-overlay .acd-cap{font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;opacity:.72;margin-top:3px;}
-        #app-confirm-overlay .acd-body{padding:20px 24px 6px;}
-        #app-confirm-overlay .acd-msg{font-size:15px;font-weight:600;color:var(--ink);line-height:1.9;white-space:pre-line;}
-        #app-confirm-overlay .acd-details{margin-top:16px;border:1px solid var(--border);border-radius:12px;background:#F7FAFD;overflow:hidden;}
-        #app-confirm-overlay .acd-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 14px;}
-        #app-confirm-overlay .acd-row[data-sep]{border-bottom:1px solid var(--line-2);}
-        #app-confirm-overlay .acd-row-label{font-size:11px;font-weight:700;color:var(--txt-2);}
-        #app-confirm-overlay .acd-row-value{font-size:13px;font-weight:700;color:var(--indigo);}
-        #app-confirm-overlay .acd-note{margin-top:14px;color:var(--txt-2);font-size:12px;line-height:1.75;}
-        #app-confirm-overlay .acd-foot{display:flex;gap:10px;justify-content:flex-start;padding:18px 24px 22px;}
-        #app-confirm-overlay .acd-btn{border:none;border-radius:12px;padding:11px 24px;font-family:'PlexAr',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:transform .12s ease,box-shadow .15s ease,background .15s ease;}
-        #app-confirm-overlay .acd-btn:active{transform:translateY(1px);}
-        #app-confirm-overlay .acd-btn:focus-visible{outline:2px solid ${accent};outline-offset:2px;}
-        #app-confirm-overlay .acd-confirm{background:${accent};color:#fff;box-shadow:0 10px 26px -12px rgba(20,24,46,.38);}
-        #app-confirm-overlay .acd-confirm:hover{filter:brightness(1.05);box-shadow:0 10px 26px -12px rgba(20,24,46,.38);}
-        #app-confirm-overlay .acd-cancel{background:#fff;border:1.5px solid var(--border);color:var(--indigo);}
-        #app-confirm-overlay .acd-cancel:hover{background:#F4F7FB;border-color:var(--border);}
-      </style>
       <div class="acd-card" role="dialog" aria-modal="true">
         <div class="acd-head">
           <div class="acd-title">${escapeHtml(title)}</div>
@@ -1610,48 +1583,6 @@ function renderCommentsOverlay(i){
   overlay.dir = 'rtl';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(15,19,33,.55);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);';
   overlay.innerHTML = `
-    <style>
-      @keyframes cmtFade{from{opacity:0}to{opacity:1}}
-      @keyframes cmtPop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
-      #app-comments-overlay{animation:cmtFade .18s ease both;font-family:'PlexAr','Inter',sans-serif;}
-      #app-comments-overlay .cmt-card{width:min(520px,100%);max-height:88vh;display:flex;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 24px 56px -20px rgba(20,24,46,.45);overflow:hidden;animation:cmtPop .26s cubic-bezier(.2,.8,.25,1) both;}
-      #app-comments-overlay .cmt-head{position:relative;padding:20px 24px 18px;background:linear-gradient(120deg,#2F817C 0%,#326F82 48%,var(--indigo) 100%);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px;}
-      #app-comments-overlay .cmt-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.35),rgba(255,255,255,0));}
-      #app-comments-overlay .cmt-htitle{font-size:18px;font-weight:700;}
-      #app-comments-overlay .cmt-hcap{font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.4px;opacity:.72;margin-top:2px;direction:ltr;}
-      #app-comments-overlay .cmt-x{background:rgba(255,255,255,.16);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:pointer;line-height:1;transition:background .15s ease;}
-      #app-comments-overlay .cmt-x:hover{background:rgba(255,255,255,.28);}
-      #app-comments-overlay .cmt-body{padding:16px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;background:#F7FAFD;}
-      #app-comments-overlay .cmt-empty{text-align:center;color:var(--txt-2);font-size:13px;font-weight:600;padding:22px 8px;}
-      #app-comments-overlay .cmt-item{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
-      #app-comments-overlay .cmt-item.editing{border-color:var(--teal);box-shadow:0 1px 2px rgba(20,24,46,.06);}
-      #app-comments-overlay .cmt-item-hd{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:7px;}
-      #app-comments-overlay .cmt-who b{font-size:13px;font-weight:700;color:var(--indigo);}
-      #app-comments-overlay .cmt-role{font-size:11px;color:var(--txt-2);margin-right:6px;}
-      #app-comments-overlay .cmt-vis-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;}
-      #app-comments-overlay .cmt-all{background:#EAF3FF;color:#2563EB;}
-      #app-comments-overlay .cmt-mgmt{background:#F3EEFF;color:#6B46C1;}
-      #app-comments-overlay .cmt-staff{background:#E7F7F0;color:var(--green);}
-      #app-comments-overlay .cmt-text{font-size:13px;font-weight:600;color:var(--ink);line-height:1.85;white-space:pre-wrap;word-break:break-word;}
-      #app-comments-overlay .cmt-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;}
-      #app-comments-overlay .cmt-time{font-size:11px;color:#94A3B8;direction:ltr;}
-      #app-comments-overlay .cmt-actions{display:flex;gap:6px;}
-      #app-comments-overlay .cmt-link{background:none;border:none;font-family:'PlexAr',sans-serif;font-size:12px;font-weight:700;color:var(--teal);cursor:pointer;padding:3px 7px;border-radius:8px;}
-      #app-comments-overlay .cmt-link:hover{background:#EAF3F3;}
-      #app-comments-overlay .cmt-link.danger{color:var(--stop);}
-      #app-comments-overlay .cmt-link.danger:hover{background:#FCEBEF;}
-      #app-comments-overlay textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;font-family:'PlexAr',sans-serif;font-size:13px;resize:vertical;outline:none;background:#fff;}
-      #app-comments-overlay textarea:focus{border-color:var(--teal);box-shadow:0 1px 2px rgba(20,24,46,.06);}
-      #app-comments-overlay .cmt-add{border-top:1px solid var(--border);padding:14px 20px 18px;background:#fff;display:flex;flex-direction:column;gap:10px;}
-      #app-comments-overlay .cmt-vis-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
-      #app-comments-overlay .cmt-vis-lbl{font-size:12px;font-weight:700;color:var(--txt-2);}
-      #app-comments-overlay .cmt-vis-opt{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--indigo);background:#F4F7FB;border:1.5px solid #E2E9F2;border-radius:8px;padding:6px 11px;cursor:pointer;}
-      #app-comments-overlay .cmt-vis-opt:has(input:checked){border-color:var(--teal);background:#EAF6F5;color:#1F6F6B;}
-      #app-comments-overlay .cmt-vis-opt input{accent-color:var(--teal);}
-      #app-comments-overlay .cmt-submit{align-self:flex-start;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:10px 22px;font-family:'PlexAr',sans-serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 10px 26px -12px rgba(20,24,46,.38);transition:filter .15s ease;}
-      #app-comments-overlay .cmt-submit:hover{filter:brightness(1.06);}
-      #app-comments-overlay .cmt-locked{border-top:1px solid var(--border);padding:16px 20px;background:#fff;color:var(--txt-2);font-size:12px;font-weight:700;text-align:center;}
-    </style>
     <div class="cmt-card" role="dialog" aria-modal="true">
       <div class="cmt-head">
         <div><div class="cmt-htitle">${t('تعليقات الطلب')}</div><div class="cmt-hcap">${escAttr(reqNo)} · COMMENTS</div></div>
@@ -1800,13 +1731,11 @@ async function loadArchive(silent=false){
   }
   // من يرى كل الطلبات (شامل الملغية): المحاسب + حساب العرض فقط
   const canSeeAll = isAcc || (CURRENT && CURRENT.role==='viewer');
-  const cancelledTab = document.getElementById('atab-cancelled');
-  if(cancelledTab) cancelledTab.style.display = canSeeAll ? '' : 'none';
+  const typeSel = document.getElementById('arc-type');
+  const cancelledOpt = typeSel ? typeSel.querySelector('option[value="cancelled"]') : null;
+  if(cancelledOpt) cancelledOpt.hidden = !canSeeAll;
   if(!canSeeAll && ARC_TAB === 'cancelled') ARC_TAB = 'all';
-  ['all','cancel','disb','cancelled'].forEach(x=>{
-    const tab = document.getElementById('atab-'+x);
-    if(tab) tab.classList.toggle('on',x===ARC_TAB);
-  });
+  if(typeSel && typeSel.value !== ARC_TAB) typeSel.value = ARC_TAB;
   if(!SB_ON){
     note.innerHTML=t('<div class="arc-note">الأرشيف السحابي غير مفعّل بعد. الطلبات تشتغل وتطبع وتتحمّل عادي.<br>لحفظ الطلبات وعرضها هنا للجميع، أضف رابط ومفتاح Supabase في أعلى كود الملف.</div>');
     body.innerHTML=`<div class="arc-empty">${t('— الأرشيف غير مفعّل —')}</div>`;
@@ -1857,7 +1786,8 @@ async function loadArchive(silent=false){
     if(shown.length===0){ body.innerHTML=`<div class="arc-empty">${t('لا توجد طلبات')}</div>`; window._arcRows=[]; return; }
     list = shown;
     await loadTransferGroupsFor(list);          // بيانات مجموعات التحويل الظاهرة في القائمة
-    sortTransferGroupsTogether(list, reqNum);   // طلبات التحويل الواحد تفضل ورا بعض ككتلة واحدة
+    applyArchiveSort(list, reqNum);            // ترتيب المستخدم
+    sortTransferGroupsTogether(list);   // طلبات التحويل الواحد تفضل ورا بعض ككتلة واحدة
     window._arcRows = list;
     renderTransferGroupNote(note, search);      // لافتة ملخّص عند فلترة مجموعة تحويل
     body.innerHTML=list.map((x,i)=>{
@@ -2522,11 +2452,6 @@ function showBusyOverlay(text){
   ov.dir = 'rtl';
   ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(15,19,33,.55);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);';
   ov.innerHTML = `
-    <style>
-      @keyframes abzSpin{to{transform:rotate(360deg)}}
-      #app-busy-overlay .abz-card{background:#fff;border-radius:16px;padding:24px 30px;display:flex;align-items:center;gap:14px;font-family:'PlexAr',sans-serif;font-size:13px;font-weight:700;color:var(--ink);box-shadow:0 24px 56px -20px rgba(20,24,46,.45);}
-      #app-busy-overlay .abz-spin{width:22px;height:22px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--teal);animation:abzSpin .8s linear infinite;}
-    </style>
     <div class="abz-card"><span class="abz-spin"></span><span>${escapeHtml(text||t('جاري التجهيز...'))}</span></div>`;
   document.body.appendChild(ov);
 }
@@ -2564,21 +2489,19 @@ function transferGroupVars(gid){
 }
 // ترتيب القائمة بحيث تفضل طلبات كل تحويل مجمّع ورا بعض ككتلة واحدة،
 // والكتلة تاخد مكان أعلى رقم طلب فيها عشان الترتيب العام ما يتلخبطش.
-function sortTransferGroupsTogether(list, reqNum){
+function sortTransferGroupsTogether(list){
+  // بنحافظ على ترتيب المستخدم، وبنجمّع طلبات كل تحويل عند أول موضع ظهور للمجموعة
   const gidOf = r => (r && !r.cancelled && r.transfer_group) ? r.transfer_group : '';
+  const idx = new Map(list.map((r,i)=>[r,i]));
   const anchor = {};
-  list.forEach(r=>{
-    const g = gidOf(r); if(!g) return;
-    const n = reqNum(r);
-    if(!(g in anchor) || n > anchor[g]) anchor[g] = n;
-  });
+  list.forEach((r,i)=>{ const g=gidOf(r); if(g && !(g in anchor)) anchor[g]=i; });
   list.sort((a,b)=>{
-    const ga = gidOf(a), gb = gidOf(b);
-    const ka = ga ? anchor[ga] : reqNum(a);
-    const kb = gb ? anchor[gb] : reqNum(b);
-    if(kb !== ka) return kb - ka;
-    if(ga !== gb) return ga < gb ? -1 : 1;      // نفس المرتبة → كل مجموعة لوحدها متلاصقة
-    return (reqNum(b) - reqNum(a)) || ((b.id||0) - (a.id||0));
+    const ga=gidOf(a), gb=gidOf(b);
+    const ka = ga ? anchor[ga] : idx.get(a);
+    const kb = gb ? anchor[gb] : idx.get(b);
+    if(ka !== kb) return ka - kb;
+    if(ga !== gb) return ga < gb ? -1 : 1;
+    return idx.get(a) - idx.get(b);
   });
   return list;
 }
@@ -2745,39 +2668,6 @@ function showGroupTransferDialog(rows, total){
     overlay.dir = 'rtl';
     overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,19,33,.55);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);';
     overlay.innerHTML = `
-      <style>
-        @keyframes agdFade{from{opacity:0}to{opacity:1}}
-        @keyframes agdPop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
-        #app-group-overlay{animation:agdFade .18s ease both;}
-        #app-group-overlay .agd-card{width:min(520px,100%);max-height:88vh;display:flex;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 24px 56px -20px rgba(20,24,46,.45);overflow:hidden;font-family:'PlexAr','Inter',sans-serif;animation:agdPop .26s cubic-bezier(.2,.8,.25,1) both;}
-        #app-group-overlay .agd-head{padding:20px 24px 18px;background:linear-gradient(120deg,#2F817C 0%,#326F82 48%,var(--indigo) 100%);color:#fff;}
-        #app-group-overlay .agd-title{font-size:18px;font-weight:700;}
-        #app-group-overlay .agd-cap{font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;opacity:.72;margin-top:3px;}
-        #app-group-overlay .agd-body{padding:18px 24px 8px;overflow:auto;}
-        #app-group-overlay .agd-list{border:1px solid var(--border);border-radius:12px;background:#F7FAFD;overflow:hidden;max-height:210px;overflow-y:auto;}
-        #app-group-overlay .agd-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid var(--line-2);}
-        #app-group-overlay .agd-row:last-child{border-bottom:none;}
-        #app-group-overlay .agd-no{font-size:12px;font-weight:700;color:var(--indigo);direction:ltr;}
-        #app-group-overlay .agd-by{font-size:10px;font-weight:700;color:var(--txt-3);}
-        #app-group-overlay .agd-amt{font-size:12px;font-weight:700;color:var(--green);direction:ltr;}
-        #app-group-overlay .agd-total{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:12px 14px;border-radius:12px;background:#ECF6F2;border:1px solid #cdeadd;}
-        #app-group-overlay .agd-total span{font-size:12px;font-weight:700;color:#33607a;}
-        #app-group-overlay .agd-total b{font-size:15px;font-weight:700;color:var(--green);direction:ltr;}
-        #app-group-overlay .agd-field{margin-top:14px;}
-        #app-group-overlay .agd-field label{display:block;font-size:11px;font-weight:700;color:var(--txt-2);margin-bottom:6px;}
-        #app-group-overlay .agd-field input[type=text]{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;font-family:'PlexAr',sans-serif;font-size:13px;font-weight:700;color:var(--ink);outline:none;}
-        #app-group-overlay .agd-field input[type=text]:focus{border-color:var(--teal);}
-        #app-group-overlay .agd-file{margin-top:14px;border:1.6px dashed var(--border);border-radius:12px;background:#F7FAFD;padding:16px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
-        #app-group-overlay .agd-file:hover{border-color:var(--teal);background:#f2f9fa;}
-        #app-group-overlay .agd-file b{display:block;font-size:13px;font-weight:700;color:var(--indigo);}
-        #app-group-overlay .agd-file small{display:block;margin-top:4px;font-size:11px;color:var(--txt-3);font-weight:700;}
-        #app-group-overlay .agd-file.picked{border-style:solid;border-color:var(--green);background:#ECF6F2;}
-        #app-group-overlay .agd-foot{display:flex;gap:10px;padding:16px 24px 20px;}
-        #app-group-overlay .agd-btn{border:none;border-radius:12px;padding:11px 22px;font-family:'PlexAr',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
-        #app-group-overlay .agd-confirm{background:var(--teal);color:#fff;box-shadow:0 10px 26px -12px rgba(20,24,46,.38);}
-        #app-group-overlay .agd-confirm:disabled{background:#c6d2dd;box-shadow:none;cursor:not-allowed;}
-        #app-group-overlay .agd-cancel{background:#fff;border:1.5px solid var(--border);color:var(--indigo);}
-      </style>
       <div class="agd-card" role="dialog" aria-modal="true">
         <div class="agd-head">
           <div class="agd-title">${t('تحويل مجمّع — إثبات واحد لعدة طلبات')}</div>
@@ -3190,4 +3080,16 @@ async function reviewFromHome(id){
       if(b){ b.classList.add('pulse'); setTimeout(()=>b.classList.remove('pulse'), 2400); }
     }
   }, 500);
+}
+
+
+// ترتيب القائمة حسب اختيار المستخدم
+function applyArchiveSort(list, reqNum){
+  const amt = r => Number(r.amount)||0;
+  const when = r => new Date(r.created_at || r.signed_at || r.req_date || 0).getTime() || 0;
+  if(ARC_SORT==='old')          list.sort((a,b)=> when(a)-when(b) || reqNum(a)-reqNum(b));
+  else if(ARC_SORT==='amount')  list.sort((a,b)=> amt(b)-amt(a));
+  else if(ARC_SORT==='aging')   list.sort((a,b)=> requestAgeDays(b)-requestAgeDays(a));
+  else                          list.sort((a,b)=> (reqNum(b)-reqNum(a)) || ((b.id||0)-(a.id||0)));
+  return list;
 }
