@@ -342,14 +342,14 @@ async function notifyTransferredRequests(){
     }));
     if(fresh.length > 8) details.push({ label:t('و طلبات أخرى'), value:'+' + (fresh.length-8) });
     showMessageDialog({
-      title:t('تم تحويل طلبك ✅'),
+      title:t('تم تحويل طلبك'),
       subtitle:'Request Transferred',
       message: fresh.length===1
         ? t('تم تحويل المبلغ الخاص بطلبك ورفع إثبات التحويل. يمكنك عرض الإثبات من إدارة الطلبات.')
         : t('تم تحويل المبالغ الخاصة بعدد {n} من طلباتك ورفع إثبات التحويل. يمكنك عرضها من إدارة الطلبات.').replace('{n}', fresh.length),
       details,
       note:t('الطلبات المحوّلة تظهر باللون الأخضر داخل إدارة الطلبات.'),
-      confirmText:t('تم')
+      confirmText:t('حسنًا')
     });
     // تعليم الطلبات كمقروءة على مستوى الحساب (مش هتظهر تاني على أي جهاز)
     const ids = fresh.map(r=>r.id);
@@ -674,7 +674,7 @@ function updateMatch(){
   } else {
     box.className='match-note bad';
     const sign = diff>0 ? t('أكبر') : t('أقل');
-    box.innerHTML=t('✗ الإجمالي لا يساوي إجمالي فاتورة المورّد — ')+sign+t(' بمقدار <small>')+Math.abs(diff).toLocaleString('en-US',{minimumFractionDigits:2})+t(' ر.ق</small>')+appendixHint;
+    box.innerHTML=t('✗ الإجمالي لا يساوي إجمالي فاتورة المورّد —')+' '+sign+t(' بمقدار <small>')+Math.abs(diff).toLocaleString('en-US',{minimumFractionDigits:2})+t(' ر.ق</small>')+appendixHint;
   }
 }
 addClientRow(); // أول صف
@@ -1246,7 +1246,7 @@ async function persistRequestRecord(kind, rec){
     }
     else { console.error(error); 
       let msg = t('تعذّر الحفظ — اتأكد إنك مسجّل دخول وإن جدول requests متظبط في Supabase.');
-      if(error.message && error.message.includes('column')){ msg += t('\n\nتحتاج تشغّل الـ SQL ده في Supabase > SQL Editor:\nALTER TABLE requests ADD COLUMN IF NOT EXISTS attachments_data TEXT;\nALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_image TEXT;'); }
+      if(error.message && error.message.includes('column')){ msg += t('\n\nيلزم تنفيذ أمر SQL التالي في Supabase > SQL Editor:\nALTER TABLE requests ADD COLUMN IF NOT EXISTS attachments_data TEXT;\nALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_image TEXT;'); }
       if(error.code === '23505' || /duplicate|unique/i.test(error.message||'')){
         msg += t('\n\nفي طلب ملغي قديم بنفس الرقم. اضغط حفظ مرة تانية بعد تحديث الصفحة، ولو استمر الخطأ افتح الطلب الملغي من الأرشيف وألغيه مرة أخرى لتحرير الرقم.');
       }
@@ -1439,7 +1439,7 @@ function showArchiveTimePopover(btn, submittedAt, approvedAt){
   if(!pop) return;
   closeArchiveMenu();
   pop.innerHTML = `
-    <div class="pop-title"><span>${t('تفاصيل التوقيت')}</span><small>Timeline</small></div>
+    <div class="pop-title"><span>${t('سجل التوقيت')}</span><small>Timeline</small></div>
     <div class="arc-time-row"><span>${t('تاريخ التقديم')}</span><b>${submittedAt || '—'}</b></div>
     <div class="arc-time-row"><span>${t('توقيت اعتماد الحسابات')}</span><b>${approvedAt || t('لم يعتمد بعد')}</b></div>
   `;
@@ -1781,7 +1781,7 @@ async function loadArchive(silent=false){
       console.error(error); 
       let errMsg = t('خطأ اتصال');
       if(error.message && error.message.includes('column')){
-        errMsg = t('خطأ: عمود غير موجود في الجدول. شغّل الـ SQL ده في Supabase:<br><code style="font-size:10px;direction:ltr;display:block;background:#f5f5f5;padding:6px;margin-top:4px">ALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_image TEXT;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS attachments_data TEXT;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS cancelled BOOLEAN DEFAULT FALSE;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();</code>');
+        errMsg = t('خطأ: عمود غير موجود في الجدول. يُرجى تنفيذ أمر SQL التالي في Supabase:<br><code style="font-size:10px;direction:ltr;display:block;background:#f5f5f5;padding:6px;margin-top:4px">ALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_image TEXT;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS attachments_data TEXT;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS cancelled BOOLEAN DEFAULT FALSE;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();</code>');
         note.innerHTML = `<div class="arc-note">${errMsg}</div>`;
       }
       body.innerHTML=`<div class="arc-empty">${t('خطأ اتصال')}</div>`; return; 
@@ -1969,15 +1969,15 @@ async function uploadTransferImage(i){
       const path = await uploadFileToStorage(file, 'transfer-images');
       const { error } = await sb.from('requests').update({ transfer_image:path }).eq('id', x.id);
       if(error){ console.error(error);
-        alert(t('تعذّر حفظ الصورة.\n\nشغّل الـ SQL ده في Supabase > SQL Editor:\n\nALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_image TEXT;\nALTER TABLE requests ADD COLUMN IF NOT EXISTS attachments_data TEXT;'));
+        alert(t('تعذّر حفظ الصورة.\n\nيُرجى تنفيذ أمر SQL التالي في Supabase > SQL Editor:\n\nALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_image TEXT;\nALTER TABLE requests ADD COLUMN IF NOT EXISTS attachments_data TEXT;'));
         return;
       }
       loadArchive();
       await showMessageDialog({
-        title:t('تم رفع إثبات التحويل ✅'),
+        title:t('تم رفع إثبات التحويل'),
         subtitle:'Transfer Proof Uploaded',
         message:t('تم حفظ إثبات التحويل بنجاح، وأُرسل إشعار لمقدّم الطلب بأن طلبه تم تحويله.'),
-        confirmText:t('تم')
+        confirmText:t('حسنًا')
       });
     }catch(e){ await showMessageDialog({ title:t('خطأ اتصال'), message:t('تعذّر رفع إثبات التحويل. تحقّق من الاتصال وحاول مرة أخرى.'), confirmText:t('حسنًا') }); console.error(e); }
   };
@@ -2043,7 +2043,7 @@ async function deleteTransferImage(rowIndex){
     const { error } = await sb.from('requests').update(patch).eq('id', x.id);
     if(error){ console.error(error); await showMessageDialog({ title:t('تعذّر الحذف'), message:t('حصل خطأ أثناء الحذف. حاول مرة أخرى.'), confirmText:t('حسنًا') }); return; }
     loadArchive();
-    await showMessageDialog({ title:t('تم الحذف ✅'), message:t('تم حذف إثبات التحويل. يمكنك الآن رفع إثبات جديد.'), confirmText:t('تم') });
+    await showMessageDialog({ title:t('تم الحذف'), message:t('تم حذف إثبات التحويل. يمكنك الآن رفع إثبات جديد.'), confirmText:t('حسنًا') });
   }catch(e){ console.error(e); await showMessageDialog({ title:t('خطأ اتصال'), message:t('تعذّر الحذف. تحقّق من الاتصال وحاول مرة أخرى.'), confirmText:t('حسنًا') }); }
 }
 
@@ -2595,7 +2595,7 @@ function toggleTransferSelectMode(){
     showMessageDialog({
       title:t('الميزة تحتاج تجهيز قاعدة البيانات'),
       subtitle:'Setup Required',
-      message:t('أعمدة التحويل المجمّع غير موجودة في جدول requests. شغّل الأوامر دي مرة واحدة في Supabase > SQL Editor:\n\n')+TRANSFER_GROUP_SQL,
+      message:t('أعمدة التحويل المجمّع غير موجودة في جدول requests. يُرجى تنفيذ الأوامر التالية مرة واحدة في Supabase > SQL Editor:\n\n')+TRANSFER_GROUP_SQL,
       confirmText:t('حسنًا')
     });
     return;
@@ -2786,7 +2786,7 @@ async function startGroupTransfer(){
     loadArchive();
     hideBusyOverlay();
     await showMessageDialog({
-      title:t('تم إنشاء التحويل المجمّع ✅'),
+      title:t('تم إنشاء التحويل المجمّع'),
       subtitle:'Grouped Transfer Created',
       message:t('تم ربط الطلبات المحددة بإثبات تحويل واحد، وأُرسل إشعار لأصحاب الطلبات.'),
       details:[
@@ -2795,7 +2795,7 @@ async function startGroupTransfer(){
         { label:t('إجمالي المبلغ'), value:formatMoney(total)+' QAR', ltr:true },
         ...(result.note ? [{ label:t('مرجع التحويل'), value:result.note }] : [])
       ],
-      confirmText:t('تم')
+      confirmText:t('حسنًا')
     });
   }catch(e){
     console.error(e);
@@ -2804,7 +2804,7 @@ async function startGroupTransfer(){
     await showMessageDialog({
       title:t('تعذّر إتمام التحويل المجمّع'),
       message: /column|transfer_group/i.test(msg)
-        ? t('أعمدة التحويل المجمّع غير موجودة. شغّل الأوامر دي في Supabase > SQL Editor:\n\n')+TRANSFER_GROUP_SQL
+        ? t('أعمدة التحويل المجمّع غير موجودة. يُرجى تنفيذ الأوامر التالية في Supabase > SQL Editor:\n\n')+TRANSFER_GROUP_SQL
         : t('حصل خطأ أثناء رفع الإثبات أو ربط الطلبات. تحقّق من الاتصال وحاول مرة أخرى.'),
       confirmText:t('حسنًا')
     });
@@ -2816,7 +2816,7 @@ async function deleteTransferGroup(gid){
   const info = (window._arcGroups||{})[gid];
   const ok = await showConfirmDialog({
     title:t('حذف التحويل المجمّع'),
-    message:t('هيتم حذف إثبات التحويل من كل طلبات المجموعة وفك ارتباطها ببعض. الطلبات نفسها مش هتتأثر، وتقدر ترفع إثبات جديد بعدها.'),
+    message:t('سيتم حذف إثبات التحويل من جميع طلبات المجموعة وفكّ ارتباطها. لن تتأثر الطلبات نفسها، ويمكن رفع إثبات جديد لاحقًا.'),
     details:[
       { label:t('رقم المجموعة'), value:gid, ltr:true },
       { label:t('عدد الطلبات'), value:String(info ? info.rows.length : '—'), ltr:true }
@@ -2833,7 +2833,7 @@ async function deleteTransferGroup(gid){
     if(error) throw error;
     loadArchive();
     hideBusyOverlay();
-    await showMessageDialog({ title:t('تم الحذف ✅'), message:t('تم حذف إثبات التحويل من كل طلبات المجموعة.'), confirmText:t('تم') });
+    await showMessageDialog({ title:t('تم الحذف'), message:t('تم حذف إثبات التحويل من كل طلبات المجموعة.'), confirmText:t('حسنًا') });
   }catch(e){
     console.error(e);
     hideBusyOverlay();
@@ -3032,7 +3032,7 @@ async function loadHome(){
       html += homeSection('مطلوب منك', 'بانتظار اعتمادك', pending.length,
         pending.length ? pending.slice(0,6).map(x=>homeRow(x,
           `<button class="hbtn sm primary" onclick="event.stopPropagation();reviewFromHome(${x.id})">${t('مراجعة واعتماد')}</button>`)).join('')
-        : homeEmpty(ARC_ICONS.sign,'مفيش طلبات مستنية اعتمادك','كل حاجة تمام 👌'), pending.length>6);
+        : homeEmpty(ARC_ICONS.sign,'مفيش طلبات مستنية اعتمادك','لا توجد مهام معلّقة'), pending.length>6);
       html += homeSection('جاهز للتحويل', 'معتمد ولم يُحوّل', toPay.length,
         toPay.length ? `<div class="h-paybar"><span>${t('إجمالي جاهز للتحويل')}</span>
              <b>${formatMoney(payTotal)} ${t('ر.ق')}</b>
