@@ -3029,11 +3029,11 @@ async function loadHome(){
       const pending  = live.filter(r=>!r.accounts_signed_by).sort(byAge);
       const toPay    = live.filter(r=>r.accounts_signed_by && !r.transfer_image).sort(byAge);
       const payTotal = toPay.reduce((a,r)=>a+(Number(r.amount)||0),0);
-      html += homeSection('مطلوب منك', 'بانتظار اعتمادك', pending.length,
+      html += homeSection('بانتظار اعتمادك', 'طلبات موقّعة لم تُعتمد بعد', pending.length,
         pending.length ? pending.slice(0,6).map(x=>homeRow(x,
           `<button class="hbtn sm primary" onclick="event.stopPropagation();reviewFromHome(${x.id})">${t('مراجعة واعتماد')}</button>`)).join('')
         : homeEmpty(ARC_ICONS.sign,'مفيش طلبات مستنية اعتمادك','لا توجد مهام معلّقة'), pending.length>6);
-      html += homeSection('جاهز للتحويل', 'معتمد ولم يُحوّل', toPay.length,
+      html += homeSection('جاهزة للتحويل', 'طلبات معتمدة لم تُحوّل بعد', toPay.length,
         toPay.length ? `<div class="h-paybar"><span>${t('إجمالي جاهز للتحويل')}</span>
              <b>${formatMoney(payTotal)} ${t('ر.ق')}</b>
              <button class="hbtn primary" onclick="startBatchFromHome()">${ARC_ICONS.layers}${t('تحويل مجمّع')}</button></div>`
@@ -3043,11 +3043,11 @@ async function loadHome(){
     } else {
       const mine = live.filter(r=>r.created_by===CURRENT.name).sort((a,b)=>(b.id||0)-(a.id||0));
       const waiting = mine.filter(r=>!r.transfer_image);
-      html += homeSection('طلباتي', 'قيد التنفيذ', waiting.length,
+      html += homeSection('طلباتي', 'طلبات قيد التنفيذ', waiting.length,
         waiting.length ? waiting.slice(0,8).map(x=>homeRow(x,'')).join('')
         : homeEmpty(ARC_ICONS.doc,'مفيش طلبات قيد التنفيذ','ابدأ بطلب صرف جديد'), waiting.length>8);
       const done = mine.filter(r=>r.transfer_image).slice(0,4);
-      if(done.length) html += homeSection('تم تحويلها', 'آخر التحويلات', done.length,
+      if(done.length) html += homeSection('طلبات محوّلة', 'أحدث التحويلات', done.length,
         done.map(x=>homeRow(x,'')).join(''), false);
     }
     body.innerHTML = html;
