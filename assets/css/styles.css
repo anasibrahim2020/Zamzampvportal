@@ -1387,7 +1387,7 @@ table.arc tbody tr.arc-grp-head td,
 .login-box,.tb-menu,#app-confirm-overlay .acd-card,#app-comments-overlay .cmt-card,
 #app-busy-overlay .abz-card,#app-group-overlay .agd-card,#arc-menu-pop,#arc-time-pop{
   box-shadow:var(--sh-2) !important;}
-.login-btn,.btn-primary,.btn,.nav-btn,.arc-refresh-btn,.rl-row,.h-sec{
+.login-btn,.btn-primary,.btn,.nav-btn,.arc-refresh-btn,.h-sec{
   box-shadow:none !important;}
 /* ٣) نصف قطر متّسق للنوافذ والبطاقات */
 .login-box,.tb-menu,#app-confirm-overlay .acd-card,#app-comments-overlay .cmt-card,
@@ -1611,17 +1611,151 @@ table.arc tbody tr.arc-grp-head td,
    الملغي مستثنى (مفيش إجراء مطلوب عليه).
 ══════════════════════════════════════════════════════════ */
 :root{
-  --row-need-approve:#FDF7F9;
-  --row-need-approve-h:#FAEBEF;
-  --row-need-proof:#FEFAFB;
-  --row-need-proof-h:#FCF3F6;
+  --mark-approve:#DE7B93;   /* غير معتمد — أوضح */
+  --mark-proof:#EFB9C7;     /* بدون إثبات — أخف */
 }
-.rl-row.rl-need-approve{background:var(--row-need-approve);}
-.rl-row.rl-need-approve:hover{background:var(--row-need-approve-h);}
-.rl-row.rl-need-proof{background:var(--row-need-proof);}
-.rl-row.rl-need-proof:hover{background:var(--row-need-proof-h);}
+/* شريط على حافة بداية الصف — الخلفية تفضل بيضا */
+.rl-row.rl-need-approve{box-shadow:inset -4px 0 0 var(--mark-approve) !important;}
+.rl-row.rl-need-proof{box-shadow:inset -4px 0 0 var(--mark-proof) !important;}
+html[dir=ltr] .rl-row.rl-need-approve{box-shadow:inset 4px 0 0 var(--mark-approve) !important;}
+html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !important;}
 /* الملغي والمحدَّد يغلبوا التظليل */
 .rl-row.rl-cancelled{background:var(--n1);}
 @media print{
-  .rl-row.rl-need-approve,.rl-row.rl-need-proof{background:transparent !important;}
+  .rl-row.rl-need-approve,.rl-row.rl-need-proof{box-shadow:none !important;}
+}
+
+/* ══════════════════════════════════════════════════════════
+   خانة التاريخ: كانت الخانة الوحيدة اللي نصّها مش ملفوف،
+   واتجاهها rtl بدون أرقام متساوية، ورقاقة التقادم كانت تنزل
+   سطر تاني أحيانًا فيتغيّر ارتفاعها من صف لصف (18 مقابل 42).
+══════════════════════════════════════════════════════════ */
+.rl-date{
+  flex-direction:column;align-items:flex-start;justify-content:center;
+  gap:3px;flex-wrap:nowrap;}
+.rl-dt{
+  direction:ltr;font-variant-numeric:tabular-nums;
+  white-space:nowrap;line-height:1.25;}
+.rl-date .rl-age{margin:0;white-space:nowrap;}
+/* رقم الطلب برضه أرقام متساوية عشان يتحاذى تحت بعضه */
+.rl-no b{direction:ltr;font-variant-numeric:tabular-nums;}
+/* الرقاقة الفاضية بتحجز مكانها عشان التاريخ يقع في نفس الارتفاع
+   في كل الصفوف سواء فيه تقادم أو لأ */
+.rl-age.is-blank{visibility:hidden;}
+.rl-date .rl-age{min-height:17px;display:inline-flex;align-items:center;}
+/* سطر التاريخ بارتفاع ثابت عشان ما يزيحش بكسور البكسل */
+.rl-dt{height:17px;display:flex;align-items:center;}
+
+/* ══════════════════════════════════════════════════════════
+   محاذاة الشريط العلوي: اللوجو كان عليه margin 10px شارد
+   فبقى على 42px من الحافة بينما الأفاتار 32 والتنقّل 24.
+   دلوقتي الكل على 24px — نفس حد محتوى الصفحة.
+══════════════════════════════════════════════════════════ */
+.topbar{padding-inline:24px !important;}
+.tb-logo{margin:0 !important;}
+.tb-left{display:flex;align-items:center;gap:12px;}
+.nav{padding-inline:24px !important;}
+@media (max-width:819px){
+  .topbar{padding-inline:14px !important;}
+  .nav{padding-inline:14px !important;}
+}
+/* بطاقة المحتوى على نفس خط الشريط العلوي (24px) */
+.page-wrap{padding-inline:24px !important;}
+.arc-wrap{width:100% !important;}
+@media (max-width:819px){
+  .page-wrap{padding-inline:14px !important;}
+}
+
+/* ══════════════════════════════════════════════════════════
+   القوايم المنبثقة والحوارات — سطح واحد لكلها
+   أبيض · حد رفيع · نصف قطر 12 · ظل واحد · عناصر 8px
+══════════════════════════════════════════════════════════ */
+#arc-menu-pop,#arc-time-pop,.tb-menu,
+#app-confirm-overlay .acd-card,#app-comments-overlay .cmt-card,
+#app-group-overlay .agd-card,#app-busy-overlay .abz-card{
+  background:var(--n0) !important;
+  border:1px solid var(--n3) !important;
+  border-radius:var(--r-md) !important;
+  box-shadow:var(--sh-2) !important;}
+#arc-menu-pop,#arc-time-pop,.tb-menu{padding:8px !important;}
+
+/* عنوان القايمة */
+#arc-menu-pop .pop-title,#arc-time-pop .pop-title{
+  display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  padding:6px 8px 9px;margin-bottom:6px;
+  border-bottom:1px solid var(--n3);}
+#arc-menu-pop .pop-title span,#arc-time-pop .pop-title span{
+  font-size:12px;font-weight:700;color:var(--n8);}
+#arc-menu-pop .pop-title small,#arc-time-pop .pop-title small{
+  font-size:9px;font-weight:700;color:var(--n5);
+  letter-spacing:.7px;text-transform:uppercase;direction:ltr;}
+
+/* عناصر القايمة */
+.arc-menu-item{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  width:100%;padding:9px 10px;border:0;border-radius:var(--r-sm);
+  background:transparent;cursor:pointer;
+  font-family:inherit;font-size:12.5px;font-weight:600;color:var(--n7);
+  text-align:start;transition:background .12s,color .12s;}
+.arc-menu-item:hover{background:var(--n2);color:var(--n8);}
+.arc-menu-item:focus-visible{outline:2px solid var(--indigo);outline-offset:-2px;}
+.arc-menu-item svg{width:15px;height:15px;stroke:currentColor;stroke-width:1.9;
+  fill:none;opacity:.62;flex:0 0 auto;}
+.arc-menu-item:hover svg{opacity:1;}
+.arc-menu-item.danger{color:var(--stop);}
+.arc-menu-item.danger:hover{background:var(--stop-bg);color:var(--stop);}
+.arc-menu-sep{height:1px;background:var(--n3);margin:6px 4px;}
+
+/* سهم منبثق سجل التوقيت بنفس لون الحد */
+#arc-time-pop::before{background:var(--n0) !important;
+  border-top:1px solid var(--n3);border-inline-start:1px solid var(--n3);}
+#arc-time-pop .pop-title{color:var(--n8) !important;}
+#arc-time-pop .pop-title small{color:var(--n5) !important;}
+.arc-time-row{display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:6px 8px;border-radius:var(--r-sm);font-size:12px;}
+.arc-time-row:nth-child(even){background:var(--n1);}
+.arc-time-row span{color:var(--n6);font-weight:600;}
+.arc-time-row b{color:var(--n8);font-weight:700;direction:ltr;
+  font-variant-numeric:tabular-nums;}
+
+/* قوايم الاختيار (نوع الطلب / الترتيب) بنفس شكل الأزرار الثانوية */
+.arc-sel-f{
+  height:38px;border:1px solid var(--n4) !important;border-radius:var(--r-sm) !important;
+  background-color:var(--n0) !important;
+  font-family:inherit;font-size:13px;font-weight:600;color:var(--n7);
+  cursor:pointer;transition:border-color .12s,background .12s;}
+.arc-sel-f:hover{border-color:var(--n5) !important;background-color:var(--n1) !important;}
+.arc-sel-f:focus{outline:none;border-color:var(--indigo) !important;
+  box-shadow:0 0 0 3px var(--focus) !important;}
+
+/* رؤوس الحوارات */
+#app-confirm-overlay .acd-head,#app-comments-overlay .cmt-head,
+#app-group-overlay .agd-head{
+  padding:16px 20px !important;}
+
+/* الموبايل: الأفاتار كان في آخر سطر لوحده بعيد عن اسم المورّد.
+   مكانه الصح جنب المورّد لأنه بيقول «مين قدّم الطلب ده». */
+@media (max-width:819px){
+  .rl-row{
+    grid-template-columns:30px minmax(0,1fr) 88px !important;
+    grid-template-areas:
+      'no    no    act'
+      'who   party party'
+      'date  date  amt'
+      'st    st    st' !important;
+    row-gap:5px;}
+  .rl-who{grid-area:who !important;justify-content:flex-start !important;}
+  .rl-who .pav{width:26px;height:26px;flex:0 0 26px;font-size:9px;}
+  .rl-party{grid-area:party !important;}
+  .hrow{
+    grid-template-columns:30px minmax(0,1fr) 132px !important;
+    grid-template-areas:
+      'no    no    act'
+      'who   party party'
+      'age   age   amt'
+      'st    st    st' !important;
+    row-gap:5px;}
+  .hrow-who{grid-area:who !important;justify-content:flex-start !important;}
+  .hrow-who .pav{width:26px;height:26px;flex:0 0 26px;font-size:9px;}
+  .hrow-party{grid-area:party !important;}
 }

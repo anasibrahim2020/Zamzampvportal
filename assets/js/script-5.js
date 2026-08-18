@@ -1915,7 +1915,7 @@ async function loadArchive(silent=false){
           </span>
         </span>
         <span class="rl-c rl-who">${personAvatar(x.created_by)}</span>
-        <span class="rl-c rl-date">${x.req_date||'—'}${showAge?`<em class="rl-age ${ageCls}">${days===0?t('اليوم'):days===1?t('من يوم'):t('من {n} يوم').replace('{n}',days)}</em>`:''}</span>
+        <span class="rl-c rl-date"><span class="rl-dt">${x.req_date||'—'}</span><em class="rl-age ${showAge?ageCls:'is-blank'}">${showAge?(days===0?t('اليوم'):days===1?t('من يوم'):t('من {n} يوم').replace('{n}',days)):''}</em></span>
         <span class="rl-c rl-amt">${x.amount?formatMoney(x.amount):'—'}</span>
         <span class="rl-c rl-st"><span class="arc-status ${st.cls}"><i></i>${t(st.label)}</span></span>
         <span class="rl-c rl-act">${actIcon}
