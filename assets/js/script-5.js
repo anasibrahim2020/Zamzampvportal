@@ -847,8 +847,6 @@ function setDocumentLocked(kind, locked){
   }
   const saveBtn = document.getElementById(kind + '-save-btn');
   if(saveBtn) saveBtn.disabled = !!locked;
-  const signBtn = document.getElementById(kind + '-sign-btn');
-  if(signBtn) signBtn.disabled = !!locked;
   if(kind === 'disb' && typeof updateCostCenterDisabledUI === 'function') updateCostCenterDisabledUI();
 }
 function applyArchiveEditLock(kind, request){
@@ -979,16 +977,6 @@ document.addEventListener('blur', (e)=>{
   if(!isFinite(n)) return;
   el.value = docAmount(n);
 }, true);
-// التوقيع من خانة التوقيع نفسها — الفعل بيحصل في مكان النتيجة.
-// بنتجاهل الضغط لو الوثيقة مقفولة أو الطلب موقّع بالفعل.
-// نص الدعوة للضغط بيتحط كسمة data عشان ما يدخلش في نص الوثيقة المطبوع
-function refreshSigHints(){
-  refreshPadStates();
-  ['disb','cancel'].forEach(k=>{
-    const ph = document.getElementById(k+'-sig-ph');
-    if(ph) ph.setAttribute('data-hint', t('اضغط للتوقيع'));
-  });
-}
 // اعتماد الحسابات من الخانة نفسها — نفس منطق التوقيع
 function signAccFromPad(kind){
   if(!CURRENT || CURRENT.role !== 'accountant') return;
@@ -1044,7 +1032,6 @@ function signDoc(kind){
   document.getElementById(kind+'-sig-stamp').classList.add('on');
   document.getElementById(kind+'-sig-mono').textContent = initials(CURRENT.name);
   document.getElementById(kind+'-sig-name').textContent = personName(CURRENT.name);
-  document.getElementById(kind+'-sign-btn')?.classList.add('signed');
   document.getElementById(kind+'-sig-meta').textContent = dt;
   refreshPadStates();
   showMessageDialog({
@@ -1057,117 +1044,6 @@ function signDoc(kind){
     note:t('يمكنك الآن تقديم الطلب أو طباعته حسب الإجراء المطلوب.'),
     confirmText:t('حسنًا')
   });
-}
-function signCancelDoc(){ return signDoc('cancel'); }
-function signDisbDoc(){ return signDoc('disb'); }
-
-// اعتماد إدارة الحسابات (للمحاسب فقط) — من النموذج أو من الأرشيف، لطلب الصرف أو الإلغاء
-async function signAccountsFor(kind){
-  if(!CURRENT || CURRENT.role!=='accountant'){ alert(t('اعتماد الحسابات متاح للمحاسب فقط.')); return; }
-  const pfx = kind === 'cancel' ? 'cancel' : 'disb';
-  const now=new Date();
-  const dt = stampDate(now);
-  setAccSign(pfx, { name:CURRENT.name, time:now.toISOString(), label:dt });
-  document.getElementById(pfx+'-acc-ph').style.display='none';
-  document.getElementById(pfx+'-acc-stamp').classList.add('on');
-  document.getElementById(pfx+'-acc-mono').textContent = initials(CURRENT.name);
-  document.getElementById(pfx+'-acc-name').textContent = personName(CURRENT.name);
-  document.getElementById(pfx+'-acc-meta').textContent = dt;
-  refreshPadStates();
-  if(EDIT_ID && SB_ON){
-    const btn=document.getElementById(pfx+'-acc-btn'); const o=btn?btn.innerHTML:'';
-    if(btn){ btn.disabled=true; btn.textContent=t('جاري الاعتماد...'); }
-    try{
-      const { error } = await sb.from('requests').update({
-        accounts_signed_by: CURRENT.name, accounts_signed_at: now.toISOString()
-      }).eq('id', EDIT_ID);
-      if(error){ console.error(error); alert(t('تعذّر حفظ الاعتماد — اتأكد إن سياسة التعديل (update) متفعّلة في Supabase (راجع كود SQL في التعليمات).')); }
-      else {
-        if(EDIT_REQUEST){
-          EDIT_REQUEST = { ...EDIT_REQUEST, accounts_signed_by: CURRENT.name, accounts_signed_at: now.toISOString() };
-        }
-        showMessageDialog({
-          title:t('تم اعتماد الطلب'),
-          message:t('تم اعتماد الطلب من إدارة الحسابات وحفظه في الأرشيف.'),
-          details:[
-            { label:t('رقم الطلب'), value: displayRequestNo(EDIT_REQUEST?.req_no) || '—', ltr:true },
-            { label:t('معتمد بواسطة'), value: CURRENT.name },
-            { label:t('وقت الاعتماد'), value: dt, ltr:true }
-          ],
-          note:t('الطلب الآن متاح للطباعة.'),
-          confirmText:t('حسنًا')
-        });
-      }
-    }catch(e){ alert(t('خطأ اتصال بـ Supabase.')); console.error(e); }
-    if(btn){ btn.disabled=false; btn.innerHTML=o; }
-  }
-}
-async function signCancelAccounts(){ return signAccountsFor('cancel'); }
-async function signDisbAccounts(){ return signAccountsFor('disb'); }
-
-/* ══════════════════════════════════════════
-   REQUEST PDF (attachments stay separate)
-══════════════════════════════════════════ */
-async function generateRequestPDF(docId='doc-disb', opts={}){
-  const captureScale = opts.scale || 3;                    // دقة الالتقاط
-  const imgFormat = (opts.format || 'PNG').toUpperCase();  // PNG للطباعة، JPEG لتصغير حجم الملف
-  const imgQuality = opts.quality || 0.92;
-  commitValuesForPrint();
-  await document.fonts.ready;
-  const el=document.getElementById(docId);
-  const hidden = [...el.querySelectorAll('.attach-zone, .attach-list, #attach-list, .attach-item, #disb-attach-sec, .add-row-btn')];
-  const originalDisplay = hidden.map(node=>[node, node.style.display]);
-  const originalStyles = {
-    width: el.style.width,
-    maxWidth: el.style.maxWidth,
-    margin: el.style.margin,
-    boxShadow: el.style.boxShadow,
-    borderRadius: el.style.borderRadius,
-    transform: el.style.transform,
-  };
-  hidden.forEach(node=>node.style.display='none');
-  el.style.width = '210mm';
-  el.style.maxWidth = '210mm';
-  el.style.margin = '0 auto';
-  el.style.boxShadow = 'none';
-  el.style.borderRadius = '0';
-  el.style.transform = 'none';
-  let canvas;
-  try{
-    await new Promise(requestAnimationFrame);
-    canvas = await html2canvas(el,{scale:captureScale,backgroundColor:'#ffffff',useCORS:true,
-      scrollX:0,
-      scrollY:0,
-      windowWidth:el.scrollWidth,
-      windowHeight:el.scrollHeight,
-      ignoreElements:(n)=>n.classList&&n.classList.contains('no-print')});
-  }finally{
-    originalDisplay.forEach(([node, value])=>{ node.style.display = value; });
-    el.style.width = originalStyles.width;
-    el.style.maxWidth = originalStyles.maxWidth;
-    el.style.margin = originalStyles.margin;
-    el.style.boxShadow = originalStyles.boxShadow;
-    el.style.borderRadius = originalStyles.borderRadius;
-    el.style.transform = originalStyles.transform;
-  }
-  const img = imgFormat === 'JPEG' ? canvas.toDataURL('image/jpeg', imgQuality) : canvas.toDataURL('image/png');
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p','mm','a4');
-  const pw = pdf.internal.pageSize.getWidth();
-  const ph = pdf.internal.pageSize.getHeight();
-  const PX_TO_MM = 0.2645833333;
-  const canvasWidthMm = canvas.width * PX_TO_MM;
-  const canvasHeightMm = canvas.height * PX_TO_MM;
-  const pdfScale = canvasWidthMm > 0 ? Math.min(1, pw / canvasWidthMm) : 1;
-  const imgW = canvasWidthMm * pdfScale;
-  const imgH = canvasHeightMm * pdfScale;
-  const offsetX = Math.max(0, (pw - imgW) / 2);
-  const totalPages = Math.ceil(imgH / ph);
-  for(let pageIndex = 0; pageIndex < totalPages; pageIndex++){
-    if(pageIndex > 0) pdf.addPage();
-    pdf.addImage(img, imgFormat, offsetX, -ph * pageIndex, imgW, imgH);
-  }
-  return pdf.output('arraybuffer');
 }
 async function getAttachmentBytes(attachment){
   if(attachment instanceof Blob){
@@ -2485,7 +2361,6 @@ function clearCancel(){
   SIGNED.cancel=null;
   document.getElementById('cancel-sig-stamp').classList.remove('on');
   document.getElementById('cancel-sig-ph').style.display='block';
-  document.getElementById('cancel-sign-btn')?.classList.remove('signed');
   // إعادة ضبط اعتماد الحسابات
   setAccSign('cancel', null);
   document.getElementById('cancel-acc-stamp').classList.remove('on');
@@ -2516,7 +2391,6 @@ function clearDisb(){
   SIGNED.disb=null;
   document.getElementById('disb-sig-stamp').classList.remove('on');
   document.getElementById('disb-sig-ph').style.display='block';
-  document.getElementById('disb-sign-btn')?.classList.remove('signed');
   // إعادة ضبط اعتماد الحسابات
   setAccSign('disb', null);
   document.getElementById('disb-acc-stamp').classList.remove('on');

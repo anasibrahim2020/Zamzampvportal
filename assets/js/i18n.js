@@ -590,6 +590,7 @@ function applyLanguage(opts){
     btn.setAttribute('aria-label', tip);
   });
   if(typeof syncUserChip === 'function') syncUserChip();
+  if(typeof refreshPadStates === 'function') refreshPadStates();   // دعوة التوقيع تتترجم مع اللغة
   if(!o.skipDynamic && typeof refreshDynamicUI === 'function'){
     refreshDynamicUI();
     translateStaticNodes();   // العناصر اللي اتولدت من جديد
