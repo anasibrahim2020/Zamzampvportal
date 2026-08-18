@@ -1838,8 +1838,10 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
 .rl-cnt{font-variant-numeric:tabular-nums;min-width:42px;justify-content:center;}
 /* حاوية العدّادات بعرض محجوز، فالرقائق تبدأ من حافة ثابتة
    وتمتد جوّاها زي رقاقة التقادم والمبلغ بالظبط */
-.rl-act .rl-counts{width:92px;flex:0 0 92px;justify-content:flex-start;}
-@media (max-width:819px){ .rl-act .rl-counts{width:auto;flex:0 0 auto;} }
+@media (min-width:901px){
+  .rl-act .rl-counts{width:92px;flex:0 0 92px;justify-content:flex-start;}
+}
+.rl-act .rl-counts{justify-content:flex-start;}
 
 /* ══════════════════════════════════════════════════════════
    التاريخ ورقم الطلب توأم في رأس الوثيقة — نفس المعاملة
@@ -1925,4 +1927,56 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
       'who   party party'
       'age   age   amt'
       'st    st    st' !important;}
+}
+/* عمود الإجراءات على الموبايل: رقاقة (42) + زرارين (30+30) + فواصل
+   = 114px، وكان 88 فبيفيض. العمود ده بياخد كمان المبلغ فلازم يسع
+   9,876,543.21 — 120px بتكفّي الاتنين. */
+@media (max-width:819px){
+  .rl-row{grid-template-columns:30px minmax(0,1fr) 120px !important;}
+  .hrow{grid-template-columns:30px minmax(0,1fr) 132px !important;}
+  .rl-act{gap:4px;}
+  .rl-act .rl-counts{width:auto;flex:0 0 auto;}
+}
+/* المدى المتوسط (884px): رقاقة «Awaiting approval» الإنجليزية أعرض
+   من العربية، وعمود الإجراءات فيه 3 عناصر — الاتنين كانوا بيفيضوا */
+@media (min-width:820px) and (max-width:900px){
+  .rl-head,.rl-row{
+    grid-template-columns:114px minmax(0,1fr) 42px 84px 120px 118px 150px !important;}
+  .hrow{grid-template-columns:112px minmax(0,1fr) 42px 126px 70px 120px 124px !important;}
+}
+/* المدى المتوسط: العدّادات بعرض محتواها والعمود يوسّع للثلاثة عناصر */
+@media (min-width:820px) and (max-width:900px){
+  .rl-act .rl-counts{width:auto !important;flex:0 0 auto !important;}
+  .rl-head,.rl-row{
+    grid-template-columns:110px minmax(0,1fr) 40px 82px 118px 112px 158px !important;}
+  .rl-act{gap:5px;}
+}
+
+/* ══════════════════════════════════════════════════════════
+   أزرار إجراء الصف: نمط واحد — أبيض بحد، واللون هو اللي
+   يقول الحالة. كان فيه تلات أوزان بصرية لنفس نوع الزرار.
+══════════════════════════════════════════════════════════ */
+.rl-go,.rl-go.proof,.rl-go.review,.rl-go.upload{
+  background:var(--n0) !important;
+  border:1px solid var(--n4) !important;
+  color:var(--n6) !important;
+  border-radius:var(--r-sm) !important;
+  box-shadow:none !important;
+  transition:border-color .12s,color .12s,background .12s;}
+/* اللون بيقول المعنى */
+.rl-go.review{border-color:var(--indigo-l) !important;color:var(--indigo-d) !important;}
+.rl-go.review:hover{border-color:var(--indigo) !important;background:var(--indigo-t) !important;}
+.rl-go.upload{border-color:var(--teal-l) !important;color:var(--teal-d) !important;}
+.rl-go.upload:hover{border-color:var(--teal) !important;background:var(--teal-t) !important;}
+.rl-go.proof:hover{border-color:var(--n5) !important;color:var(--n7) !important;background:var(--n1) !important;}
+/* زر «المزيد» يتماشى معاهم */
+.rl-more{border:1px solid transparent !important;background:transparent !important;
+  color:var(--n5) !important;border-radius:var(--r-sm) !important;}
+.rl-more:hover{background:var(--n2) !important;color:var(--n7) !important;}
+/* الشاشات الكبيرة: حجز العدّادات (92) + زرارين (30+30) + فواصل = 164
+   والعمود كان 152 فبيفيض. 172 بتسع الأقصى بهامش. */
+@media (min-width:901px){
+  .rl-head,.rl-row{
+    grid-template-columns:150px minmax(0,1fr) 56px 112px 124px 120px 172px !important;}
+  .rl-act{gap:6px;}
 }
