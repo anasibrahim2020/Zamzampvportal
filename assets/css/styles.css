@@ -1430,3 +1430,23 @@ table.arc tbody tr.arc-grp-head td,
 .st-transferred i,.st-transferred .dot,.st-transferred b{background:var(--green) !important;}
 .st-pending{color:#966425 !important;}
 .st-pending i,.st-pending .dot,.st-pending b{background:var(--wait) !important;}
+
+/* زر حذف الصف كان 19×23 — أصغر من الحد الآمن للمس، وهو زر بيمسح.
+   الشكل زي ما هو، بس مساحة اللمس اتكبّرت بـ::after شفّاف. */
+.del-row{position:relative;}
+.del-row::after{content:'';position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);width:44px;height:44px;}
+@media print{ .del-row::after{content:none;} }
+
+/* الشاشات المتوسطة (زي Z Fold وهو مفتوح ≈884px) كانت بتاخد تخطيط
+   بطاقات الموبايل رغم إن عرضها يكفي جدول كامل. الأعمدة أضيق شوية. */
+@media (min-width:820px) and (max-width:900px){
+  .rl-head{display:grid !important;}
+  .rl-head,.rl-row{
+    grid-template-areas:none !important;
+    grid-template-columns:150px minmax(0,1fr) 96px 112px 104px 64px !important;
+    align-items:center !important;}
+  .rl-head>*,.rl-row>*{grid-area:auto !important;}
+  .rl-st{justify-self:start !important;margin-top:0 !important;}
+  .rl-amt{justify-self:end !important;}
+}
