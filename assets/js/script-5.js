@@ -1877,7 +1877,7 @@ async function loadArchive(silent=false){
     const headHtml = `<div class="rl-head">
       <span class="rl-c rl-no">${t('رقم الطلب')}</span>
       <span class="rl-c rl-party">${t('المورّد')}</span>
-      <span class="rl-c rl-who">${t('مقدّم الطلب')}</span>
+      <span class="rl-c rl-who">${t('مقدّم')}</span>
       <span class="rl-c rl-date">${t('التاريخ')}</span>
       <span class="rl-c rl-amt">${t('المبلغ')}</span>
       <span class="rl-c rl-st">${t('الحالة')}</span>

@@ -1797,3 +1797,17 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
   border:1px solid var(--indigo-l);}
 .form-mode.view{background:var(--n2);color:var(--n6);border:1px solid var(--n3);}
 @media print{ .form-mode{display:none !important;} }
+
+/* ══════════════════════════════════════════════════════════
+   هيدر الوثيقة — اسم الشركة ياخد لون اللوجو
+   العنوان الإنجليزي كان بياخد --teal اللي بقى لون حالة «معتمد»،
+   وده خارج سياقه. دلوقتي: العنوان حبر · الإنجليزي رمادي هادي ·
+   اسم الشركة تركوازي العلامة = العنصر الوحيد اللي بيحمل الهوية.
+══════════════════════════════════════════════════════════ */
+.doc-hd-txt .en{color:var(--n5) !important;letter-spacing:.6px;}
+.doc-hd-txt .co{color:var(--indigo) !important;font-weight:700 !important;}
+/* الخط تحت الهيدر: تركوازي العلامة مصمت بدل التدرّج الرباعي */
+.doc-hd{border-image:none !important;
+  border-bottom:2.5px solid var(--indigo) !important;}
+/* عنوان عمود الأفاتار ضيّق — نمنعه يفيض على «التاريخ» */
+.rl-head .rl-who{overflow:hidden;white-space:nowrap;text-align:center;}

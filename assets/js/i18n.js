@@ -8,6 +8,7 @@ let LANG = 'ar';
 try{ LANG = localStorage.getItem(LANG_KEY) || 'ar'; }catch(e){ LANG = 'ar'; }
 
 const I18N_EN = {
+  'مقدّم':'By',
   'تعديل طلب قائم':'Editing an existing request',
   'عرض فقط':'View only',
   'مقدّم الطلب':'Requester',
