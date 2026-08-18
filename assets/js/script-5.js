@@ -476,11 +476,15 @@ function getDisbTableRowsCount(){
   return document.querySelectorAll('#supplier-rows tr').length + document.querySelectorAll('#client-rows tr').length;
 }
 function canAddDisbTableRow(){
+  return true;   // بلا حد — الطباعة بتتدفّق على صفحات A4 تلقائياً
+  /* eslint-disable no-unreachable */
   if(getDisbTableRowsCount() < MAX_DISB_TABLE_ROWS) return true;
   alert(t('لقد وصلت للحد الأقصى للمدخلات.\n\nالحد الأعلى هو {max} صفاً. الصفوف الزائدة عن {main} ستظهر في ملحق تفاصيل الفواتير عند الطباعة.').replace('{max}', MAX_DISB_TABLE_ROWS).replace('{main}', DISB_MAIN_PRINT_ROWS));
   return false;
 }
 function ensureDisbRowsPrintable(){
+  return true;   // الجدول بيتقسّم على الصفحات لوحده
+  /* eslint-disable no-unreachable */
   const count = getDisbTableRowsCount();
   if(count <= MAX_DISB_TABLE_ROWS) return true;
   alert(t('لا يمكن طباعة الطلب بعدد الصفوف الحالي.\n\nالعدد الحالي: {n}\nالحد الأقصى: {max} صفاً.').replace('{n}', count).replace('{max}', MAX_DISB_TABLE_ROWS));
@@ -556,6 +560,8 @@ function renderAppendixClientRows(rows){
 }
 function prepareDisbPrintAppendix(){
   clearDisbPrintAppendix();
+  return;   // مفيش ملحق — كل الصفوف بتتطبع في الجدول وبتتدفّق على الصفحات
+  /* eslint-disable no-unreachable */
   const supplierRows = getDisbSupplierRows();
   const clientRows = getDisbClientRows();
   const totalRows = supplierRows.length + clientRows.length;
