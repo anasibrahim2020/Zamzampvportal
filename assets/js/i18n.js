@@ -496,6 +496,8 @@ const I18N_EN = {
   'مفيش طلبات جاهزة للتحويل':'No requests ready to transfer',
   'هتظهر هنا بعد الاعتماد':'They appear here once approved',
   'اعتماد':'Approve',
+  'مراجعة واعتماد':'Review & approve',
+  'رفع الإثبات':'Upload proof',
   'إثبات':'Proof',
   'طلباتي':'My requests',
   'قيد التنفيذ':'In progress',

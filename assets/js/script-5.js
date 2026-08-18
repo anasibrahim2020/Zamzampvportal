@@ -1376,21 +1376,21 @@ function showConfirmDialog({ title, message, details=[], note='', confirmText=t(
         @keyframes acdFade{from{opacity:0}to{opacity:1}}
         @keyframes acdPop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
         #app-confirm-overlay{animation:acdFade .18s ease both;}
-        #app-confirm-overlay .acd-card{width:min(460px,100%);background:#fff;border-radius:16px;box-shadow:0 24px 56px -20px rgba(20,24,46,.45);overflow:hidden;font-family:'Cairo','Montserrat',sans-serif;animation:acdPop .26s cubic-bezier(.2,.8,.25,1) both;}
+        #app-confirm-overlay .acd-card{width:min(460px,100%);background:#fff;border-radius:16px;box-shadow:0 24px 56px -20px rgba(20,24,46,.45);overflow:hidden;font-family:'PlexAr','Inter',sans-serif;animation:acdPop .26s cubic-bezier(.2,.8,.25,1) both;}
         #app-confirm-overlay .acd-head{position:relative;padding:22px 24px 20px;background:linear-gradient(120deg,#2F817C 0%,#326F82 48%,#3E3A72 100%);color:#fff;}
         #app-confirm-overlay .acd-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,rgba(255,255,255,.0),rgba(255,255,255,.35),rgba(255,255,255,.0));}
-        #app-confirm-overlay .acd-title{font-size:18px;font-weight:800;line-height:1.45;}
-        #app-confirm-overlay .acd-cap{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;opacity:.72;margin-top:3px;}
+        #app-confirm-overlay .acd-title{font-size:18px;font-weight:700;line-height:1.45;}
+        #app-confirm-overlay .acd-cap{font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;opacity:.72;margin-top:3px;}
         #app-confirm-overlay .acd-body{padding:20px 24px 6px;}
         #app-confirm-overlay .acd-msg{font-size:15px;font-weight:600;color:#1B2233;line-height:1.9;white-space:pre-line;}
         #app-confirm-overlay .acd-details{margin-top:16px;border:1px solid #E4EBF3;border-radius:12px;background:#F7FAFD;overflow:hidden;}
         #app-confirm-overlay .acd-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 14px;}
         #app-confirm-overlay .acd-row[data-sep]{border-bottom:1px solid #EEF2F7;}
         #app-confirm-overlay .acd-row-label{font-size:11px;font-weight:700;color:#5A6880;}
-        #app-confirm-overlay .acd-row-value{font-size:13px;font-weight:800;color:#3E3A72;}
+        #app-confirm-overlay .acd-row-value{font-size:13px;font-weight:700;color:#3E3A72;}
         #app-confirm-overlay .acd-note{margin-top:14px;color:#5A6880;font-size:12px;line-height:1.75;}
         #app-confirm-overlay .acd-foot{display:flex;gap:10px;justify-content:flex-start;padding:18px 24px 22px;}
-        #app-confirm-overlay .acd-btn{border:none;border-radius:12px;padding:11px 24px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:transform .12s ease,box-shadow .15s ease,background .15s ease;}
+        #app-confirm-overlay .acd-btn{border:none;border-radius:12px;padding:11px 24px;font-family:'PlexAr',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:transform .12s ease,box-shadow .15s ease,background .15s ease;}
         #app-confirm-overlay .acd-btn:active{transform:translateY(1px);}
         #app-confirm-overlay .acd-btn:focus-visible{outline:2px solid ${accent};outline-offset:2px;}
         #app-confirm-overlay .acd-confirm{background:${accent};color:#fff;box-shadow:0 10px 26px -12px rgba(20,24,46,.38);}
@@ -1613,12 +1613,12 @@ function renderCommentsOverlay(i){
     <style>
       @keyframes cmtFade{from{opacity:0}to{opacity:1}}
       @keyframes cmtPop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
-      #app-comments-overlay{animation:cmtFade .18s ease both;font-family:'Cairo','Montserrat',sans-serif;}
+      #app-comments-overlay{animation:cmtFade .18s ease both;font-family:'PlexAr','Inter',sans-serif;}
       #app-comments-overlay .cmt-card{width:min(520px,100%);max-height:88vh;display:flex;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 24px 56px -20px rgba(20,24,46,.45);overflow:hidden;animation:cmtPop .26s cubic-bezier(.2,.8,.25,1) both;}
       #app-comments-overlay .cmt-head{position:relative;padding:20px 24px 18px;background:linear-gradient(120deg,#2F817C 0%,#326F82 48%,#3E3A72 100%);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px;}
       #app-comments-overlay .cmt-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.35),rgba(255,255,255,0));}
-      #app-comments-overlay .cmt-htitle{font-size:18px;font-weight:800;}
-      #app-comments-overlay .cmt-hcap{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.4px;opacity:.72;margin-top:2px;direction:ltr;}
+      #app-comments-overlay .cmt-htitle{font-size:18px;font-weight:700;}
+      #app-comments-overlay .cmt-hcap{font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.4px;opacity:.72;margin-top:2px;direction:ltr;}
       #app-comments-overlay .cmt-x{background:rgba(255,255,255,.16);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:pointer;line-height:1;transition:background .15s ease;}
       #app-comments-overlay .cmt-x:hover{background:rgba(255,255,255,.28);}
       #app-comments-overlay .cmt-body{padding:16px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;background:#F7FAFD;}
@@ -1626,9 +1626,9 @@ function renderCommentsOverlay(i){
       #app-comments-overlay .cmt-item{background:#fff;border:1px solid #E4EBF3;border-radius:12px;padding:12px 14px;}
       #app-comments-overlay .cmt-item.editing{border-color:#2C8B8E;box-shadow:0 1px 2px rgba(20,24,46,.06);}
       #app-comments-overlay .cmt-item-hd{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:7px;}
-      #app-comments-overlay .cmt-who b{font-size:13px;font-weight:800;color:#3E3A72;}
+      #app-comments-overlay .cmt-who b{font-size:13px;font-weight:700;color:#3E3A72;}
       #app-comments-overlay .cmt-role{font-size:11px;color:#5A6880;margin-right:6px;}
-      #app-comments-overlay .cmt-vis-badge{font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap;}
+      #app-comments-overlay .cmt-vis-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;}
       #app-comments-overlay .cmt-all{background:#EAF3FF;color:#2563EB;}
       #app-comments-overlay .cmt-mgmt{background:#F3EEFF;color:#6B46C1;}
       #app-comments-overlay .cmt-staff{background:#E7F7F0;color:#1E9E78;}
@@ -1636,19 +1636,19 @@ function renderCommentsOverlay(i){
       #app-comments-overlay .cmt-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;}
       #app-comments-overlay .cmt-time{font-size:11px;color:#94A3B8;direction:ltr;}
       #app-comments-overlay .cmt-actions{display:flex;gap:6px;}
-      #app-comments-overlay .cmt-link{background:none;border:none;font-family:'Cairo',sans-serif;font-size:12px;font-weight:800;color:#2C8B8E;cursor:pointer;padding:3px 7px;border-radius:8px;}
+      #app-comments-overlay .cmt-link{background:none;border:none;font-family:'PlexAr',sans-serif;font-size:12px;font-weight:700;color:#2C8B8E;cursor:pointer;padding:3px 7px;border-radius:8px;}
       #app-comments-overlay .cmt-link:hover{background:#EAF3F3;}
       #app-comments-overlay .cmt-link.danger{color:#E0526B;}
       #app-comments-overlay .cmt-link.danger:hover{background:#FCEBEF;}
-      #app-comments-overlay textarea{width:100%;box-sizing:border-box;border:1.5px solid #E4EBF3;border-radius:12px;padding:10px 12px;font-family:'Cairo',sans-serif;font-size:13px;resize:vertical;outline:none;background:#fff;}
+      #app-comments-overlay textarea{width:100%;box-sizing:border-box;border:1.5px solid #E4EBF3;border-radius:12px;padding:10px 12px;font-family:'PlexAr',sans-serif;font-size:13px;resize:vertical;outline:none;background:#fff;}
       #app-comments-overlay textarea:focus{border-color:#2C8B8E;box-shadow:0 1px 2px rgba(20,24,46,.06);}
       #app-comments-overlay .cmt-add{border-top:1px solid #E4EBF3;padding:14px 20px 18px;background:#fff;display:flex;flex-direction:column;gap:10px;}
       #app-comments-overlay .cmt-vis-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
-      #app-comments-overlay .cmt-vis-lbl{font-size:12px;font-weight:800;color:#5A6880;}
+      #app-comments-overlay .cmt-vis-lbl{font-size:12px;font-weight:700;color:#5A6880;}
       #app-comments-overlay .cmt-vis-opt{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#3E3A72;background:#F4F7FB;border:1.5px solid #E2E9F2;border-radius:8px;padding:6px 11px;cursor:pointer;}
       #app-comments-overlay .cmt-vis-opt:has(input:checked){border-color:#2C8B8E;background:#EAF6F5;color:#1F6F6B;}
       #app-comments-overlay .cmt-vis-opt input{accent-color:#2C8B8E;}
-      #app-comments-overlay .cmt-submit{align-self:flex-start;background:#2C8B8E;color:#fff;border:none;border-radius:12px;padding:10px 22px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 10px 26px -12px rgba(20,24,46,.38);transition:filter .15s ease;}
+      #app-comments-overlay .cmt-submit{align-self:flex-start;background:#2C8B8E;color:#fff;border:none;border-radius:12px;padding:10px 22px;font-family:'PlexAr',sans-serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 10px 26px -12px rgba(20,24,46,.38);transition:filter .15s ease;}
       #app-comments-overlay .cmt-submit:hover{filter:brightness(1.06);}
       #app-comments-overlay .cmt-locked{border-top:1px solid #E4EBF3;padding:16px 20px;background:#fff;color:#5A6880;font-size:12px;font-weight:700;text-align:center;}
     </style>
@@ -1809,10 +1809,10 @@ async function loadArchive(silent=false){
   });
   if(!SB_ON){
     note.innerHTML=t('<div class="arc-note">الأرشيف السحابي غير مفعّل بعد. الطلبات تشتغل وتطبع وتتحمّل عادي.<br>لحفظ الطلبات وعرضها هنا للجميع، أضف رابط ومفتاح Supabase في أعلى كود الملف.</div>');
-    body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('— الأرشيف غير مفعّل —')}</td></tr>`;
+    body.innerHTML=`<div class="arc-empty">${t('— الأرشيف غير مفعّل —')}</div>`;
     return;
   }
-  if(!silent) body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('جاري التحميل...')}</td></tr>`;
+  if(!silent) body.innerHTML=`<div class="arc-empty">${t('جاري التحميل...')}</div>`;
   try{
     await ensureTransferColumns();   // أعمدة التحويل المجمّع موجودة؟ (فحص مرة واحدة لكل جلسة)
     let qy = sb.from('requests').select('*').order('id',{ascending:false}).limit(200);
@@ -1840,9 +1840,9 @@ async function loadArchive(silent=false){
         errMsg = t('خطأ: عمود غير موجود في الجدول. شغّل الـ SQL ده في Supabase:<br><code style="font-size:10px;direction:ltr;display:block;background:#f5f5f5;padding:6px;margin-top:4px">ALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_image TEXT;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS attachments_data TEXT;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS cancelled BOOLEAN DEFAULT FALSE;<br>ALTER TABLE requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();</code>');
         note.innerHTML = `<div class="arc-note">${errMsg}</div>`;
       }
-      body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('خطأ اتصال')}</td></tr>`; return; 
+      body.innerHTML=`<div class="arc-empty">${t('خطأ اتصال')}</div>`; return; 
     }
-    if(!Array.isArray(rows)||rows.length===0){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('لا توجد طلبات')}</td></tr>`; return; }
+    if(!Array.isArray(rows)||rows.length===0){ body.innerHTML=`<div class="arc-empty">${t('لا توجد طلبات')}</div>`; return; }
     // الطلبات الملغية تظهر في تبويب «الملغاة / المسحوبة» فقط؛ باقي التبويبات تستثنيها
     const reqNum = r => extractRequestNoNumber(r.doc_type==='cancel' ? 'cancel' : 'disb', r.req_no);
     let list = (ARC_TAB==='cancelled' ? rows.filter(x=>x.cancelled) : rows.filter(x=>!x.cancelled))
@@ -1854,131 +1854,83 @@ async function loadArchive(silent=false){
       return ARC_STATUS==='review' ? (k==='pending'||k==='unsigned') : k===ARC_STATUS;
     });
     renderArchiveCount(shown.length, list.length, rows.length);
-    if(shown.length===0){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('لا توجد طلبات')}</td></tr>`; window._arcRows=[]; return; }
+    if(shown.length===0){ body.innerHTML=`<div class="arc-empty">${t('لا توجد طلبات')}</div>`; window._arcRows=[]; return; }
     list = shown;
     await loadTransferGroupsFor(list);          // بيانات مجموعات التحويل الظاهرة في القائمة
     sortTransferGroupsTogether(list, reqNum);   // طلبات التحويل الواحد تفضل ورا بعض ككتلة واحدة
     window._arcRows = list;
     renderTransferGroupNote(note, search);      // لافتة ملخّص عند فلترة مجموعة تحويل
     body.innerHTML=list.map((x,i)=>{
-      const type=x.doc_type==='cancel'
-        ?`<span class="badge cancel-doc">${t('إلغاء')}</span>`
-        :`<span class="badge disb-doc">${t('صرف')}</span>`;
-      // عمود «الحالة»: مرحلة واحدة واضحة بدل قراءة ثلاثة أعمدة
       const st = requestStatus(x);
-      const stTip = [
-        t('الحالة')+': '+t(st.label),
-        x.signed_by ? t('الموقّع')+': '+personName(x.signed_by) : '',
-        x.accounts_signed_by ? t('معتمد بواسطة')+': '+personName(x.accounts_signed_by) : ''
-      ].filter(Boolean).join('\n');
-      const sig = `<span class="arc-status ${st.cls}" title="${escAttr(stTip)}"><i></i>${t(st.label)}</span>`;
-      // عمود الاعتماد
-      const accTitle = x.accounts_signed_by
-        ? `${t('الحالة: معتمد من الحسابات')}\n${t('بواسطة:')} ${personName(x.accounts_signed_by)}${x.accounts_signed_at ? `\n${t('التوقيت:')} ${formatArchiveDateTime(x.accounts_signed_at)}` : ''}`
-        : t('الحالة: بانتظار اعتماد الحسابات');
-      let accCol = x.accounts_signed_by
-        ? `<span class="arc-approval-status approved" title="${escAttr(accTitle)}" aria-label="${escAttr(accTitle)}">${ARC_ICONS.sign}</span>`
-        : `<span class="arc-approval-status pending" title="${escAttr(accTitle)}" aria-label="${escAttr(accTitle)}">${ARC_ICONS.sign}<span class="hourglass">${ARC_ICONS.hourglass}</span></span>`;
-      if(isAcc && !x.accounts_signed_by && !x.cancelled){
-        accCol = `<button class="arc-approval-status pending clickable" onclick="approveFromArchive(${i})" title="${escAttr(accTitle)} — ${t('اضغط للاعتماد')}" aria-label="${escAttr(accTitle)} — ${t('اضغط للاعتماد')}">${ARC_ICONS.sign}<span class="hourglass">${ARC_ICONS.hourglass}</span></button>`;
-      } else if(isAcc && x.accounts_signed_by && !x.cancelled){
-        // الطلب معتمد: المحاسب يضغط على القلم لإلغاء الاعتماد
-        accCol = `<button class="arc-approval-status approved clickable" onclick="revokeApproval(${i})" title="${escAttr(accTitle)} — ${t('اضغط لإلغاء الاعتماد')}" aria-label="${escAttr(accTitle)} — ${t('اضغط لإلغاء الاعتماد')}">${ARC_ICONS.sign}</button>`;
-      }
-      // عمود إثبات التحويل — يتحوّل لمربع تحديد أثناء وضع «التحويل المجمّع»
       const groupId = x.transfer_group || '';
       const groupInfo = groupId ? (window._arcGroups||{})[groupId] : null;
       const groupCount = groupInfo ? groupInfo.rows.length : (groupId ? 1 : 0);
-      let imgCol = '';
-      if(ARC_SELECT_MODE && isTransferSelectable(x)){
-        const checked = ARC_SELECTED.has(x.id) ? ' checked' : '';
-        imgCol = `<label class="arc-sel-check" title="${t('تحديد الطلب لتحويل مجمّع')}"><input type="checkbox"${checked} onchange="toggleTransferSelection(${x.id}, this.checked, this)" aria-label="${t('تحديد الطلب لتحويل مجمّع')}"><span></span></label>`;
-      } else if(x.transfer_image){
-        // الضغط على الأيقونة يفتح قائمة: معاينة / تنزيل / حذف (الحذف للمحاسب)
-        imgCol = groupId
-          ? `<button class="arc-mini arc-file-pill transferred arc-menu-btn" onclick="showTransferProofMenu(this, ${i})" title="${t('تحويل مجمّع')} ${escAttr(groupId)} — ${groupCount} ${t('طلبات بإثبات واحد')}" aria-label="${t('تحويل مجمّع')} ${escAttr(groupId)}">${ARC_ICONS.layers}<b>${groupCount}</b></button>`
-          : `<button class="arc-mini icon-only transferred arc-menu-btn" onclick="showTransferProofMenu(this, ${i})" title="${t('إثبات التحويل — تم التحويل')}" aria-label="${t('إثبات التحويل — تم التحويل')}">${ARC_ICONS.file}</button>`;
-      } else if(isAcc && x.accounts_signed_by && !x.cancelled){
-        imgCol = `<button class="arc-mini icon-only" onclick="uploadTransferImage(${i})" title="${t('رفع إثبات التحويل')}" aria-label="${t('رفع إثبات التحويل')}">${ARC_ICONS.upload}</button>`;
-      } else {
-          imgCol = '<span class="arc-empty-mark">—</span>';
-      }
-      // عمود المرفقات (PDF): ملخص هادئ بدل أزرار كثيرة داخل الصف
-      const atts = getArchiveRowAttachments(x);
-      const attachCol = atts.length
-        ? `<button class="arc-mini arc-file-pill arc-menu-btn" onclick="showArchiveAttachmentsMenu(this, ${i})" title="${t('عرض المرفقات')}" aria-label="${t('عرض المرفقات')} (${atts.length})">${ARC_ICONS.paperclip}<b>${atts.length}</b></button>`
-        : '<span class="arc-empty-mark">—</span>';
-      // عمود التعليقات: أيقونة فقط (مع عدّاد التعليقات الظاهرة للمستخدم الحالي)
-      const visComments = getVisibleComments(x);
-      const commentCol = `<button class="arc-mini ${visComments.length?'arc-file-pill':'icon-only'}" onclick="openCommentsDialog(${i})" title="${t('تعليقات الطلب')}" aria-label="${t('تعليقات الطلب')}${visComments.length?' ('+visComments.length+')':''}">${ARC_ICONS.comment}${visComments.length?`<b>${visComments.length}</b>`:''}</button>`;
-      // الإجراءات
-      let act;
-      if(!isAcc){
-        if(x.accounts_signed_by){
-          // الطلب المعتمد للمبيعات: طباعة فقط، بدون تعديل.
-          act = `<button class="arc-mini icon-only arc-menu-btn" onclick="showArchiveActionsMenu(this, ${i})" title="${t('إجراءات الطلب')}" aria-label="${t('إجراءات الطلب')}">${ARC_ICONS.more}</button>`;
-        } else {
-          // الطلب غير المعتمد: المبيعات تقدر تفتح وتعدل أو تلغي.
-          act = `<button class="arc-mini icon-only arc-menu-btn" onclick="showArchiveActionsMenu(this, ${i})" title="${t('إجراءات الطلب')}" aria-label="${t('إجراءات الطلب')}">${ARC_ICONS.more}</button>`;
-        }
-      } else if(x.cancelled){
-        act = t('<span style="color:#d9415f;font-size:11px;font-weight:700">ملغى</span>');
-      } else {
-        act = `<button class="arc-mini icon-only arc-menu-btn" onclick="showArchiveActionsMenu(this, ${i})" title="${t('إجراءات الطلب')}" aria-label="${t('إجراءات الطلب')}">${ARC_ICONS.more}</button>`;
-      }
-      const ref = x.doc_type==='cancel' ? (x.invoice_ref||'—') : (x.beneficiary||'—');
-      const submittedAt = formatArchiveDateTime(x.created_at || x.signed_at || x.req_date);
-      const approvedAt = x.accounts_signed_at ? formatArchiveDateTime(x.accounts_signed_at) : t('لم يعتمد بعد');
-      const timeBtn = `<button class="arc-mini icon-only arc-time-btn" onclick="showArchiveTimePopover(this, '${escAttr(submittedAt)}', '${escAttr(approvedAt)}')" title="${t('عرض توقيت الطلب')}" aria-label="${t('عرض توقيت الطلب')}">${ARC_ICONS.clock}</button>`;
-      // كتلة المجموعة: أول صف / وسط / آخر صف — عشان الإطار يبان متصل
       const blockGid = (!x.cancelled && groupId) ? groupId : '';
       const gidAt = k => { const r = list[k]; return (r && !r.cancelled && r.transfer_group) ? r.transfer_group : ''; };
       const isBlockFirst = !!blockGid && blockGid !== gidAt(i-1);
       const isBlockLast  = !!blockGid && blockGid !== gidAt(i+1);
-      const rowCls = [];
-      if(x.transfer_image && !x.cancelled && !blockGid) rowCls.push('arc-transferred');
-      if(blockGid){
-        rowCls.push('arc-grp');
-        if(isBlockFirst) rowCls.push('arc-grp-first');
-        if(isBlockLast) rowCls.push('arc-grp-last');
-      }
-      if(groupId && !x.cancelled) rowCls.push('arc-grouped');
-      if(ARC_SELECT_MODE && ARC_SELECTED.has(x.id)) rowCls.push('arc-row-selected');
-      const rowClass = rowCls.length ? ` class="${rowCls.join(' ')}"` : '';
-      const rowStyles = [];
-      if(groupId) rowStyles.push(transferGroupVars(groupId));
-      if(x.cancelled) rowStyles.push('opacity:.55');
-      const rowStyle = rowStyles.length ? ` style="${rowStyles.join(';')}"` : '';
-      const groupChip = (groupId && !x.cancelled)
-        ? `<button class="arc-group-chip" onclick="filterByTransferGroup('${escAttr(groupId)}')" title="${t('تحويل مجمّع — اضغط لعرض طلبات المجموعة')}" aria-label="${t('تحويل مجمّع')} ${escAttr(groupId)}">${ARC_ICONS.layers}<span>${escAttr(groupId)}</span></button>`
-        : '';
-      // فاصل بسيط قبل الكتلة وبعدها عشان تبان مستقلة
-      const gapBefore = (isBlockFirst && i>0) ? `<tr class="arc-grp-gap"><td colspan="${ARC_COLS}"></td></tr>` : '';
-      // شريط نهاية الكتلة: فراغ على الديسكتوب، وخط بلون المجموعة يقفل الكروت على الموبايل/التابلت
-      const gapAfter  = isBlockLast ? `<tr class="arc-grp-gap arc-grp-end" style="${transferGroupVars(blockGid)}"><td colspan="${ARC_COLS}"></td></tr>` : '';
-      // شريط عنوان فوق أول طلب في المجموعة
-      const headRow = isBlockFirst ? `<tr class="arc-grp-head" style="${transferGroupVars(blockGid)}">
-        <td colspan="${ARC_COLS}"><div class="agh">
-          <span class="agh-ttl">${ARC_ICONS.layers}<span class="agh-lbl">${t('تحويل مجمّع')}</span><span class="agh-code">${escAttr(blockGid)}</span></span>
-          <span class="agh-sub"><span class="agh-cnt">${groupCount} ${t('طلبات')}</span>${t('إجمالي')} <b>${formatMoney(groupInfo ? groupInfo.total : x.amount)}</b> ${t('ر.ق')}${groupInfo && groupInfo.note ? `<span class="agh-ref">${t('مرجع:')} ${escapeHtml(groupInfo.note)}</span>` : ''}</span>
-        </div></td></tr>` : '';
-      return gapBefore + headRow + `<tr${rowClass}${rowStyle}>
-        <td data-label="${t('رقم الطلب')}"><b style="color:var(--indigo);font-size:13px">${displayRequestNo(x.req_no)||'—'}</b>${groupChip}</td>
-        <td data-label="${t('النوع')}">${type}</td>
-        <td data-label="${t('التاريخ')}">${x.req_date||'—'}</td>
-        <td class="arc-ref" data-label="${t('رقم الفاتورة / المورّد')}">${ref}</td>
-        <td class="arc-amount" data-label="${t('المبلغ')}">${x.amount?Number(x.amount).toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
-        <td data-label="${t('الحالة')}">${sig}</td>
-        <td style="text-align:center" data-label="${t('الاعتماد')}">${accCol}</td>
-        <td style="text-align:center" data-label="${t('تعليقات')}">${commentCol}</td>
-        <td style="text-align:center" data-label="${t('إثبات التحويل')}">${imgCol}</td>
-        <td class="arc-files-cell" data-label="${t('المرفقات')}">${attachCol}</td>
-        <td data-label="${t('إجراءات')}"><div class="arc-act">${act}</div></td>
-      </tr>` + gapAfter;
+      const atts = getArchiveRowAttachments(x);
+      const visComments = getVisibleComments(x);
+
+      // شارات الصف
+      const chips = [];
+      if(groupId && !x.cancelled) chips.push(`<button class="rq-chip grp" onclick="event.stopPropagation();filterByTransferGroup('${escAttr(groupId)}')" title="${escAttr(t('تحويل مجمّع'))}">${ARC_ICONS.layers}${escAttr(groupId)}</button>`);
+      chips.push(ageChip(x));
+
+      // أفعال الصف — الفعل التالي حسب الحالة
+      let act = '';
+      if(isAcc && !x.accounts_signed_by && !x.cancelled)
+        act = `<button class="rq-go primary" onclick="event.stopPropagation();reviewFromHome(${x.id})">${t('مراجعة واعتماد')}</button>`;
+      else if(isAcc && x.accounts_signed_by && !x.transfer_image && !x.cancelled)
+        act = `<button class="rq-go ghost" onclick="event.stopPropagation();uploadTransferImage(${i})">${ARC_ICONS.upload}${t('رفع الإثبات')}</button>`;
+      else if(x.transfer_image)
+        act = `<button class="rq-go ghost" onclick="event.stopPropagation();showTransferProofMenu(this, ${i})">${ARC_ICONS.file}${t('الإثبات')}</button>`;
+
+      // مربع تحديد التحويل المجمّع
+      const sel = (ARC_SELECT_MODE && isTransferSelectable(x))
+        ? `<label class="rq-sel" onclick="event.stopPropagation()"><input type="checkbox"${ARC_SELECTED.has(x.id)?' checked':''} onchange="toggleTransferSelection(${x.id}, this.checked, this)"><span></span></label>` : '';
+
+      const cls = ['rq'];
+      if(blockGid) cls.push('rq-grp');
+      if(isBlockFirst) cls.push('rq-grp-first');
+      if(isBlockLast) cls.push('rq-grp-last');
+      if(x.cancelled) cls.push('rq-cancelled');
+      if(ARC_SELECT_MODE && ARC_SELECTED.has(x.id)) cls.push('rq-selected');
+      const style = groupId ? ` style="${transferGroupVars(groupId)}"` : '';
+
+      const head = isBlockFirst ? `<div class="rq-ghead"${style}>
+          <span class="rq-ghead-t">${ARC_ICONS.layers}<b>${t('تحويل مجمّع')}</b><em>${escAttr(blockGid)}</em></span>
+          <span class="rq-ghead-s">${groupCount} ${t('طلبات')} · ${t('إجمالي')} <b>${formatMoney(groupInfo?groupInfo.total:x.amount)}</b> ${t('ر.ق')}${groupInfo&&groupInfo.note?` · ${t('مرجع:')} ${escapeHtml(groupInfo.note)}`:''}</span>
+        </div>` : '';
+
+      return head + `<div class="${cls.join(' ')}"${style} onclick="viewFromArchive(${i})" role="button" tabindex="0">
+        ${sel}
+        <div class="rq-main">
+          <div class="rq-top">
+            <b class="rq-no">${displayRequestNo(x.req_no)||'—'}</b>
+            <span class="rq-type ${x.doc_type==='cancel'?'is-cancel':'is-pay'}">${x.doc_type==='cancel'?t('إلغاء'):t('صرف')}</span>
+            <span class="arc-status ${st.cls}"><i></i>${t(st.label)}</span>
+            ${chips.join('')}
+          </div>
+          <div class="rq-sub">
+            <span>${escapeHtml(x.doc_type==='cancel' ? (x.invoice_ref||'—') : (x.beneficiary||'—'))}</span>
+            <span class="dot">·</span><span>${escapeHtml(personName(x.created_by||'—'))}</span>
+            <span class="dot">·</span><span>${x.req_date||'—'}</span>
+          </div>
+        </div>
+        <div class="rq-amt">${x.amount?formatMoney(x.amount):'—'}<em>${t('ر.ق')}</em></div>
+        <div class="rq-meta">
+          ${atts.length?`<button class="rq-ic" onclick="event.stopPropagation();showArchiveAttachmentsMenu(this, ${i})" title="${escAttr(t('المرفقات'))}">${ARC_ICONS.paperclip}<b>${atts.length}</b></button>`:''}
+          <button class="rq-ic${visComments.length?' has':''}" onclick="event.stopPropagation();openCommentsDialog(${i})" title="${escAttr(t('تعليقات'))}">${ARC_ICONS.comment}${visComments.length?`<b>${visComments.length}</b>`:''}</button>
+        </div>
+        <div class="rq-act">${act}
+          <button class="rq-ic more" onclick="event.stopPropagation();showArchiveActionsMenu(this, ${i})" title="${escAttr(t('إجراءات'))}">${ARC_ICONS.more}</button>
+        </div>
+      </div>` + (isBlockLast ? '<div class="rq-gend"'+style+'></div>' : '');
     }).join('');
     pruneTransferSelection(list);
     updateTransferSelectUI();
-  }catch(e){ body.innerHTML=`<tr><td colspan="${ARC_COLS}" class="arc-empty">${t('خطأ اتصال')}</td></tr>`; }
+  }catch(e){ body.innerHTML=`<div class="arc-empty">${t('خطأ اتصال')}</div>`; }
 }
 
 /* ══════════════════════════════════════════
@@ -2572,7 +2524,7 @@ function showBusyOverlay(text){
   ov.innerHTML = `
     <style>
       @keyframes abzSpin{to{transform:rotate(360deg)}}
-      #app-busy-overlay .abz-card{background:#fff;border-radius:16px;padding:24px 30px;display:flex;align-items:center;gap:14px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:800;color:#1B2233;box-shadow:0 24px 56px -20px rgba(20,24,46,.45);}
+      #app-busy-overlay .abz-card{background:#fff;border-radius:16px;padding:24px 30px;display:flex;align-items:center;gap:14px;font-family:'PlexAr',sans-serif;font-size:13px;font-weight:700;color:#1B2233;box-shadow:0 24px 56px -20px rgba(20,24,46,.45);}
       #app-busy-overlay .abz-spin{width:22px;height:22px;border-radius:50%;border:3px solid #E4EBF3;border-top-color:#2C8B8E;animation:abzSpin .8s linear infinite;}
     </style>
     <div class="abz-card"><span class="abz-spin"></span><span>${escapeHtml(text||t('جاري التجهيز...'))}</span></div>`;
@@ -2797,31 +2749,31 @@ function showGroupTransferDialog(rows, total){
         @keyframes agdFade{from{opacity:0}to{opacity:1}}
         @keyframes agdPop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
         #app-group-overlay{animation:agdFade .18s ease both;}
-        #app-group-overlay .agd-card{width:min(520px,100%);max-height:88vh;display:flex;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 24px 56px -20px rgba(20,24,46,.45);overflow:hidden;font-family:'Cairo','Montserrat',sans-serif;animation:agdPop .26s cubic-bezier(.2,.8,.25,1) both;}
+        #app-group-overlay .agd-card{width:min(520px,100%);max-height:88vh;display:flex;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 24px 56px -20px rgba(20,24,46,.45);overflow:hidden;font-family:'PlexAr','Inter',sans-serif;animation:agdPop .26s cubic-bezier(.2,.8,.25,1) both;}
         #app-group-overlay .agd-head{padding:20px 24px 18px;background:linear-gradient(120deg,#2F817C 0%,#326F82 48%,#3E3A72 100%);color:#fff;}
-        #app-group-overlay .agd-title{font-size:18px;font-weight:800;}
-        #app-group-overlay .agd-cap{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;opacity:.72;margin-top:3px;}
+        #app-group-overlay .agd-title{font-size:18px;font-weight:700;}
+        #app-group-overlay .agd-cap{font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;opacity:.72;margin-top:3px;}
         #app-group-overlay .agd-body{padding:18px 24px 8px;overflow:auto;}
         #app-group-overlay .agd-list{border:1px solid #E4EBF3;border-radius:12px;background:#F7FAFD;overflow:hidden;max-height:210px;overflow-y:auto;}
         #app-group-overlay .agd-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid #EEF2F7;}
         #app-group-overlay .agd-row:last-child{border-bottom:none;}
-        #app-group-overlay .agd-no{font-size:12px;font-weight:800;color:#3E3A72;direction:ltr;}
+        #app-group-overlay .agd-no{font-size:12px;font-weight:700;color:#3E3A72;direction:ltr;}
         #app-group-overlay .agd-by{font-size:10px;font-weight:700;color:#93A1B2;}
-        #app-group-overlay .agd-amt{font-size:12px;font-weight:800;color:#1E9E78;direction:ltr;}
+        #app-group-overlay .agd-amt{font-size:12px;font-weight:700;color:#1E9E78;direction:ltr;}
         #app-group-overlay .agd-total{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:12px 14px;border-radius:12px;background:#ECF6F2;border:1px solid #cdeadd;}
-        #app-group-overlay .agd-total span{font-size:12px;font-weight:800;color:#33607a;}
-        #app-group-overlay .agd-total b{font-size:15px;font-weight:800;color:#1E9E78;direction:ltr;}
+        #app-group-overlay .agd-total span{font-size:12px;font-weight:700;color:#33607a;}
+        #app-group-overlay .agd-total b{font-size:15px;font-weight:700;color:#1E9E78;direction:ltr;}
         #app-group-overlay .agd-field{margin-top:14px;}
-        #app-group-overlay .agd-field label{display:block;font-size:11px;font-weight:800;color:#5A6880;margin-bottom:6px;}
-        #app-group-overlay .agd-field input[type=text]{width:100%;border:1.5px solid #E4EBF3;border-radius:12px;padding:10px 12px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;color:#1B2233;outline:none;}
+        #app-group-overlay .agd-field label{display:block;font-size:11px;font-weight:700;color:#5A6880;margin-bottom:6px;}
+        #app-group-overlay .agd-field input[type=text]{width:100%;border:1.5px solid #E4EBF3;border-radius:12px;padding:10px 12px;font-family:'PlexAr',sans-serif;font-size:13px;font-weight:700;color:#1B2233;outline:none;}
         #app-group-overlay .agd-field input[type=text]:focus{border-color:#2C8B8E;}
         #app-group-overlay .agd-file{margin-top:14px;border:1.6px dashed #E4EBF3;border-radius:12px;background:#F7FAFD;padding:16px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
         #app-group-overlay .agd-file:hover{border-color:#2C8B8E;background:#f2f9fa;}
-        #app-group-overlay .agd-file b{display:block;font-size:13px;font-weight:800;color:#3E3A72;}
+        #app-group-overlay .agd-file b{display:block;font-size:13px;font-weight:700;color:#3E3A72;}
         #app-group-overlay .agd-file small{display:block;margin-top:4px;font-size:11px;color:#93A1B2;font-weight:700;}
         #app-group-overlay .agd-file.picked{border-style:solid;border-color:#1E9E78;background:#ECF6F2;}
         #app-group-overlay .agd-foot{display:flex;gap:10px;padding:16px 24px 20px;}
-        #app-group-overlay .agd-btn{border:none;border-radius:12px;padding:11px 22px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:800;cursor:pointer;}
+        #app-group-overlay .agd-btn{border:none;border-radius:12px;padding:11px 22px;font-family:'PlexAr',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
         #app-group-overlay .agd-confirm{background:#2C8B8E;color:#fff;box-shadow:0 10px 26px -12px rgba(20,24,46,.38);}
         #app-group-overlay .agd-confirm:disabled{background:#c6d2dd;box-shadow:none;cursor:not-allowed;}
         #app-group-overlay .agd-cancel{background:#fff;border:1.5px solid #E4EBF3;color:#3E3A72;}
@@ -3124,12 +3076,14 @@ function ageChip(x){
 }
 function homeRow(x, primary){
   const st = requestStatus(x);
-  return `<div class="hrow">
+  const atts = getArchiveRowAttachments(x).length;
+  return `<div class="hrow" onclick="reviewFromHome(${x.id})" role="button" tabindex="0">
     <div class="hrow-main">
       <div class="hrow-top"><b>${displayRequestNo(x.req_no)||'—'}</b>
         <span class="arc-status ${st.cls}"><i></i>${t(st.label)}</span>${ageChip(x)}</div>
       <div class="hrow-sub">${escapeHtml(x.doc_type==='cancel' ? (x.invoice_ref||'—') : (x.beneficiary||'—'))}
-        <span class="dot">·</span>${escapeHtml(personName(x.created_by||''))}</div>
+        <span class="dot">·</span>${escapeHtml(personName(x.created_by||''))}
+        ${atts?`<span class="dot">·</span><span class="hrow-att">${ARC_ICONS.paperclip}${atts}</span>`:''}</div>
     </div>
     <div class="hrow-amt">${x.amount?formatMoney(x.amount):'—'} <em>${t('ر.ق')}</em></div>
     <div class="hrow-act">${primary||''}</div>
@@ -3167,14 +3121,14 @@ async function loadHome(){
       const payTotal = toPay.reduce((a,r)=>a+(Number(r.amount)||0),0);
       html += homeSection('مطلوب منك', 'بانتظار اعتمادك', pending.length,
         pending.length ? pending.slice(0,6).map(x=>homeRow(x,
-          `<button class="hbtn sm primary" onclick="approveFromHome(${x.id})">${t('اعتماد')}</button>`)).join('')
+          `<button class="hbtn sm primary" onclick="event.stopPropagation();reviewFromHome(${x.id})">${t('مراجعة واعتماد')}</button>`)).join('')
         : homeEmpty(ARC_ICONS.sign,'مفيش طلبات مستنية اعتمادك','كل حاجة تمام 👌'), pending.length>6);
       html += homeSection('جاهز للتحويل', 'معتمد ولم يُحوّل', toPay.length,
         toPay.length ? `<div class="h-paybar"><span>${t('إجمالي جاهز للتحويل')}</span>
              <b>${formatMoney(payTotal)} ${t('ر.ق')}</b>
              <button class="hbtn primary" onclick="startBatchFromHome()">${ARC_ICONS.layers}${t('تحويل مجمّع')}</button></div>`
             + toPay.slice(0,5).map(x=>homeRow(x,
-              `<button class="hbtn sm ghost" onclick="uploadProofFromHome(${x.id})">${t('إثبات')}</button>`)).join('')
+              `<button class="hbtn sm ghost" onclick="event.stopPropagation();uploadProofFromHome(${x.id})">${ARC_ICONS.upload}${t('رفع الإثبات')}</button>`)).join('')
         : homeEmpty(ARC_ICONS.upload,'مفيش طلبات جاهزة للتحويل','هتظهر هنا بعد الاعتماد'), toPay.length>5);
     } else {
       const mine = live.filter(r=>r.created_by===CURRENT.name).sort((a,b)=>(b.id||0)-(a.id||0));
@@ -3218,4 +3172,22 @@ async function openArchiveRowById(id){
     }catch(e){ return -1; }
   }
   return (window._arcRows||[]).findIndex(r=>r.id===id);
+}
+
+
+// فتح الطلب من الرئيسية للمراجعة الكاملة قبل الاعتماد
+async function reviewFromHome(id){
+  const i = await openArchiveRowById(id);
+  if(i < 0){ showMessageDialog({ title:t('تعذّر فتح الطلب.'), message:t('حاول مرة أخرى'), confirmText:t('حسنًا') }); return; }
+  viewFromArchive(i);
+  // نلفت النظر لزر الاعتماد جوه الوثيقة
+  setTimeout(()=>{
+    const kind = (window._arcRows[i].doc_type==='cancel') ? 'cancel' : 'disb';
+    const row = document.getElementById(kind+'-acc-btn-row');
+    if(row && row.style.display !== 'none'){
+      row.scrollIntoView({ behavior:'smooth', block:'center' });
+      const b = document.getElementById(kind+'-acc-btn');
+      if(b){ b.classList.add('pulse'); setTimeout(()=>b.classList.remove('pulse'), 2400); }
+    }
+  }, 500);
 }

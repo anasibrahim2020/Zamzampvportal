@@ -2,7 +2,7 @@
 // نسخة بسيطة: تخلّي التطبيق قابل للتثبيت، وتسرّع فتح الملفات الثابتة.
 // ملاحظة: البيانات (Supabase) دايمًا من النت — مابنعملهاش cache.
 
-const CACHE = 'zamzam-v30';
+const CACHE = 'zamzam-v33';
 const ASSETS = [
   './',
   './index.html',
@@ -10,6 +10,10 @@ const ASSETS = [
   './assets/css/styles.css',
   './assets/css/cost-center-toggle.css',
   './assets/fonts/inter-latin.woff2',
+  './assets/fonts/plex-arabic-400.woff2',
+  './assets/fonts/plex-arabic-500.woff2',
+  './assets/fonts/plex-arabic-600.woff2',
+  './assets/fonts/plex-arabic-700.woff2',
   './assets/js/i18n.js',
   './assets/js/script-1.js',
   './assets/js/script-2.js',
