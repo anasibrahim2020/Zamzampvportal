@@ -284,6 +284,7 @@ function enterApp(){
   document.getElementById('app').style.display='block';
   document.getElementById('tb-name').textContent = personName(CURRENT.name);
   document.getElementById('tb-role').textContent = personName(CURRENT.dept || '');
+  if(typeof syncUserChip==='function') syncUserChip();
   // الاسم والقسم بيتعبّوا أوتوماتيك حسب الحساب
   document.getElementById('d-name').value = personName(CURRENT.name);
   document.getElementById('d-dept').value = personName(CURRENT.dept || (CURRENT.role==='accountant'?'قسم الحسابات':'قسم المبيعات'));
@@ -1964,7 +1965,7 @@ async function loadArchive(silent=false){
         <td data-label="${t('التاريخ')}">${x.req_date||'—'}</td>
         <td class="arc-ref" data-label="${t('رقم الفاتورة / المورّد')}">${ref}</td>
         <td class="arc-amount" data-label="${t('المبلغ')}">${x.amount?Number(x.amount).toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
-        <td data-label="${t('التوقيع')}">${sig}</td>
+        <td data-label="${t('الحالة')}">${sig}</td>
         <td style="text-align:center" data-label="${t('الاعتماد')}">${accCol}</td>
         <td style="text-align:center" data-label="${t('تعليقات')}">${commentCol}</td>
         <td style="text-align:center" data-label="${t('إثبات التحويل')}">${imgCol}</td>
@@ -2996,6 +2997,7 @@ function refreshDynamicUI(){
     if(CURRENT){
       const role = document.getElementById('tb-role');
       if(role) role.textContent = personName(CURRENT.dept || '');
+      if(typeof syncUserChip==='function') syncUserChip();
       const nameEl = document.getElementById('tb-name');
       if(nameEl) nameEl.textContent = personName(CURRENT.name);
       const dName = document.getElementById('d-name');
@@ -3049,12 +3051,15 @@ function renderArchiveSummary(list){
     { key:'approved',    label:'معتمد — بانتظار التحويل', rows:approved, cls:'sm-approved' },
     { key:'transferred', label:'تم التحويل',            rows:done,     cls:'sm-done' },
   ];
+  const active = k => ARC_STATUS===k || (k==='review' && (ARC_STATUS==='pending'||ARC_STATUS==='unsigned'));
   box.innerHTML = cards.map(c=>`
-    <button class="arc-sm ${c.cls}${ (ARC_STATUS===c.key || (c.key==='review' && (ARC_STATUS==='pending'||ARC_STATUS==='unsigned'))) ? ' on':''}"
-            onclick="setArchiveStatusFilter(${c.key===null?'null':`'${c.key}'`})">
-      <span class="sm-lbl">${t(c.label)}</span>
-      <span class="sm-val"><b>${c.rows.length}</b><em>${formatMoney(sum(c.rows))} ${t('ر.ق')}</em></span>
-    </button>`).join('');
+    <button class="arc-stat ${c.cls}${active(c.key)?' on':''}"
+            onclick="setArchiveStatusFilter(${c.key===null?'null':`'${c.key}'`})"
+            title="${escAttr(t(c.label))} — ${formatMoney(sum(c.rows))} ${t('ر.ق')}">
+      <i class="stat-dot"></i>
+      <span class="stat-n">${c.rows.length}</span>
+      <span class="stat-txt"><b>${t(c.label)}</b><em>${formatMoney(sum(c.rows))} ${t('ر.ق')}</em></span>
+    </button>`).join('<span class="arc-stat-sep"></span>');
 }
 function setArchiveStatusFilter(key){
   ARC_STATUS = (ARC_STATUS===key) ? null : key;
@@ -3075,3 +3080,35 @@ function showArchiveTimeFromMenu(btn, rowIndex){
   showArchiveTimePopover(btn, formatArchiveDateTime(x.created_at || x.signed_at || x.req_date),
     x.accounts_signed_at ? formatArchiveDateTime(x.accounts_signed_at) : t('لم يعتمد بعد'));
 }
+
+/* ══════════════════════════════════════════
+   قائمة المستخدم في الشريط العلوي
+══════════════════════════════════════════ */
+function syncUserChip(){
+  if(!CURRENT) return;
+  const name = personName(CURRENT.name), role = personName(CURRENT.dept);
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('tb-avatar', initials(CURRENT.name));
+  set('tbm-avatar', initials(CURRENT.name));
+  set('tbm-name', name);
+  set('tbm-role', role);
+  const lang=document.getElementById('tbm-lang');
+  if(lang) lang.textContent = isEnglish() ? 'English' : 'العربية';
+}
+function toggleUserMenu(e){
+  if(e) e.stopPropagation();
+  const menu=document.getElementById('tb-menu'), chip=document.getElementById('tb-chip');
+  if(!menu) return;
+  const on = menu.classList.toggle('on');
+  chip?.setAttribute('aria-expanded', on ? 'true' : 'false');
+  chip?.classList.toggle('on', on);
+  if(on) syncUserChip();
+}
+function closeUserMenu(){
+  document.getElementById('tb-menu')?.classList.remove('on');
+  const chip=document.getElementById('tb-chip');
+  chip?.setAttribute('aria-expanded','false');
+  chip?.classList.remove('on');
+}
+document.addEventListener('click', e=>{ if(!e.target.closest('#tb-menu') && !e.target.closest('#tb-chip')) closeUserMenu(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeUserMenu(); });

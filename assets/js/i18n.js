@@ -468,6 +468,8 @@ const I18N_EN = {
   'توقيت اعتماد الحسابات':'Accounts approval',
 
   'الحالة':'Status',
+  'اللغة':'Language',
+  'تسجيل الخروج':'Sign out',
   'معتمد':'Approved',
   'بانتظار التوقيع':'Awaiting signature',
   'بانتظار الاعتماد':'Awaiting approval',
@@ -534,7 +536,7 @@ function applyLanguage(opts){
   document.title = LANG === 'en' ? 'Zamzam Hajj & Umrah · زمزم' : 'زمزم للحج والعمرة · Zamzam';
   translateStaticNodes();
   const globe = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"></path></svg>';
-  ['lang-btn','login-lang-btn'].forEach(id=>{
+  ['login-lang-btn'].forEach(id=>{
     const btn = document.getElementById(id);
     if(!btn) return;
     btn.innerHTML = globe + '<span>' + (LANG === 'en' ? 'ع' : 'EN') + '</span>';
@@ -542,6 +544,7 @@ function applyLanguage(opts){
     btn.setAttribute('title', tip);
     btn.setAttribute('aria-label', tip);
   });
+  if(typeof syncUserChip === 'function') syncUserChip();
   if(!o.skipDynamic && typeof refreshDynamicUI === 'function'){
     refreshDynamicUI();
     translateStaticNodes();   // العناصر اللي اتولدت من جديد
