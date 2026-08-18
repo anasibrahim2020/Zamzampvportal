@@ -1423,3 +1423,10 @@ table.arc tbody tr.arc-grp-head td,
 .st-unsigned{background:var(--n2) !important;color:var(--n6) !important;
   border-color:var(--n3) !important;}
 .st-unsigned i,.st-unsigned .dot,.st-unsigned b{background:var(--n5) !important;color:var(--n5) !important;}
+
+/* نص رقائق الحالة عند 10px كان تباينه أقل من 4.5 في حالتين.
+   النقطة الملوّنة فاضلة بلون الهوية — النص بس اللي غمق. */
+.st-transferred{color:#187C5E !important;}
+.st-transferred i,.st-transferred .dot,.st-transferred b{background:var(--green) !important;}
+.st-pending{color:#966425 !important;}
+.st-pending i,.st-pending .dot,.st-pending b{background:var(--wait) !important;}
