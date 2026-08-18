@@ -1994,3 +1994,17 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
   #d-date::-webkit-calendar-picker-indicator,
   #c-date::-webkit-calendar-picker-indicator{display:none !important;}
 }
+
+/* .rl-sup كان عليه max-width:46% عشان يقاسم الخانة مع رقائق
+   المرفقات. الرقائق اتنقلت لعمود الإجراءات، فالحد ده بقى
+   بيضيّع نص العمود على الفاضي. */
+.rl-sup{max-width:100% !important;width:100% !important;}
+
+/* هيدر الوثيقة: لمحة تركوازية بالكاد تحسّها بدل الرمادي المزرق،
+   وبتطبع شبه بيضا فما بتستهلكش حبر */
+#doc-disb .doc-hd,#doc-cancel .doc-hd{
+  background:linear-gradient(180deg,#FFFFFF 0%,#F3F8F8 100%) !important;}
+@media print{
+  #doc-disb .doc-hd,#doc-cancel .doc-hd{
+    background:linear-gradient(180deg,#FFFFFF 0%,#F7FBFB 100%) !important;}
+}

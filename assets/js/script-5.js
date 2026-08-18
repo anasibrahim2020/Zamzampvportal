@@ -921,11 +921,14 @@ function showPavTip(el){
 }
 function hidePavTip(){ if(PAV_TIP) PAV_TIP.classList.remove('on'); }
 document.addEventListener('mouseover', e=>{
-  const a = e.target.closest && e.target.closest('.pav');
-  if(a) showPavTip(a);
+  if(!e.target.closest) return;
+  const a = e.target.closest('.pav');
+  if(a){ showPavTip(a); return; }
+  const n = e.target.closest('.pav-name');
+  if(n && n.scrollWidth > n.clientWidth + 1) showPavTip(n);   // بس لو الاسم مقصوص
 });
 document.addEventListener('mouseout', e=>{
-  if(e.target.closest && e.target.closest('.pav')) hidePavTip();
+  if(e.target.closest && (e.target.closest('.pav') || e.target.closest('.pav-name'))) hidePavTip();
 });
 document.addEventListener('focusin',  e=>{ const a=e.target.closest&&e.target.closest('.pav'); if(a) showPavTip(a); });
 document.addEventListener('focusout', hidePavTip);
@@ -2005,7 +2008,7 @@ async function loadArchive(silent=false){
           ${groupId&&!x.cancelled?`<button class="rl-grp-chip" onclick="event.stopPropagation();filterByTransferGroup('${escAttr(groupId)}')" title="${escAttr(t('تحويل مجمّع'))}">${ARC_ICONS.layers}</button>`:''}
         </span>
         <span class="rl-c rl-party">
-          <span class="rl-sup">${escapeHtml(x.doc_type==='cancel' ? (x.invoice_ref||'—') : (x.beneficiary||'—'))}</span>
+          <span class="rl-sup pav-name" data-name="${escAttr(x.doc_type==='cancel' ? (x.invoice_ref||'—') : (x.beneficiary||'—'))}">${escapeHtml(x.doc_type==='cancel' ? (x.invoice_ref||'—') : (x.beneficiary||'—'))}</span>
         </span>
         <span class="rl-c rl-who">${personAvatar(x.created_by)}</span>
         <span class="rl-c rl-date"><span class="rl-dt">${x.req_date||'—'}</span><em class="rl-age ${showAge?ageCls:'is-blank'}">${showAge?(days===0?t('اليوم'):days===1?t('من يوم'):t('من {n} يوم').replace('{n}',days)):''}</em></span>
