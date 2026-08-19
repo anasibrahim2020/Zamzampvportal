@@ -2054,3 +2054,18 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
     max-height:min(68vh,440px);}
 }
 @media print{ .tb-bell-wrap,.tb-notif{display:none !important;} }
+
+/* ══════════════════════════════════════════════════════════
+   الموبايل: خانة الإجراءات كانت 120px والمحتوى 156px
+   (رقاقتين 88 + زرارين 60 + فواصل)، فالزرار «⋯» كان بيطلع
+   برّه الخانة ويتزحلق حسب عدد الرقائق — 391 مقابل 355.
+   دلوقتي العدّادات بعرض محجوز والخانة تسع الأقصى.
+══════════════════════════════════════════════════════════ */
+@media (max-width:819px){
+  .rl-cnt{height:26px;min-width:38px;padding:0 6px;font-size:10px;}
+  .rl-cnt svg{width:11px;height:11px;}
+  .rl-act .rl-counts{width:80px !important;flex:0 0 80px !important;
+    justify-content:flex-start;gap:4px;}
+  .rl-row{grid-template-columns:30px minmax(0,1fr) 148px !important;}
+  .rl-act{gap:4px;}
+}
