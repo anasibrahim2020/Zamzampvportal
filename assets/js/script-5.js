@@ -1628,29 +1628,16 @@ function positionArchivePopover(pop, btn){
   pop.style.top  = top + 'px';
   POP_ANCHORS.set(pop.id, btn);
 }
-// إعادة التموضع مع الاسكرول — وتقفل لو الزرار خرج من الشاشة
-let POP_TICK = false;
-function repositionOpenPopovers(){
-  if(POP_TICK) return;
-  POP_TICK = true;
-  requestAnimationFrame(()=>{
-    POP_TICK = false;
-    ['arc-menu-pop','arc-time-pop'].forEach(id=>{
-      const pop = document.getElementById(id);
-      if(!pop || !pop.classList.contains('on')) return;
-      const btn = POP_ANCHORS.get(id);
-      if(!btn || !btn.isConnected){ pop.classList.remove('on'); return; }
-      const r = btn.getBoundingClientRect();
-      if(r.bottom < 0 || r.top > window.innerHeight){   // الصف خرج من الشاشة
-        pop.classList.remove('on');
-        return;
-      }
-      positionArchivePopover(pop, btn);
-    });
+// القوايم المنبثقة بتتقفل مع الاسكرول — ده السلوك المتعارف عليه،
+// وأضمن من ملاحقة الزرار عبر حاويات زحلقة مختلفة.
+function closeOpenPopovers(){
+  ['arc-menu-pop','arc-time-pop'].forEach(id=>{
+    const pop = document.getElementById(id);
+    if(pop && pop.classList.contains('on')) pop.classList.remove('on');
   });
 }
-window.addEventListener('scroll', repositionOpenPopovers, true);
-window.addEventListener('resize', repositionOpenPopovers);
+document.addEventListener('scroll', closeOpenPopovers, true);
+window.addEventListener('resize', closeOpenPopovers);
 function showArchiveTimePopover(btn, submittedAt, approvedAt){
   const pop = document.getElementById('arc-time-pop');
   if(!pop) return;
