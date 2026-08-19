@@ -51,35 +51,78 @@
         });
       }
       await saveSubscription(sub, userName);
-      hideBell();
     } catch (e) { console.warn('[push] subscribe failed', e); }
   }
 
-  /* زر عائم «فعّل الإشعارات» — يظهر فقط لو الإذن لسه مطلوب (default) */
-  var bell = null;
-  function showBell(userName) {
-    if (bell || Notification.permission !== 'default') return;
-    bell = document.createElement('button');
-    bell.type = 'button';
-    bell.setAttribute('aria-label', 'تفعيل الإشعارات');
-    bell.innerHTML = '<span style="font-size:16px">🔔</span><span>تفعيل الإشعارات</span>';
-    bell.style.cssText = [
-      'position:fixed', 'z-index:9998', 'inset-inline-end:16px', 'bottom:18px',
-      'display:inline-flex', 'align-items:center', 'gap:8px',
-      'background:linear-gradient(115deg,#2F817C 0%,#326F82 46%,#3E3A72 100%)',
-      'color:#fff', 'border:none', 'border-radius:999px',
-      'padding:12px 18px', "font-family:'PlexAr','Inter',sans-serif", 'font-size:13px', 'font-weight:800',
-      'box-shadow:0 10px 28px rgba(46,58,114,.32)', 'cursor:pointer'
-    ].join(';');
-    bell.onclick = function () {
-      Notification.requestPermission().then(function (p) {
-        if (p === 'granted') subscribe(userName);
-        else hideBell();
-      });
-    };
-    document.body.appendChild(bell);
+  /* ───── نافذة تفعيل الإشعارات ─────
+     الإذن لازم يتطلب من ضغطة مستخدم (شرط آبل)، فالنافذة هي الوسيط. */
+  function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent)
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   }
-  function hideBell() { if (bell) { bell.remove(); bell = null; } }
+  function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+  }
+  function askedKey(u) { return 'zamzam-push-asked-' + (u || 'x'); }
+  function alreadyAsked(u) { try { return !!localStorage.getItem(askedKey(u)); } catch (e) { return false; } }
+  function markAsked(u) { try { localStorage.setItem(askedKey(u), '1'); } catch (e) {} }
+
+  var TT = (typeof t === 'function') ? t : function (x) { return x; };
+
+  async function showPushDialog(userName) {
+    if (alreadyAsked(userName)) return;
+    if (typeof showConfirmDialog !== 'function') return;
+
+    // آيفون من المتصفح: الدفع مش مدعوم أصلاً — نوريه الخطوة الصح
+    if (isIOS() && !isStandalone()) {
+      markAsked(userName);
+      if (typeof showMessageDialog === 'function') {
+        showMessageDialog({
+          title: TT('فعّل إشعارات الطلبات'),
+          subtitle: 'Enable Notifications',
+          message: TT('عشان توصلك إشعارات الطلبات على الآيفون، لازم تضيف البوابة للشاشة الرئيسية الأول.'),
+          details: [
+            { label: TT('الخطوة ١'), value: TT('اضغط زر المشاركة في سفاري') },
+            { label: TT('الخطوة ٢'), value: TT('اختر «إضافة إلى الشاشة الرئيسية»') },
+            { label: TT('الخطوة ٣'), value: TT('افتح البوابة من الأيقونة الجديدة') }
+          ],
+          note: TT('بعدها هيظهرلك طلب تفعيل الإشعارات.'),
+          confirmText: TT('حسنًا')
+        });
+      }
+      return;
+    }
+
+    var ok = await showConfirmDialog({
+      title: TT('فعّل إشعارات الطلبات'),
+      subtitle: 'Enable Notifications',
+      message: TT('يوصلك إشعار فوري على جهازك عند كل حدث يخصّك — حتى والبوابة مقفولة.'),
+      details: [
+        { label: TT('المحاسب'), value: TT('طلب جديد بانتظار اعتمادك') },
+        { label: TT('الموظف'),  value: TT('اعتماد طلبك وتحويله') },
+        { label: TT('الجميع'),  value: TT('تعليق جديد على طلب') }
+      ],
+      note: TT('تقدر توقفها في أي وقت من إعدادات المتصفح.'),
+      confirmText: TT('تفعيل الإشعارات'),
+      cancelText: TT('مش دلوقتي')
+    });
+    markAsked(userName);
+    if (!ok) return;
+    try {
+      var p = await Notification.requestPermission();
+      if (p === 'granted') {
+        subscribe(userName);
+        if (typeof showMessageDialog === 'function') {
+          showMessageDialog({
+            title: TT('تم تفعيل الإشعارات'),
+            message: TT('هيوصلك إشعار على الجهاز ده عند كل حدث يخصّك.'),
+            confirmText: TT('حسنًا')
+          });
+        }
+      }
+    } catch (e) { console.warn('[push] permission failed', e); }
+  }
 
   /* النداء الرئيسي — يُستدعى من enterApp() بعد الدخول */
   window.initPush = function (current) {
@@ -87,8 +130,8 @@
     if (!userName || !supported()) return;
     if (Notification.permission === 'granted') { subscribe(userName); return; }
     if (Notification.permission === 'denied') return;
-    // default: نعرض زر لطيف (الإذن على iOS لازم يكون بضغطة مستخدم)
-    showBell(userName);
+    // default: نافذة واضحة تشرح وتطلب الإذن بضغطة المستخدم
+    setTimeout(function () { showPushDialog(userName); }, 1200);
   };
 
   // نداء يدوي احتياطي لو حبينا نربطه بزر تاني
