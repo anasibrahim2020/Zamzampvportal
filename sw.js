@@ -2,7 +2,7 @@
 // نسخة بسيطة: تخلّي التطبيق قابل للتثبيت، وتسرّع فتح الملفات الثابتة.
 // ملاحظة: البيانات (Supabase) دايمًا من النت — مابنعملهاش cache.
 
-const CACHE = 'zamzam-v134';
+const CACHE = 'zamzam-v136';
 const ASSETS = [
   './',
   './index.html',
@@ -23,7 +23,9 @@ const ASSETS = [
   './assets/js/push.js',
   './assets/images/image-5fa147e6c3d5.png',
   './assets/images/icon-192.png',
+  './assets/images/badge-96.png',
   './assets/images/icon-512.png',
+  './assets/images/icon-512-maskable.png',
   './assets/images/icon-180.png',
 ];
 
@@ -85,8 +87,8 @@ self.addEventListener('push', (e) => {
   const title = data.title || 'زمزم للحج والعمرة';
   const options = {
     body: data.body || '',
-    icon: './assets/images/icon-192.png',
-    badge: './assets/images/icon-192.png',
+    icon: './assets/images/icon-192.png',     // ملوّنة — جوّه الإشعار
+    badge: './assets/images/badge-96.png',    // ظلّية — شريط الحالة جنب الساعة
     dir: 'rtl',
     lang: 'ar',
     tag: data.tag || undefined,
