@@ -1026,6 +1026,113 @@ document.addEventListener('blur', (e)=>{
   el.value = docAmount(n);
 }, true);
 // اعتماد الحسابات من الخانة نفسها — نفس منطق التوقيع
+// اعتماد إدارة الحسابات (للمحاسب فقط) — من النموذج أو من الأرشيف، لطلب الصرف أو الإلغاء
+async function signAccountsFor(kind){
+  if(!CURRENT || CURRENT.role!=='accountant'){ alert(t('اعتماد الحسابات متاح للمحاسب فقط.')); return; }
+  const pfx = kind === 'cancel' ? 'cancel' : 'disb';
+  const now=new Date();
+  const dt = stampDate(now);
+  setAccSign(pfx, { name:CURRENT.name, time:now.toISOString(), label:dt });
+  document.getElementById(pfx+'-acc-ph').style.display='none';
+  document.getElementById(pfx+'-acc-stamp').classList.add('on');
+  document.getElementById(pfx+'-acc-mono').textContent = initials(CURRENT.name);
+  document.getElementById(pfx+'-acc-name').textContent = personName(CURRENT.name);
+  document.getElementById(pfx+'-acc-meta').textContent = dt;
+  refreshPadStates();
+  if(EDIT_ID && SB_ON){
+    const btn=document.getElementById(pfx+'-acc-btn'); const o=btn?btn.innerHTML:'';
+    if(btn){ btn.disabled=true; btn.textContent=t('جاري الاعتماد...'); }
+    try{
+      const { error } = await sb.from('requests').update({
+        accounts_signed_by: CURRENT.name, accounts_signed_at: now.toISOString()
+      }).eq('id', EDIT_ID);
+      if(error){ console.error(error); alert(t('تعذّر حفظ الاعتماد — اتأكد إن سياسة التعديل (update) متفعّلة في Supabase (راجع كود SQL في التعليمات).')); }
+      else {
+        if(EDIT_REQUEST){
+          EDIT_REQUEST = { ...EDIT_REQUEST, accounts_signed_by: CURRENT.name, accounts_signed_at: now.toISOString() };
+        }
+        showMessageDialog({
+          title:t('تم اعتماد الطلب'),
+          message:t('تم اعتماد الطلب من إدارة الحسابات وحفظه في الأرشيف.'),
+          details:[
+            { label:t('رقم الطلب'), value: displayRequestNo(EDIT_REQUEST?.req_no) || '—', ltr:true },
+            { label:t('معتمد بواسطة'), value: CURRENT.name },
+            { label:t('وقت الاعتماد'), value: dt, ltr:true }
+          ],
+          note:t('الطلب الآن متاح للطباعة.'),
+          confirmText:t('حسنًا')
+        });
+      }
+    }catch(e){ alert(t('خطأ اتصال بـ Supabase.')); console.error(e); }
+    if(btn){ btn.disabled=false; btn.innerHTML=o; }
+  }
+}
+async function generateRequestPDF(docId='doc-disb', opts={}){
+  const captureScale = opts.scale || 3;                    // دقة الالتقاط
+  const imgFormat = (opts.format || 'PNG').toUpperCase();  // PNG للطباعة، JPEG لتصغير حجم الملف
+  const imgQuality = opts.quality || 0.92;
+  commitValuesForPrint();
+  await document.fonts.ready;
+  const el=document.getElementById(docId);
+  const hidden = [...el.querySelectorAll('.attach-zone, .attach-list, #attach-list, .attach-item, #disb-attach-sec, .add-row-btn')];
+  const originalDisplay = hidden.map(node=>[node, node.style.display]);
+  const originalStyles = {
+    width: el.style.width,
+    maxWidth: el.style.maxWidth,
+    margin: el.style.margin,
+    boxShadow: el.style.boxShadow,
+    borderRadius: el.style.borderRadius,
+    transform: el.style.transform,
+  };
+  hidden.forEach(node=>node.style.display='none');
+  el.style.width = '210mm';
+  el.style.maxWidth = '210mm';
+  el.style.margin = '0 auto';
+  el.style.boxShadow = 'none';
+  el.style.borderRadius = '0';
+  el.style.transform = 'none';
+  let canvas;
+  try{
+    await new Promise(requestAnimationFrame);
+    canvas = await html2canvas(el,{scale:captureScale,backgroundColor:'#ffffff',useCORS:true,
+      scrollX:0,
+      scrollY:0,
+      windowWidth:el.scrollWidth,
+      windowHeight:el.scrollHeight,
+      ignoreElements:(n)=>n.classList&&n.classList.contains('no-print')});
+  }finally{
+    originalDisplay.forEach(([node, value])=>{ node.style.display = value; });
+    el.style.width = originalStyles.width;
+    el.style.maxWidth = originalStyles.maxWidth;
+    el.style.margin = originalStyles.margin;
+    el.style.boxShadow = originalStyles.boxShadow;
+    el.style.borderRadius = originalStyles.borderRadius;
+    el.style.transform = originalStyles.transform;
+  }
+  const img = imgFormat === 'JPEG' ? canvas.toDataURL('image/jpeg', imgQuality) : canvas.toDataURL('image/png');
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','mm','a4');
+  const pw = pdf.internal.pageSize.getWidth();
+  const ph = pdf.internal.pageSize.getHeight();
+  const PX_TO_MM = 0.2645833333;
+  const canvasWidthMm = canvas.width * PX_TO_MM;
+  const canvasHeightMm = canvas.height * PX_TO_MM;
+  const pdfScale = canvasWidthMm > 0 ? Math.min(1, pw / canvasWidthMm) : 1;
+  const imgW = canvasWidthMm * pdfScale;
+  const imgH = canvasHeightMm * pdfScale;
+  const offsetX = Math.max(0, (pw - imgW) / 2);
+  const totalPages = Math.ceil(imgH / ph);
+  for(let pageIndex = 0; pageIndex < totalPages; pageIndex++){
+    if(pageIndex > 0) pdf.addPage();
+    pdf.addImage(img, imgFormat, offsetX, -ph * pageIndex, imgW, imgH);
+  }
+  return pdf.output('arraybuffer');
+}
+
+async function signDisbAccounts(){ return signAccountsFor('disb'); }
+
+async function signCancelAccounts(){ return signAccountsFor('cancel'); }
+
 function signAccFromPad(kind){
   if(!CURRENT || CURRENT.role !== 'accountant') return;
   const doc = document.getElementById(kind === 'cancel' ? 'doc-cancel' : 'doc-disb');
@@ -1503,14 +1610,47 @@ function closeArchiveMenu(){
   const pop = document.getElementById('arc-menu-pop');
   if(pop) pop.classList.remove('on');
 }
+// المنبثقة بتتموضع بالنسبة للزرار اللي فتحها. بنحتفظ بالزرار عشان
+// نعيد التموضع مع الاسكرول بدل ما تفضل واقفة مكانها والصف بيتحرك.
+let POP_ANCHORS = new Map();
 function positionArchivePopover(pop, btn){
   const r = btn.getBoundingClientRect();
-  const width = pop.offsetWidth || 240;
+  const width  = pop.offsetWidth  || 240;
+  const height = pop.offsetHeight || 200;
   let left = r.right - width;
   left = Math.max(12, Math.min(left, window.innerWidth - width - 12));
+  // لو مفيش مكان تحت، نفتحها فوق الزرار
+  let top = r.bottom + 10;
+  if(top + height > window.innerHeight - 12 && r.top - height - 10 > 12){
+    top = r.top - height - 10;
+  }
   pop.style.left = left + 'px';
-  pop.style.top = (r.bottom + 10) + 'px';
+  pop.style.top  = top + 'px';
+  POP_ANCHORS.set(pop.id, btn);
 }
+// إعادة التموضع مع الاسكرول — وتقفل لو الزرار خرج من الشاشة
+let POP_TICK = false;
+function repositionOpenPopovers(){
+  if(POP_TICK) return;
+  POP_TICK = true;
+  requestAnimationFrame(()=>{
+    POP_TICK = false;
+    ['arc-menu-pop','arc-time-pop'].forEach(id=>{
+      const pop = document.getElementById(id);
+      if(!pop || !pop.classList.contains('on')) return;
+      const btn = POP_ANCHORS.get(id);
+      if(!btn || !btn.isConnected){ pop.classList.remove('on'); return; }
+      const r = btn.getBoundingClientRect();
+      if(r.bottom < 0 || r.top > window.innerHeight){   // الصف خرج من الشاشة
+        pop.classList.remove('on');
+        return;
+      }
+      positionArchivePopover(pop, btn);
+    });
+  });
+}
+window.addEventListener('scroll', repositionOpenPopovers, true);
+window.addEventListener('resize', repositionOpenPopovers);
 function showArchiveTimePopover(btn, submittedAt, approvedAt){
   const pop = document.getElementById('arc-time-pop');
   if(!pop) return;
@@ -1954,7 +2094,7 @@ async function loadArchive(silent=false){
         <span class="rl-c rl-act">
           <span class="rl-counts">
             ${atts.length?`<button class="rl-cnt" onclick="event.stopPropagation();showArchiveAttachmentsMenu(this, ${i})" title="${escAttr(t('المرفقات'))}">${ARC_ICONS.paperclip}${atts.length}</button>`:''}
-            ${visComments.length?`<button class="rl-cnt" onclick="event.stopPropagation();openCommentsDialog(${i})" title="${escAttr(t('تعليقات'))}">${ARC_ICONS.comment}${visComments.length}</button>`:''}
+            <button class="rl-cnt${visComments.length?'':' is-empty'}" onclick="event.stopPropagation();openCommentsDialog(${i})" title="${escAttr(visComments.length?t('تعليقات'):t('إضافة تعليق'))}">${ARC_ICONS.comment}${visComments.length||''}</button>
           </span>${actIcon}
           <button class="rl-more" onclick="event.stopPropagation();showArchiveActionsMenu(this, ${i})" title="${escAttr(t('إجراءات'))}">${ARC_ICONS.more}</button>
         </span>

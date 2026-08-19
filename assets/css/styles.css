@@ -1980,3 +1980,13 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
     grid-template-columns:150px minmax(0,1fr) 56px 112px 124px 120px 172px !important;}
   .rl-act{gap:6px;}
 }
+
+/* زرار التعليق بيظهر على كل طلب — باهت لما ما يكونش فيه تعليقات
+   عشان تقدر تضيف أول تعليق من القايمة */
+.rl-cnt.is-empty{color:var(--n5);border-color:var(--n3);}
+.rl-cnt.is-empty:hover{color:var(--indigo);border-color:var(--indigo);background:var(--indigo-t);}
+.rl-cnt.is-empty svg{opacity:.75;}
+/* اسم المعلّق ودوره كانوا ملزوقين — margin-right بيروح للناحية
+   الغلط في RTL. الخاصية المنطقية بتشتغل صح في الاتجاهين. */
+#app-comments-overlay .cmt-who{display:flex;align-items:baseline;gap:8px;}
+#app-comments-overlay .cmt-role{margin-right:0 !important;margin-inline-start:0 !important;}
