@@ -315,6 +315,8 @@ function enterApp(){
   startArchiveAutoRefresh();
   // إشعار مقدم الطلب عند فتح البورتال بأن طلبه تم تحويله
   notifyTransferredRequests();
+  loadNotifs();                       // إشعارات الجرس
+  if(!window.__NOTIF_TIMER) window.__NOTIF_TIMER = setInterval(loadNotifs, 60000);
   // تسجيل إشعارات Push للجهاز (تظهر حتى والتطبيق مقفول)
   if(typeof initPush === 'function') initPush(CURRENT);
 }
@@ -1039,6 +1041,7 @@ async function signAccountsFor(kind){
   document.getElementById(pfx+'-acc-name').textContent = personName(CURRENT.name);
   document.getElementById(pfx+'-acc-meta').textContent = dt;
   refreshPadStates();
+  if(typeof loadNotifs==='function') setTimeout(loadNotifs, 800);
   if(EDIT_ID && SB_ON){
     const btn=document.getElementById(pfx+'-acc-btn'); const o=btn?btn.innerHTML:'';
     if(btn){ btn.disabled=true; btn.textContent=t('جاري الاعتماد...'); }
@@ -1189,6 +1192,7 @@ function signDoc(kind){
   document.getElementById(kind+'-sig-name').textContent = personName(CURRENT.name);
   document.getElementById(kind+'-sig-meta').textContent = dt;
   refreshPadStates();
+  if(typeof loadNotifs==='function') setTimeout(loadNotifs, 800);
   showMessageDialog({
     title:t('تم التوقيع الإلكتروني'),
     message:t('تم تسجيل توقيعك الإلكتروني على الطلب بنجاح.'),
@@ -1933,6 +1937,7 @@ function startArchiveAutoRefresh(){
     if(document.getElementById('arc-menu-pop')?.classList.contains('on')) return;
     if(document.getElementById('arc-time-pop')?.classList.contains('on')) return;
     loadArchive(true);   // تحديث صامت
+    loadNotifs();        // وتحديث الإشعارات معاه
   }, 30000);
 }
 async function loadArchive(silent=false){
@@ -3168,6 +3173,128 @@ function syncUserChip(){
   const lang=document.getElementById('tbm-lang');
   if(lang) lang.textContent = isEnglish() ? 'English' : 'العربية';
 }
+// ═══════════════════════════════════════════════════════════
+//  إشعارات داخل الموقع — الأحداث بتتشتق من بيانات الطلبات
+//  نفسها، من غير جدول جديد. حالة «مقروء» محفوظة محليًا لكل
+//  مستخدم كآخر وقت شافه.
+// ═══════════════════════════════════════════════════════════
+let NOTIFS = [];
+function notifSeenKey(){ return 'zamzam-notif-seen-' + (CURRENT?.user || CURRENT?.name || 'x'); }
+function notifSeenAt(){ try{ return localStorage.getItem(notifSeenKey()) || ''; }catch(e){ return ''; } }
+function markNotifsSeen(){
+  try{ localStorage.setItem(notifSeenKey(), new Date().toISOString()); }catch(e){}
+  renderNotifBadge();
+}
+// بناء قائمة الأحداث اللي تخصّ المستخدم الحالي
+function buildNotifs(rows){
+  if(!CURRENT) return [];
+  const me   = CURRENT.name;
+  const role = CURRENT.role;
+  const out  = [];
+  const push = (at, icon, title, body, id) => { if(at) out.push({at, icon, title, body, id}); };
+
+  (rows||[]).forEach(x=>{
+    if(!x || x.cancelled) return;
+    const no    = displayRequestNo(x.req_no) || '';
+    const mine  = x.created_by === me;
+    const party = x.doc_type === 'cancel' ? (x.invoice_ref||'') : (x.beneficiary||'');
+
+    // بانتظار اعتماد المحاسب
+    if(role === 'accountant' && x.signed_by && !x.accounts_signed_by){
+      push(x.signed_at, 'clock', t('بانتظار اعتمادك'), no + (party ? ' · ' + party : ''), x.id);
+    }
+    // اتعتمد
+    if(x.accounts_signed_by){
+      if(mine) push(x.accounts_signed_at, 'check', t('تم اعتماد طلبك'), no + (party ? ' · ' + party : ''), x.id);
+      else if(role === 'accountant' && !x.transfer_image)
+        push(x.accounts_signed_at, 'upload', t('جاهز للتحويل'), no + (party ? ' · ' + party : ''), x.id);
+    }
+    // اتحوّل
+    if(x.transfer_image && mine)
+      push(x.transfer_group_at || x.accounts_signed_at, 'money', t('تم تحويل طلبك'), no, x.id);
+
+    // تعليقات
+    getRequestComments(x).forEach(c=>{
+      if(!c || !c.at || c.by === me) return;
+      if(!canSeeComment(c)) return;
+      const relevant = mine || role === 'accountant' || role === 'viewer';
+      if(!relevant) return;
+      push(c.at, 'comment', t('تعليق جديد'),
+           no + ' · ' + personName(c.by||'') + ' — ' + String(c.text||'').slice(0, 48), x.id);
+    });
+  });
+
+  out.sort((a,b)=> String(b.at).localeCompare(String(a.at)));
+  return out.slice(0, 40);
+}
+async function loadNotifs(){
+  if(!SB_ON || !CURRENT) return;
+  try{
+    let q = sb.from('requests')
+      .select('id,req_no,doc_type,beneficiary,invoice_ref,created_by,signed_by,signed_at,accounts_signed_by,accounts_signed_at,transfer_image,transfer_group_at,comments_data,cancelled')
+      .order('id',{ascending:false}).limit(120);
+    if(CURRENT.role === 'sales') q = q.eq('created_by', CURRENT.name);
+    const { data, error } = await q;
+    if(error || !Array.isArray(data)) return;
+    NOTIFS = buildNotifs(data);
+    renderNotifBadge();
+  }catch(e){}
+}
+function unreadNotifs(){
+  const seen = notifSeenAt();
+  return NOTIFS.filter(n => !seen || String(n.at) > seen);
+}
+function renderNotifBadge(){
+  const b = document.getElementById('tb-bell-count');
+  if(!b) return;
+  const n = unreadNotifs().length;
+  b.textContent = n > 99 ? '99+' : String(n);
+  b.classList.toggle('on', n > 0);
+  const btn = document.getElementById('tb-bell');
+  if(btn) btn.setAttribute('aria-label', t('الإشعارات') + (n ? ' — ' + n : ''));
+}
+const NOTIF_ICONS = {
+  clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>',
+  check:'<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg>',
+  upload:'<svg viewBox="0 0 24 24"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg>',
+  money:'<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2.5"></circle></svg>',
+  comment:'<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"></path></svg>'
+};
+function toggleNotifPanel(ev){
+  if(ev) ev.stopPropagation();
+  const panel = document.getElementById('tb-notif');
+  if(!panel) return;
+  const open = panel.classList.contains('on');
+  closeUserMenu && closeUserMenu();
+  if(open){ panel.classList.remove('on'); return; }
+  const seen = notifSeenAt();
+  panel.innerHTML = NOTIFS.length ? `
+    <div class="ntf-head">
+      <b>${escapeHtml(t('الإشعارات'))}</b>
+      <button class="ntf-clear" onclick="markNotifsSeen();toggleNotifPanel(event)">${escapeHtml(t('تحديد الكل كمقروء'))}</button>
+    </div>
+    <div class="ntf-list">${NOTIFS.map(n=>`
+      <button class="ntf-item${(!seen || String(n.at) > seen) ? ' unread' : ''}" onclick="openNotif(${n.id})">
+        <span class="ntf-ic">${NOTIF_ICONS[n.icon]||''}</span>
+        <span class="ntf-txt"><b>${escapeHtml(n.title)}</b><span>${escapeHtml(n.body)}</span>
+          <em>${escapeHtml(formatArchiveDateTime ? formatArchiveDateTime(n.at) : String(n.at).slice(0,16))}</em></span>
+      </button>`).join('')}</div>`
+    : `<div class="ntf-empty">${escapeHtml(t('لا توجد إشعارات'))}</div>`;
+  panel.classList.add('on');
+  markNotifsSeen();
+}
+function closeNotifPanel(){ document.getElementById('tb-notif')?.classList.remove('on'); }
+async function openNotif(id){
+  closeNotifPanel();
+  showPage('arc');
+  await new Promise(r=>setTimeout(r,300));
+  const i = (window._arcRows||[]).findIndex(r=>r.id===id);
+  if(i >= 0){ VIEW_ONLY = true; openFromArchive(i); }
+}
+document.addEventListener('click', e=>{
+  if(e.target.closest && (e.target.closest('#tb-notif') || e.target.closest('#tb-bell'))) return;
+  closeNotifPanel();
+});
 function toggleUserMenu(e){
   if(e) e.stopPropagation();
   const menu=document.getElementById('tb-menu'), chip=document.getElementById('tb-chip');

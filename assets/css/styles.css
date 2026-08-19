@@ -1990,3 +1990,67 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
    الغلط في RTL. الخاصية المنطقية بتشتغل صح في الاتجاهين. */
 #app-comments-overlay .cmt-who{display:flex;align-items:baseline;gap:8px;}
 #app-comments-overlay .cmt-role{margin-right:0 !important;margin-inline-start:0 !important;}
+
+/* ══════════════════════════════════════════════════════════
+   إشعارات داخل الموقع — جرس في الشريط العلوي بعدّاد ولوحة
+══════════════════════════════════════════════════════════ */
+.tb-bell-wrap{position:relative;display:flex;align-items:center;}
+.tb-bell{
+  position:relative;width:38px;height:38px;display:grid;place-items:center;
+  background:transparent;border:1px solid var(--chrome-line);border-radius:var(--r-sm);
+  color:rgba(255,255,255,.78);cursor:pointer;transition:background .14s,color .14s;}
+.tb-bell:hover{background:rgba(255,255,255,.08);color:#fff;}
+.tb-bell:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+.tb-bell svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.8;fill:none;
+  stroke-linecap:round;stroke-linejoin:round;}
+.tb-bell-count{
+  position:absolute;top:-5px;inset-inline-end:-5px;min-width:17px;height:17px;padding:0 4px;
+  display:none;align-items:center;justify-content:center;border-radius:999px;
+  background:var(--stop);color:#fff;font-size:10px;font-weight:700;
+  font-variant-numeric:tabular-nums;line-height:1;border:1.5px solid var(--chrome);}
+.tb-bell-count.on{display:flex;}
+
+.tb-notif{
+  display:none;position:absolute;top:calc(100% + 10px);inset-inline-end:0;z-index:130;
+  width:min(360px,calc(100vw - 28px));max-height:min(70vh,460px);overflow:hidden;
+  background:var(--n0);border:1px solid var(--n3);border-radius:var(--r-md);
+  box-shadow:var(--sh-2);}
+.tb-notif.on{display:flex;flex-direction:column;}
+.ntf-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:12px 14px;border-bottom:1px solid var(--n3);}
+.ntf-head b{font-size:13px;font-weight:700;color:var(--n8);}
+.ntf-clear{background:none;border:0;cursor:pointer;font-family:inherit;
+  font-size:11px;font-weight:700;color:var(--indigo);padding:4px 6px;border-radius:6px;}
+.ntf-clear:hover{background:var(--indigo-t);}
+.ntf-list{overflow-y:auto;padding:6px;}
+.ntf-item{
+  display:flex;align-items:flex-start;gap:10px;width:100%;text-align:start;
+  padding:10px;border:0;border-radius:var(--r-sm);background:transparent;cursor:pointer;
+  font-family:inherit;transition:background .12s;}
+.ntf-item:hover{background:var(--n2);}
+.ntf-item.unread{background:var(--indigo-t);}
+.ntf-item.unread:hover{background:var(--indigo-l);}
+.ntf-ic{flex:0 0 30px;width:30px;height:30px;display:grid;place-items:center;
+  border-radius:50%;background:var(--n2);color:var(--indigo-d);}
+.ntf-item.unread .ntf-ic{background:var(--n0);}
+.ntf-ic svg{width:15px;height:15px;stroke:currentColor;stroke-width:2;fill:none;
+  stroke-linecap:round;stroke-linejoin:round;}
+.ntf-txt{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.ntf-txt b{font-size:12.5px;font-weight:700;color:var(--n8);}
+.ntf-txt span{font-size:11.5px;font-weight:600;color:var(--n6);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ntf-txt em{font-style:normal;font-size:10px;font-weight:700;color:var(--n5);
+  direction:ltr;font-variant-numeric:tabular-nums;}
+.ntf-empty{padding:28px 16px;text-align:center;font-size:12px;font-weight:600;color:var(--n5);}
+@media (max-width:819px){
+  .tb-bell{width:34px;height:34px;}
+  /* على الموبايل اللوحة بتتموضع بالنسبة للشاشة مش للجرس،
+     لأن الجرس في حافة الشريط فكانت بتخرج برّه. */
+  .tb-notif{
+    position:fixed;
+    top:calc(54px + env(safe-area-inset-top, 0px) + 8px);
+    inset-inline:12px;
+    width:auto;max-width:none;
+    max-height:min(68vh,440px);}
+}
+@media print{ .tb-bell-wrap,.tb-notif{display:none !important;} }
