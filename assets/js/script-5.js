@@ -2628,24 +2628,37 @@ function getPrintFilename(type, reqNo){
   const value = reqNo || document.getElementById(type === 'cancel' ? 'c-reqno' : 'd-reqno')?.value || fallback;
   return value ? value.replace(/\s+/g,'_') : fallback;
 }
-function restoreTitleLater(title){
-  setTimeout(()=>{ document.title = title; }, 1000);
+/* اسم الملف وقت "حفظ كـ PDF" بياخده المتصفح من عنوان الصفحة،
+   فبنخلّي العنوان رقم الطلب قبل الطباعة.
+   الرجوع مربوط بـafterprint مش بمؤقّت: في سفاري والموبايل
+   window.print() مابتوقفش التنفيذ، فمؤقّت الثانية كان بيرجّع
+   العنوان والمستخدم لسه بيختار، فالملف يتسمّى باسم الموقع. */
+let PRINT_TITLE_BACKUP = null;
+function setPrintTitle(name){
+  if(PRINT_TITLE_BACKUP === null) PRINT_TITLE_BACKUP = document.title;
+  document.title = name;
+  // احتياطي بعيد لو afterprint ماحصلش: العنوان يفضل رقم الطلب لحد ساعتها وده مش ضار
+  clearTimeout(setPrintTitle._t);
+  setPrintTitle._t = setTimeout(restorePrintTitle, 300000);
+}
+function restorePrintTitle(){
+  if(PRINT_TITLE_BACKUP === null) return;
+  clearTimeout(setPrintTitle._t);
+  document.title = PRINT_TITLE_BACKUP;
+  PRINT_TITLE_BACKUP = null;
 }
 
 /* === طباعة طلب الإلغاء: مسار مستقل تماماً عن PDF طلب الصرف === */
 async function printCancelDoc(reqNo){
-  const origTitle = document.title;
-  document.title = getPrintFilename('cancel', reqNo);
+  setPrintTitle(getPrintFilename('cancel', reqNo));
   commitValuesForPrint();
   window.print();
-  restoreTitleLater(origTitle);
 }
 
 /* === طباعة طلب الصرف: وحده يجهّز PDF الطلب والمرفقات المنفصلة === */
 async function printDisbDoc(reqNo){
   if(!ensureDisbRowsPrintable()) return;
-  const origTitle = document.title;
-  document.title = getPrintFilename('disb', reqNo);
+  setPrintTitle(getPrintFilename('disb', reqNo));
   commitValuesForPrint();
   prepareDisbPrintAppendix();
   if(getDisbTableRowsCount() <= DISB_MAIN_PRINT_ROWS){
@@ -2660,7 +2673,6 @@ async function printDisbDoc(reqNo){
     updateRequestPdfStatus();
   }
   window.print();
-  restoreTitleLater(origTitle);
 }
 
 /* جسر توافق للأرشيف وأي استدعاءات قديمة */
@@ -2692,6 +2704,7 @@ window.addEventListener('beforeprint', ()=>{
   }
 });
 window.addEventListener('afterprint', ()=>{
+  restorePrintTitle();
   clearDisbPrintAppendix();
   if(typeof endBilingualDocument === 'function') endBilingualDocument();
 });
