@@ -1163,7 +1163,18 @@ async function generateRequestPDF(docId='doc-disb', opts={}){
   const PX_TO_MM = 0.2645833333;
   const canvasWidthMm = canvas.width * PX_TO_MM;
   const canvasHeightMm = canvas.height * PX_TO_MM;
-  const pdfScale = canvasWidthMm > 0 ? Math.min(1, pw / canvasWidthMm) : 1;
+  const fitWidth = canvasWidthMm > 0 ? Math.min(1, pw / canvasWidthMm) : 1;
+  const heightAtFitWidth = canvasHeightMm * fitWidth;
+  // الوثيقة مصمّمة لتُطبع على صفحة A4 واحدة، والتصوير بيطلع أطول منها
+  // شوية. القص بيحصل عند ارتفاع ثابت مهما كان اللي هناك، فكان بيقع في
+  // نص خانات التوقيع. فلو الزيادة صغيرة نصغّر الوثيقة كلها لتدخل في
+  // صفحة واحدة بدل ما نقصّها. أطول من كده تفضل تتقسّم زي ما كانت.
+  const ONE_PAGE_LIMIT = ph * 1.35;
+  const shrinkToOnePage = heightAtFitWidth > ph && heightAtFitWidth <= ONE_PAGE_LIMIT
+                          && canvasHeightMm > 0;
+  const pdfScale = shrinkToOnePage
+    ? Math.min(pw / canvasWidthMm, ph / canvasHeightMm)
+    : fitWidth;
   const imgW = canvasWidthMm * pdfScale;
   const imgH = canvasHeightMm * pdfScale;
   const offsetX = Math.max(0, (pw - imgW) / 2);
