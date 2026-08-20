@@ -2698,6 +2698,14 @@ document.addEventListener('input', function(event){
   }
 });
 window.addEventListener('beforeprint', ()=>{
+  // الطباعة ممكن تبدأ من غير زرار التطبيق (Cmd+P أو قائمة المتصفح)،
+  // وساعتها مافيش حاجة سمّت الملف. بنسمّيه هنا لأن الحدث ده بيحصل
+  // في كل الحالات. لو زرار التطبيق سمّاه بالفعل مابنلمسوش.
+  if(PRINT_TITLE_BACKUP === null){
+    const isCancel = document.getElementById('page-cancel')?.classList.contains('on');
+    const isDisb   = document.getElementById('page-disb')?.classList.contains('on');
+    if(isCancel || isDisb) setPrintTitle(getPrintFilename(isCancel ? 'cancel' : 'disb'));
+  }
   if(typeof beginBilingualDocument === 'function') beginBilingualDocument();   // الوثيقة تُطبع عربي + إنجليزي دائماً
   if(document.getElementById('page-disb')?.classList.contains('on')){
     prepareDisbPrintAppendix();
