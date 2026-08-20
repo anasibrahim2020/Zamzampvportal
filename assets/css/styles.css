@@ -2069,3 +2069,25 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
   .rl-row{grid-template-columns:30px minmax(0,1fr) 148px !important;}
   .rl-act{gap:4px;}
 }
+
+/* ══════════════════════════════════════════════════════════
+   الطباعة: نرجّع آلية الجدول الأصلية بدل التثبيت
+   .sheet-frame جدول بـ THEAD و TFOOT — دي الطريقة القياسية
+   لتكرار الرأس والتذييل في كل صفحة مطبوعة. القواعد كانت
+   بتفرض display:block فبتعطّل التكرار، فاتعوّض بـposition:fixed
+   على التذييل — وده اللي بيخلّي سفاري يحجز صفحة زيادة.
+   برجوع display:table-*-group التكرار بيشتغل أصلاً في كل
+   المتصفحات، والتثبيت مابقاش له لزوم.
+══════════════════════════════════════════════════════════ */
+@media print{
+  .sheet-frame{display:table !important;width:100% !important;}
+  .sheet-frame>thead{display:table-header-group !important;}
+  .sheet-frame>tbody{display:table-row-group !important;}
+  .sheet-frame>tfoot{display:table-footer-group !important;}
+  .sheet-frame>thead>tr,.sheet-frame>tbody>tr,.sheet-frame>tfoot>tr{display:table-row !important;}
+  .sheet-frame>thead>tr>td,.sheet-frame>thead>tr>th,
+  .sheet-frame>tbody>tr>td,.sheet-frame>tfoot>tr>td{display:table-cell !important;}
+  .doc-ftr{position:static !important;inset:auto !important;
+    break-inside:avoid !important;page-break-inside:avoid !important;}
+  html,body{height:auto !important;overflow:visible !important;}
+}
