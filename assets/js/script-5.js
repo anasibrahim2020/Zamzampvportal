@@ -3401,7 +3401,7 @@ async function loadHome(){
   if(!SB_ON){ body.innerHTML = homeEmpty(ARC_ICONS.file,'الأرشيف غير مفعّل','—'); return; }
   body.innerHTML = `<div class="h-loading">${t('جاري التحميل...')}</div>`;
   try{
-    let qy = sb.from('requests').select('*').order('id',{ascending:false}).limit(200);
+    let qy = sb.from('requests').select('*').order('id',{ascending:false}).limit(1000);
     if(CURRENT.role==='sales'){
       const names = Object.values(USER_MAP).filter(u=>u.role==='sales').map(u=>u.name);
       qy = qy.in('created_by', names);
