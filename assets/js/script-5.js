@@ -2636,6 +2636,7 @@ function getPrintFilename(type, reqNo){
 let PRINT_TITLE_BACKUP = null;
 function setPrintTitle(name){
   if(PRINT_TITLE_BACKUP === null) PRINT_TITLE_BACKUP = document.title;
+  window.PRINT_TITLE_ACTIVE = true;
   document.title = name;
   // احتياطي بعيد لو afterprint ماحصلش: العنوان يفضل رقم الطلب لحد ساعتها وده مش ضار
   clearTimeout(setPrintTitle._t);
@@ -2644,6 +2645,7 @@ function setPrintTitle(name){
 function restorePrintTitle(){
   if(PRINT_TITLE_BACKUP === null) return;
   clearTimeout(setPrintTitle._t);
+  window.PRINT_TITLE_ACTIVE = false;
   document.title = PRINT_TITLE_BACKUP;
   PRINT_TITLE_BACKUP = null;
 }

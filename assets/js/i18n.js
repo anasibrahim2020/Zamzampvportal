@@ -623,7 +623,11 @@ function applyLanguage(opts){
   html.setAttribute('lang', LANG);
   html.setAttribute('dir', LANG === 'en' ? 'ltr' : 'rtl');
   html.classList.toggle('lang-en', LANG === 'en');
-  document.title = LANG === 'en' ? 'Zamzam Hajj & Umrah · زمزم' : 'زمزم للحج والعمرة · Zamzam';
+  // وقت الطباعة العنوان بيبقى رقم الطلب (منه بياخد المتصفح اسم ملف الـPDF)،
+  // وتجهيز الوثيقة ثنائية اللغة بينادي الدالة دي، فلازم نسيب العنوان زي ما هو.
+  if(!window.PRINT_TITLE_ACTIVE){
+    document.title = LANG === 'en' ? 'Zamzam Hajj & Umrah · زمزم' : 'زمزم للحج والعمرة · Zamzam';
+  }
   translateStaticNodes();
   const globe = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"></path></svg>';
   ['login-lang-btn'].forEach(id=>{
