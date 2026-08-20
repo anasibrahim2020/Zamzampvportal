@@ -81,13 +81,13 @@
         showMessageDialog({
           title: TT('فعّل إشعارات الطلبات'),
           subtitle: 'Enable Notifications',
-          message: TT('عشان توصلك إشعارات الطلبات على الآيفون، لازم تضيف البوابة للشاشة الرئيسية الأول.'),
+          message: TT('لاستقبال إشعارات الطلبات على iPhone، يلزم إضافة البوابة إلى الشاشة الرئيسية أولاً.'),
           details: [
-            { label: TT('الخطوة ١'), value: TT('اضغط زر المشاركة في سفاري') },
+            { label: TT('الخطوة ١'), value: TT('افتح قائمة المشاركة في Safari') },
             { label: TT('الخطوة ٢'), value: TT('اختر «إضافة إلى الشاشة الرئيسية»') },
             { label: TT('الخطوة ٣'), value: TT('افتح البوابة من الأيقونة الجديدة') }
           ],
-          note: TT('بعدها هيظهرلك طلب تفعيل الإشعارات.'),
+          note: TT('سيظهر بعدها طلب تفعيل الإشعارات.'),
           confirmText: TT('حسنًا')
         });
       }
@@ -97,15 +97,15 @@
     var ok = await showConfirmDialog({
       title: TT('فعّل إشعارات الطلبات'),
       subtitle: 'Enable Notifications',
-      message: TT('يوصلك إشعار فوري على جهازك عند كل حدث يخصّك — حتى والبوابة مقفولة.'),
+      message: TT('يصلك إشعار فوري على جهازك عند كل حدث يخصّك، حتى والبوابة مغلقة.'),
       details: [
         { label: TT('المحاسب'), value: TT('طلب جديد بانتظار اعتمادك') },
         { label: TT('الموظف'),  value: TT('اعتماد طلبك وتحويله') },
         { label: TT('الجميع'),  value: TT('تعليق جديد على طلب') }
       ],
-      note: TT('تقدر توقفها في أي وقت من إعدادات المتصفح.'),
+      note: TT('يمكنك إيقافها في أي وقت من إعدادات المتصفح.'),
       confirmText: TT('تفعيل الإشعارات'),
-      cancelText: TT('مش دلوقتي')
+      cancelText: TT('ليس الآن')
     });
     markAsked(userName);
     if (!ok) return;
@@ -116,7 +116,7 @@
         if (typeof showMessageDialog === 'function') {
           showMessageDialog({
             title: TT('تم تفعيل الإشعارات'),
-            message: TT('هيوصلك إشعار على الجهاز ده عند كل حدث يخصّك.'),
+            message: TT('سيصلك إشعار على هذا الجهاز عند كل حدث يخصّك.'),
             confirmText: TT('حسنًا')
           });
         }

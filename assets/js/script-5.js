@@ -238,7 +238,7 @@ async function doLogin(){
   const err   = document.getElementById('login-error');
   const btn   = document.querySelector('.login-btn');
   if(!SB_ON){
-    err.textContent=t('الإعداد غير مكتمل — لازم تضيف بيانات Supabase الأول (راجع دليل الإعداد).');
+    err.textContent=t('الإعداد غير مكتمل — يلزم إضافة بيانات Supabase أولاً (راجع دليل الإعداد).');
     err.style.display='block';
     return;
   }
@@ -2265,12 +2265,12 @@ async function deleteTransferImage(rowIndex){
 
 // إلغاء طلب — المحاسب يقدر يلغي، والمبيعات تقدر تلغي طلبها قبل اعتماد الحسابات فقط.
 async function cancelRequest(i){
-  if(!CURRENT){ alert(t('لازم تسجل دخول أولاً.')); return; }
+  if(!CURRENT){ alert(t('يجب تسجيل الدخول أولاً.')); return; }
   const x=(window._arcRows||[])[i]; if(!x) return;
   const isAcc = CURRENT.role === 'accountant';
   const canSalesCancel = isOwnRequest(x) && !isApprovedRequest(x) && !x.cancelled;
   if(!isAcc && !canSalesCancel){
-    alert(t('لا يمكن إلغاء هذا الطلب.\n\nالمبيعات تقدر تلغي الطلب فقط قبل اعتماد الحسابات.'));
+    alert(t('لا يمكن إلغاء هذا الطلب.\n\nيمكن للمبيعات إلغاء الطلب قبل اعتماد الحسابات فقط.'));
     return;
   }
   const ok = await showConfirmDialog({
