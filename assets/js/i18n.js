@@ -8,6 +8,8 @@ let LANG = 'ar';
 try{ LANG = localStorage.getItem(LANG_KEY) || 'ar'; }catch(e){ LANG = 'ar'; }
 
 const I18N_EN = {
+  'جاري تجهيز الملف...':'Preparing the file…',
+  'تعذّر تجهيز ملف الطلب.':'Could not prepare the request file.',
   // رسائل تشخيص رفع المرفقات
   'تعذّر الوصول إلى خادم التخزين':'Could not reach the storage server',
   'لم يصل الطلب إلى الخادم من الأساس، والسبب غالبًا أحد الآتي:':'The request never reached the server. The cause is most likely one of the following:',

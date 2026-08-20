@@ -2069,3 +2069,9 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
   .rl-row{grid-template-columns:30px minmax(0,1fr) 148px !important;}
   .rl-act{gap:4px;}
 }
+
+/* مؤشّر تجهيز ملف الطلب أثناء التنزيل */
+.dl-busy{position:fixed;inset-inline:0;bottom:24px;margin-inline:auto;width:max-content;
+  max-width:calc(100% - 32px);z-index:9998;background:var(--chrome);color:#fff;
+  padding:11px 20px;border-radius:var(--r-pill);font-size:13px;font-weight:600;
+  box-shadow:var(--sh-2);pointer-events:none;}

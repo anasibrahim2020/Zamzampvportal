@@ -1943,6 +1943,7 @@ function showArchiveActionsMenu(btn, rowIndex){
   // عرض الطلب (قراءة فقط) + طباعة الطلب متاحان دائماً
   html += archiveMenuButton(t('عرض الطلب'), ARC_ICONS.view, `viewFromArchive(${rowIndex})`);
   html += archiveMenuButton(t('طباعة الطلب'), ARC_ICONS.print, `reprintFromArchive(${rowIndex})`);
+  html += archiveMenuButton(t('تنزيل الطلب PDF'), ARC_ICONS.download, `downloadRequestPDF(${rowIndex})`);
   html += archiveMenuButton(t('سجل التوقيت'), ARC_ICONS.clock, `showArchiveTimeFromMenu(this, ${rowIndex})`);
   // تعديل الطلب ثم إلغاء الطلب (لمن يملك صلاحية التعديل فقط)
   if(canEdit || canRevoke || canCancel){
@@ -2208,6 +2209,39 @@ function reprintFromArchive(i){
     showPage('disb');
   }
   setTimeout(()=>printDoc(x.doc_type, displayRequestNo(x.req_no)), 400);
+}
+
+// تنزيل الطلب PDF من الأرشيف
+// بنعدّي على نفس مسار الطباعة: نحمّل الطلب في الوثيقة ونخلّي المتصفح
+// يرسمها، وبعدين generateRequestPDF بتصوّرها بـhtml2canvas وتحطها صورة
+// في الـPDF. فالعربي بيتحفظ زي ما هو معروض بالظبط — مافيش نص بيتكتب
+// حرف حرف في jsPDF عشان يتعكس.
+async function downloadRequestPDF(i){
+  const x = (window._arcRows||[])[i];
+  if(!x){ alert(t('تعذّر فتح الطلب.')); return; }
+  const no = displayRequestNo(x.req_no) || (x.doc_type==='cancel' ? 'RR' : 'PV');
+  VIEW_ONLY = true;
+  if(x.doc_type==='cancel'){ loadCancelFromRow(x); showPage('cancel'); }
+  else                     { loadDisbFromRow(x);   showPage('disb');   }
+  const busy = t('جاري تجهيز الملف...');
+  let note = null;
+  try{
+    note = document.createElement('div');
+    note.className = 'dl-busy no-print';
+    note.textContent = busy;
+    document.body.appendChild(note);
+    // نفس مهلة الطباعة عشان الوثيقة تترسم بالكامل قبل التصوير
+    await new Promise(r=>setTimeout(r, 400));
+    if(x.doc_type!=='cancel' && typeof prepareDisbPrintAppendix === 'function') prepareDisbPrintAppendix();
+    const bytes = await generateRequestPDF(x.doc_type==='cancel' ? 'doc-cancel' : 'doc-disb');
+    dl(new Blob([bytes], { type:'application/pdf' }), no.replace(/\s+/g,'_') + '.pdf');
+  }catch(e){
+    console.error(e);
+    alert(t('تعذّر تجهيز ملف الطلب.') + '\n\n' + (e.message || e));
+  }finally{
+    if(note) note.remove();
+    if(x.doc_type!=='cancel' && typeof clearDisbPrintAppendix === 'function') clearDisbPrintAppendix();
+  }
 }
 
 // رفع إثبات التحويل (المحاسب فقط بعد الاعتماد)
