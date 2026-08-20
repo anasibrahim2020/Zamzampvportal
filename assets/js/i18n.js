@@ -8,6 +8,26 @@ let LANG = 'ar';
 try{ LANG = localStorage.getItem(LANG_KEY) || 'ar'; }catch(e){ LANG = 'ar'; }
 
 const I18N_EN = {
+  // رسائل تشخيص رفع المرفقات
+  'تعذّر الوصول إلى خادم التخزين':'Could not reach the storage server',
+  'لم يصل الطلب إلى الخادم من الأساس، والسبب غالبًا أحد الآتي:':'The request never reached the server. The cause is most likely one of the following:',
+  '• انقطاع الاتصال بالإنترنت أثناء الرفع.':'• The internet connection dropped during the upload.',
+  '• حجب شبكة المكتب أو الجدار الناري للنطاق supabase.co':'• The office network or firewall is blocking the supabase.co domain.',
+  '• إضافة في المتصفح تمنع الطلبات (مانع الإعلانات أو حماية الخصوصية).':'• A browser extension is blocking the request (an ad blocker or privacy guard).',
+  'جرّب من شبكة أخرى أو من بيانات الهاتف للتأكد.':'Try another network, or your phone’s mobile data, to confirm.',
+  'الخادم رفض الرفع لعدم وجود صلاحية':'The server refused the upload for lack of permission',
+  'سياسات التخزين تحتاج مراجعة، أو انتهت جلسة الدخول. سجّل الخروج والدخول مرة أخرى، فإن استمرت المشكلة فالمطلوب ضبط سياسات Storage.':'The storage policies need review, or your session has expired. Sign out and back in; if the problem persists, the Storage policies must be configured.',
+  'حجم الملف أكبر من الحد المسموح به':'The file exceeds the maximum allowed size',
+  'اضغط الملف أو ارفعه بجودة أقل ثم أعد المحاولة.':'Compress the file or upload it at a lower quality, then try again.',
+  'نوع الملف غير مقبول':'The file type is not accepted',
+  'المسموح: ملفات PDF والصور فقط.':'Only PDF files and images are allowed.',
+  'مساحة التخزين غير موجودة على الخادم.':'The storage space does not exist on the server.',
+  'يلزم إنشاء bucket باسم request-attachments في Supabase Storage.':'A bucket named request-attachments must be created in Supabase Storage.',
+  'يوجد ملف بنفس الاسم بالفعل':'A file with the same name already exists',
+  'أعد المحاولة، وسيُحفظ باسم جديد.':'Try again and it will be saved under a new name.',
+  'تعذّر رفع الملف':'Could not upload the file',
+  'تفاصيل الخطأ:':'Error details:',
+  'تعذّر رفع المرفقات':'Could not upload the attachments',
   'فعّل إشعارات الطلبات':'Enable request notifications',
   'يصلك إشعار فوري على جهازك عند كل حدث يخصّك، حتى والبوابة مغلقة.':'Get an instant notification on your device for anything that concerns you, even with the portal closed.',
   'طلب جديد بانتظار اعتمادك':'A new request awaiting your approval',

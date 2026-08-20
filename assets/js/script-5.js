@@ -73,12 +73,55 @@ async function uploadFileToStorage(file, folder='uploads'){
   const timestamp = Date.now();
   const random = Math.random().toString(36).slice(2,8);
   const filepath = `${folder.replace(/^\/+|\/+$/g,'')}/${timestamp}_${random}_${name}`;
-  const { data, error } = await sb.storage.from('request-attachments').upload(filepath, file, { cacheControl:'3600', upsert:false });
-  if(error){
-    const msg = error.message || error.error_description || error.error || JSON.stringify(error);
-    throw new Error(`Storage upload failed: ${msg}`);
+  // الشبكات المكتبية بتقطع الرفع أحيانًا، فنعيد المحاولة مرتين بفاصل متزايد
+  let error = null, data = null;
+  for(let attempt=0; attempt<3; attempt++){
+    if(attempt>0) await new Promise(r=>setTimeout(r, attempt*1200));
+    ({ data, error } = await sb.storage.from('request-attachments')
+      .upload(filepath, file, { cacheControl:'3600', upsert:false }));
+    if(!error) return data?.path || filepath;
+    if(!isNetworkError(error)) break;   // خطأ حقيقي من السيرفر: مفيش فايدة من الإعادة
   }
-  return data?.path || filepath;
+  throw new Error(describeUploadError(error, file));
+}
+// "Failed to fetch" معناها إن المتصفح ماوصلش للسيرفر أصلًا — مش رفض منه
+function isNetworkError(error){
+  const m = String(error?.message || error || '').toLowerCase();
+  return m.includes('failed to fetch') || m.includes('networkerror')
+      || m.includes('load failed') || m.includes('network request failed');
+}
+// رسالة تشخيص دقيقة بدل التخمين — كل حالة ولها سببها الحقيقي
+function describeUploadError(error, file){
+  const raw = error?.message || error?.error_description || error?.error || JSON.stringify(error||{});
+  const m = String(raw).toLowerCase();
+  const nm = file?.name ? ` (${file.name})` : '';
+  if(isNetworkError(error)){
+    return t('تعذّر الوصول إلى خادم التخزين') + nm + '.\n\n'
+      + t('لم يصل الطلب إلى الخادم من الأساس، والسبب غالبًا أحد الآتي:') + '\n'
+      + t('• انقطاع الاتصال بالإنترنت أثناء الرفع.') + '\n'
+      + t('• حجب شبكة المكتب أو الجدار الناري للنطاق supabase.co') + '\n'
+      + t('• إضافة في المتصفح تمنع الطلبات (مانع الإعلانات أو حماية الخصوصية).') + '\n\n'
+      + t('جرّب من شبكة أخرى أو من بيانات الهاتف للتأكد.');
+  }
+  if(m.includes('row-level security') || m.includes('unauthorized') || m.includes('accessdenied')){
+    return t('الخادم رفض الرفع لعدم وجود صلاحية') + nm + '.\n\n'
+      + t('سياسات التخزين تحتاج مراجعة، أو انتهت جلسة الدخول. سجّل الخروج والدخول مرة أخرى، فإن استمرت المشكلة فالمطلوب ضبط سياسات Storage.');
+  }
+  if(m.includes('exceeded') || m.includes('too large') || m.includes('413')){
+    return t('حجم الملف أكبر من الحد المسموح به') + nm + '.\n\n'
+      + t('اضغط الملف أو ارفعه بجودة أقل ثم أعد المحاولة.');
+  }
+  if(m.includes('mime') || m.includes('invalid_mime') || m.includes('content type')){
+    return t('نوع الملف غير مقبول') + nm + '.\n\n' + t('المسموح: ملفات PDF والصور فقط.');
+  }
+  if(m.includes('bucket not found') || m.includes('nosuchbucket')){
+    return t('مساحة التخزين غير موجودة على الخادم.') + '\n\n'
+      + t('يلزم إنشاء bucket باسم request-attachments في Supabase Storage.');
+  }
+  if(m.includes('already exists') || m.includes('duplicate')){
+    return t('يوجد ملف بنفس الاسم بالفعل') + nm + '.\n\n' + t('أعد المحاولة، وسيُحفظ باسم جديد.');
+  }
+  return t('تعذّر رفع الملف') + nm + '.\n\n' + t('تفاصيل الخطأ:') + '\n' + raw;
 }
 async function uploadAttachments(files, folder='uploads'){
   const paths = [];
@@ -1498,7 +1541,7 @@ async function saveDisbDoc(){
       rec.attachments_data = JSON.stringify([...savedPaths, ...paths]);
     }catch(e){
       console.error(e);
-      alert(`تعذّر رفع المرفقات.\n\nسبب الخطأ:\n${e.message || e}\n\nغالباً تحتاج تتأكد أن bucket باسم request-attachments موجود في Supabase Storage وأن سياسة الرفع مفعّلة للمستخدمين المسجلين.`);
+      alert(t('تعذّر رفع المرفقات') + '\n\n' + (e.message || e));
       return;
     }
   } else {
