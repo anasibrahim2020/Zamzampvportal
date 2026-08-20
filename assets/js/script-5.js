@@ -2011,7 +2011,7 @@ async function loadArchive(silent=false){
   if(!silent) body.innerHTML=`<div class="arc-empty">${t('جاري التحميل...')}</div>`;
   try{
     await ensureTransferColumns();   // أعمدة التحويل المجمّع موجودة؟ (فحص مرة واحدة لكل جلسة)
-    let qy = sb.from('requests').select('*').order('id',{ascending:false}).limit(200);
+    let qy = sb.from('requests').select('*').order('id',{ascending:false}).limit(1000);
     if(ARC_TAB==='cancelled') qy = qy.eq('cancelled', true);
     else if(ARC_TAB!=='all') qy = qy.eq('doc_type', ARC_TAB);
     // المبيعات يشوفوا طلبات بعض فقط (عرض/طباعة/تحميل) — مش طلبات المحاسب؛ التعديل لصاحب الطلب فقط
@@ -3416,23 +3416,23 @@ async function loadHome(){
       const toPay    = live.filter(r=>r.accounts_signed_by && !r.transfer_image).sort(byAge);
       const payTotal = toPay.reduce((a,r)=>a+(Number(r.amount)||0),0);
       html += homeSection('بانتظار اعتمادك', 'طلبات موقّعة لم تُعتمد بعد', pending.length,
-        pending.length ? pending.slice(0,6).map(x=>homeRow(x,
+        pending.length ? pending.map(x=>homeRow(x,
           `<button class="hbtn sm primary" onclick="event.stopPropagation();reviewFromHome(${x.id})">${t('مراجعة واعتماد')}</button>`)).join('')
-        : homeEmpty(ARC_ICONS.sign,'مفيش طلبات مستنية اعتمادك','لا توجد مهام معلّقة'), pending.length>6);
+        : homeEmpty(ARC_ICONS.sign,'مفيش طلبات مستنية اعتمادك','لا توجد مهام معلّقة'), false);
       html += homeSection('جاهزة للتحويل', 'طلبات معتمدة لم تُحوّل بعد', toPay.length,
         toPay.length ? `<div class="h-paybar"><span>${t('إجمالي جاهز للتحويل')}</span>
              <b>${formatMoney(payTotal)} ${t('ر.ق')}</b>
              <button class="hbtn primary" onclick="startBatchFromHome()">${ARC_ICONS.layers}${t('تحويل مجمّع')}</button></div>`
-            + toPay.slice(0,5).map(x=>homeRow(x,
+            + toPay.map(x=>homeRow(x,
               `<button class="hbtn sm ghost" onclick="event.stopPropagation();uploadProofFromHome(${x.id})">${ARC_ICONS.upload}${t('رفع الإثبات')}</button>`)).join('')
-        : homeEmpty(ARC_ICONS.upload,'مفيش طلبات جاهزة للتحويل','هتظهر هنا بعد الاعتماد'), toPay.length>5);
+        : homeEmpty(ARC_ICONS.upload,'مفيش طلبات جاهزة للتحويل','هتظهر هنا بعد الاعتماد'), false);
     } else {
       const mine = live.filter(r=>r.created_by===CURRENT.name).sort((a,b)=>(b.id||0)-(a.id||0));
       const waiting = mine.filter(r=>!r.transfer_image);
       html += homeSection('طلباتي', 'طلبات قيد التنفيذ', waiting.length,
-        waiting.length ? waiting.slice(0,8).map(x=>homeRow(x,'')).join('')
-        : homeEmpty(ARC_ICONS.doc,'مفيش طلبات قيد التنفيذ','ابدأ بطلب صرف جديد'), waiting.length>8);
-      const done = mine.filter(r=>r.transfer_image).slice(0,4);
+        waiting.length ? waiting.map(x=>homeRow(x,'')).join('')
+        : homeEmpty(ARC_ICONS.doc,'مفيش طلبات قيد التنفيذ','ابدأ بطلب صرف جديد'), false);
+      const done = mine.filter(r=>r.transfer_image);
       if(done.length) html += homeSection('طلبات محوّلة', 'أحدث التحويلات', done.length,
         done.map(x=>homeRow(x,'')).join(''), false);
     }
