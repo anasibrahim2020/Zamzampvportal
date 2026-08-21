@@ -1196,10 +1196,22 @@ const CAPTURE_PRINT_PATCH = `
     position:static !important;inset:auto !important;}
   html,body{height:auto !important;overflow:visible !important;}
 `;
-function applyPrintLayoutToClone(cloneDoc){
-  const st = cloneDoc.createElement('style');
-  st.textContent = collectPrintRules() + CAPTURE_PRINT_PATCH;
-  (cloneDoc.head || cloneDoc.documentElement).appendChild(st);
+/* نطبّقه على المستند الحقيقي لا على النسخة: html2canvas يقيس العنصر
+   الأصلي ليحدّد أبعاد الكانفس، فلو قِسنا تخطيط الشاشة ورسمنا تخطيط
+   الطباعة خرج الكانفس أقصر من المرسوم وضاع ما زاد. بهذا يكون المقيس
+   هو المرسوم، وتكون حدود القص الآمنة مقيسة على التخطيط الصحيح. */
+let PRINT_LAYOUT_STYLE = null;
+function beginPrintLayout(){
+  if(PRINT_LAYOUT_STYLE) return;
+  PRINT_LAYOUT_STYLE = document.createElement('style');
+  PRINT_LAYOUT_STYLE.id = 'capture-print-layout';
+  PRINT_LAYOUT_STYLE.textContent = collectPrintRules() + CAPTURE_PRINT_PATCH;
+  document.head.appendChild(PRINT_LAYOUT_STYLE);
+}
+function endPrintLayout(){
+  if(PRINT_LAYOUT_STYLE && PRINT_LAYOUT_STYLE.parentNode)
+    PRINT_LAYOUT_STYLE.parentNode.removeChild(PRINT_LAYOUT_STYLE);
+  PRINT_LAYOUT_STYLE = null;
 }
 /* تلتقط عنصراً واحداً وتُرجع الكانفس مع حدود القص الآمنة داخله */
 async function captureDocElement(el, captureScale, opts={}){
@@ -1225,7 +1237,11 @@ async function captureDocElement(el, captureScale, opts={}){
     boxShadow: el.style.boxShadow, borderRadius: el.style.borderRadius, transform: el.style.transform,
   };
   hidden.forEach(node=>node.style.display='none');
-  el.style.width = '210mm'; el.style.maxWidth = '210mm'; el.style.margin = '0 auto';
+  // بـimportant: قواعد الطباعة تضع width:100% !important على الوثيقة،
+  // فبدونه يعود العنصر لعرض النافذة ويخرج الكانفس أعرض من الورقة.
+  el.style.setProperty('width','210mm','important');
+  el.style.setProperty('max-width','210mm','important');
+  el.style.setProperty('margin','0 auto','important');
   el.style.boxShadow = 'none'; el.style.borderRadius = '0'; el.style.transform = 'none';
   const safeBreaks = [];
   let capturedHeight = 0, canvas;
@@ -1239,19 +1255,24 @@ async function captureDocElement(el, captureScale, opts={}){
         if(r.height > 0) safeBreaks.push(r.bottom - top);
       });
     safeBreaks.sort((a,b)=>a-b);
+    // نمرّر عرض العنصر نفسه لا scrollWidth: هذا الأخير يساوي عرض النافذة
+    // فيخرج الكانفس أعرض من الورقة، وعند ملاءمته على A4 يتقلّص المحتوى.
+    const boxW = Math.ceil(el.getBoundingClientRect().width) || el.offsetWidth;
+    const boxH = Math.ceil(capturedHeight);
     canvas = await html2canvas(el,{scale:captureScale,backgroundColor:'#ffffff',useCORS:true,
-      onclone:(cloneDoc)=>{
-        try{ applyPrintLayoutToClone(cloneDoc); }catch(_e){}
-        try{ normalizeModernColors(cloneDoc); }catch(_e){}
-      },
-      scrollX:0, scrollY:0, windowWidth:el.scrollWidth, windowHeight:el.scrollHeight,
+      onclone:(cloneDoc)=>{ try{ normalizeModernColors(cloneDoc); }catch(_e){} },
+      scrollX:0, scrollY:0, x:0, y:0, width:boxW, height:boxH,
+      windowWidth:boxW, windowHeight:boxH,
       ignoreElements:(n)=>n.classList&&n.classList.contains('no-print')});
   }finally{
     originalDisplay.forEach(([node, value])=>{ node.style.display = value; });
     if(borrowedFooter && borrowedFooter.parentNode) borrowedFooter.parentNode.removeChild(borrowedFooter);
     el.style.display = wasDisplay;
-    el.style.width = originalStyles.width; el.style.maxWidth = originalStyles.maxWidth;
-    el.style.margin = originalStyles.margin; el.style.boxShadow = originalStyles.boxShadow;
+    el.style.removeProperty('width'); el.style.removeProperty('max-width'); el.style.removeProperty('margin');
+    if(originalStyles.width) el.style.width = originalStyles.width;
+    if(originalStyles.maxWidth) el.style.maxWidth = originalStyles.maxWidth;
+    if(originalStyles.margin) el.style.margin = originalStyles.margin;
+    el.style.boxShadow = originalStyles.boxShadow;
     el.style.borderRadius = originalStyles.borderRadius; el.style.transform = originalStyles.transform;
   }
   return { canvas, safeBreaks, capturedHeight };
@@ -1282,6 +1303,8 @@ async function generateRequestPDF(docId='doc-disb', opts={}){
   const cx  = cut.getContext('2d');
   let firstPage = true;
 
+  beginPrintLayout();
+  try{
   for(const part of parts){
     const { canvas, safeBreaks, capturedHeight } = await captureDocElement(part, captureScale, { withFooter: part !== el });
     if(!canvas || !canvas.width || !canvas.height) continue;
@@ -1325,6 +1348,7 @@ async function generateRequestPDF(docId='doc-disb', opts={}){
       pdf.addImage(img, imgFormat, offsetX, 0, imgW, sl.h / pxPerMm);
     }
   }
+  }finally{ endPrintLayout(); }
   return pdf.output('arraybuffer');
 }
 
