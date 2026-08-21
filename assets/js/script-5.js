@@ -1180,6 +1180,22 @@ async function generateRequestPDF(docId='doc-disb', opts={}){
   el.style.borderRadius = '0';
   el.style.transform = 'none';
   let canvas;
+  // حدود القص الآمنة: قيعان الأقسام الرئيسية وصفوف الجداول. نقيسها والوثيقة
+  // ما زالت بعرض A4 حتى تطابق ما سيُصوَّر، فلا يقع فاصل الصفحة داخل صف.
+  // لا نُدرج أجزاء .disb-tail عمداً: المبلغ الإجمالي والتوقيعات كتلة واحدة
+  // لا تنفصل، فالفاصل يقع قبلها أو بعدها لا داخلها.
+  const safeBreaks = [];
+  let capturedHeight = 0;
+  try{
+    capturedHeight = el.scrollHeight || el.getBoundingClientRect().height || 0;
+    const top = el.getBoundingClientRect().top;
+    el.querySelectorAll('.doc-body > *, .inv-table tr, .refund-table tr')
+      .forEach(node=>{
+        const r = node.getBoundingClientRect();
+        if(r.height > 0) safeBreaks.push(r.bottom - top);
+      });
+    safeBreaks.sort((a,b)=>a-b);
+  }catch(_e){}
   try{
     await new Promise(requestAnimationFrame);
     canvas = await html2canvas(el,{scale:captureScale,backgroundColor:'#ffffff',useCORS:true,
@@ -1212,7 +1228,11 @@ async function generateRequestPDF(docId='doc-disb', opts={}){
   // شوية. القص بيحصل عند ارتفاع ثابت مهما كان اللي هناك، فكان بيقع في
   // نص خانات التوقيع. فلو الزيادة صغيرة نصغّر الوثيقة كلها لتدخل في
   // صفحة واحدة بدل ما نقصّها. أطول من كده تفضل تتقسّم زي ما كانت.
-  const ONE_PAGE_LIMIT = ph * 1.35;
+  // التصوير يلتقط تخطيط الشاشة وهو أفسح قليلاً من تخطيط الطباعة، فالوثيقة
+  // التي تُطبع في صفحة واحدة تخرج أطول من A4 بفارق يسير. نصغّرها لتدخل في
+  // صفحة واحدة ما دام الفارق يسيراً فقط؛ وما زاد على ذلك طلب متعدد الصفحات
+  // فعلاً، فيُقسَّم على صفحات بدل أن يُضغط في واحدة.
+  const ONE_PAGE_LIMIT = ph * 1.15;
   const shrinkToOnePage = heightAtFitWidth > ph && heightAtFitWidth <= ONE_PAGE_LIMIT
                           && canvasHeightMm > 0;
   const pdfScale = shrinkToOnePage
@@ -1221,11 +1241,45 @@ async function generateRequestPDF(docId='doc-disb', opts={}){
   const imgW = canvasWidthMm * pdfScale;
   const imgH = canvasHeightMm * pdfScale;
   const offsetX = Math.max(0, (pw - imgW) / 2);
-  const totalPages = Math.ceil(imgH / ph);
-  for(let pageIndex = 0; pageIndex < totalPages; pageIndex++){
-    if(pageIndex > 0) pdf.addPage();
-    pdf.addImage(img, imgFormat, offsetX, -ph * pageIndex, imgW, imgH);
+
+  if(imgH <= ph + 0.5){
+    pdf.addImage(img, imgFormat, offsetX, 0, imgW, imgH);
+    return pdf.output('arraybuffer');
   }
+
+  // متعدد الصفحات: نقسّم عند أقرب حد آمن قبل نهاية الصفحة بدل القص عند
+  // ارتفاع ثابت، فلا ينشطر صف ولا تنشطر خانات التوقيع.
+  const pxPerMm    = canvas.height / imgH;
+  const pageHeight = ph * pxPerMm;                    // ارتفاع الصفحة بوحدات الكانفس
+  const domToPx    = capturedHeight > 0 ? canvas.height / capturedHeight : 0;
+  const breaksPx   = domToPx ? safeBreaks.map(v=>v*domToPx) : [];
+  const MIN_FILL   = pageHeight * 0.55;               // لا نترك صفحة شبه فارغة
+
+  const slices = [];
+  let y = 0, guard = 0;
+  while(y < canvas.height - 1 && guard++ < 60){
+    let end = y + pageHeight;
+    if(end >= canvas.height){ end = canvas.height; }
+    else {
+      const fits = breaksPx.filter(b => b > y + MIN_FILL && b <= end);
+      if(fits.length) end = fits[fits.length - 1];
+    }
+    slices.push({ y, h: Math.max(1, Math.round(end - y)) });
+    y = end;
+  }
+
+  const cut = document.createElement('canvas');
+  const cx  = cut.getContext('2d');
+  slices.forEach((sl, idx)=>{
+    if(idx > 0) pdf.addPage();
+    cut.width  = canvas.width;
+    cut.height = sl.h;
+    cx.fillStyle = '#ffffff';
+    cx.fillRect(0, 0, cut.width, cut.height);
+    cx.drawImage(canvas, 0, sl.y, canvas.width, sl.h, 0, 0, canvas.width, sl.h);
+    const part = imgFormat === 'JPEG' ? cut.toDataURL('image/jpeg', imgQuality) : cut.toDataURL('image/png');
+    pdf.addImage(part, imgFormat, offsetX, 0, imgW, sl.h / pxPerMm);
+  });
   return pdf.output('arraybuffer');
 }
 
