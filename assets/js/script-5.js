@@ -3319,10 +3319,17 @@ function buildNotifs(rows){
       if(mine) push(x.accounts_signed_at, 'check', t('تم اعتماد طلبك'), no + (party ? ' · ' + party : ''), x.id);
       else if(role === 'accountant' && !x.transfer_image)
         push(x.accounts_signed_at, 'upload', t('جاهز للتحويل'), no + (party ? ' · ' + party : ''), x.id);
+      // الإدارة تتابع الاعتمادات — نفس التنبيه اللي بيوصلها بالبريد
+      else if(role === 'viewer' && !x.transfer_image)
+        push(x.accounts_signed_at, 'check', t('طلب معتمد بانتظار التحويل'),
+             no + ' · ' + t('اعتمده') + ' ' + personName(x.accounts_signed_by||'')
+                + (party ? ' · ' + party : ''), x.id);
     }
-    // اتحوّل
-    if(x.transfer_image && mine)
-      push(x.transfer_group_at || x.accounts_signed_at, 'money', t('تم تحويل طلبك'), no, x.id);
+    // اتحوّل — لصاحب الطلب وللإدارة
+    if(x.transfer_image && (mine || role === 'viewer'))
+      push(x.transfer_group_at || x.accounts_signed_at, 'money',
+           mine ? t('تم تحويل طلبك') : t('تم تحويل الطلب'),
+           no + (party ? ' · ' + party : ''), x.id);
 
     // تعليقات
     getRequestComments(x).forEach(c=>{
