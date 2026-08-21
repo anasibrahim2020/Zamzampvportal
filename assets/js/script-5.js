@@ -1763,12 +1763,13 @@ function canAddComment(row){
   return true;
 }
 // تعديل/حذف: قبل الاعتماد وغير الملغى فقط، والكاتب نفسه فقط
-// صاحب التعليق يعدّله أو يمسحه في أي وقت.
-// الاعتماد يقفل الطلب نفسه، لكن التعليق ملاحظة جانبية وصاحبها
-// أولى بها — وإضافة التعليقات مسموحة بعد الاعتماد أصلًا.
+// تعدّل تعليقك أو تمسحه طالما لسه مسموح لك تكتب تعليق على الطلب:
+// قبل الاعتماد الجميع، وبعده المحاسب والإدارة، والملغى مقفول للكل.
+// فالموظف مايعدّلش بعد ما الطلب يتعتمد، والمحاسب يعدّل عادي.
 function canModifyComment(row, c){
   if(!CURRENT || !row || !c) return false;
-  return c.user === CURRENT.user;
+  if(c.user !== CURRENT.user) return false;
+  return canAddComment(row);
 }
 function commentRoleLabel(role){
   return role === 'accountant' ? t('المحاسبة')
