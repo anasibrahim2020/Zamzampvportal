@@ -1155,131 +1155,108 @@ async function activeCacheVersion(){
     return hit || '—';
   }catch(_e){ return '—'; }
 }
-async function generateRequestPDF(docId='doc-disb', opts={}){
-  const captureScale = opts.scale || 3;                    // دقة الالتقاط
-  const imgFormat = (opts.format || 'PNG').toUpperCase();  // PNG للطباعة، JPEG لتصغير حجم الملف
-  const imgQuality = opts.quality || 0.92;
-  commitValuesForPrint();
-  await document.fonts.ready;
-  const el=document.getElementById(docId);
+/* تلتقط عنصراً واحداً وتُرجع الكانفس مع حدود القص الآمنة داخله */
+async function captureDocElement(el, captureScale){
   const hidden = [...el.querySelectorAll('.attach-zone, .attach-list, #attach-list, .attach-item, #disb-attach-sec, .add-row-btn')];
   const originalDisplay = hidden.map(node=>[node, node.style.display]);
   const originalStyles = {
-    width: el.style.width,
-    maxWidth: el.style.maxWidth,
-    margin: el.style.margin,
-    boxShadow: el.style.boxShadow,
-    borderRadius: el.style.borderRadius,
-    transform: el.style.transform,
+    width: el.style.width, maxWidth: el.style.maxWidth, margin: el.style.margin,
+    boxShadow: el.style.boxShadow, borderRadius: el.style.borderRadius, transform: el.style.transform,
   };
   hidden.forEach(node=>node.style.display='none');
-  el.style.width = '210mm';
-  el.style.maxWidth = '210mm';
-  el.style.margin = '0 auto';
-  el.style.boxShadow = 'none';
-  el.style.borderRadius = '0';
-  el.style.transform = 'none';
-  let canvas;
-  // حدود القص الآمنة: قيعان الأقسام الرئيسية وصفوف الجداول. نقيسها والوثيقة
-  // ما زالت بعرض A4 حتى تطابق ما سيُصوَّر، فلا يقع فاصل الصفحة داخل صف.
-  // لا نُدرج أجزاء .disb-tail عمداً: المبلغ الإجمالي والتوقيعات كتلة واحدة
-  // لا تنفصل، فالفاصل يقع قبلها أو بعدها لا داخلها.
+  el.style.width = '210mm'; el.style.maxWidth = '210mm'; el.style.margin = '0 auto';
+  el.style.boxShadow = 'none'; el.style.borderRadius = '0'; el.style.transform = 'none';
   const safeBreaks = [];
-  let capturedHeight = 0;
+  let capturedHeight = 0, canvas;
   try{
+    await new Promise(requestAnimationFrame);
     capturedHeight = el.scrollHeight || el.getBoundingClientRect().height || 0;
     const top = el.getBoundingClientRect().top;
-    el.querySelectorAll('.doc-body > *, .inv-table tr, .refund-table tr')
+    el.querySelectorAll('.doc-body > *, .inv-table tr, .refund-table tr, .appendix-table tr')
       .forEach(node=>{
         const r = node.getBoundingClientRect();
         if(r.height > 0) safeBreaks.push(r.bottom - top);
       });
     safeBreaks.sort((a,b)=>a-b);
-  }catch(_e){}
-  try{
-    await new Promise(requestAnimationFrame);
     canvas = await html2canvas(el,{scale:captureScale,backgroundColor:'#ffffff',useCORS:true,
       onclone:(cloneDoc)=>{ try{ normalizeModernColors(cloneDoc); }catch(_e){} },
-      scrollX:0,
-      scrollY:0,
-      windowWidth:el.scrollWidth,
-      windowHeight:el.scrollHeight,
+      scrollX:0, scrollY:0, windowWidth:el.scrollWidth, windowHeight:el.scrollHeight,
       ignoreElements:(n)=>n.classList&&n.classList.contains('no-print')});
   }finally{
     originalDisplay.forEach(([node, value])=>{ node.style.display = value; });
-    el.style.width = originalStyles.width;
-    el.style.maxWidth = originalStyles.maxWidth;
-    el.style.margin = originalStyles.margin;
-    el.style.boxShadow = originalStyles.boxShadow;
-    el.style.borderRadius = originalStyles.borderRadius;
-    el.style.transform = originalStyles.transform;
+    el.style.width = originalStyles.width; el.style.maxWidth = originalStyles.maxWidth;
+    el.style.margin = originalStyles.margin; el.style.boxShadow = originalStyles.boxShadow;
+    el.style.borderRadius = originalStyles.borderRadius; el.style.transform = originalStyles.transform;
   }
-  const img = imgFormat === 'JPEG' ? canvas.toDataURL('image/jpeg', imgQuality) : canvas.toDataURL('image/png');
+  return { canvas, safeBreaks, capturedHeight };
+}
+async function generateRequestPDF(docId='doc-disb', opts={}){
+  const captureScale = opts.scale || 3;
+  const imgFormat = (opts.format || 'PNG').toUpperCase();
+  const imgQuality = opts.quality || 0.92;
+  commitValuesForPrint();
+  await document.fonts.ready;
+  const el = document.getElementById(docId);
+  if(!el) throw new Error('doc not found: ' + docId);
+
+  // الملحق شقيق للوثيقة لا ابن لها، فلا يدخل في تصويرها. نلتقطه على حدة
+  // ونضيفه صفحاتٍ تالية، وإلا نزل الملف بالصفحة الأولى وحدها.
+  const parts = [el];
+  if(docId === 'doc-disb'){
+    const ap = document.getElementById('disb-appendix');
+    if(ap && ap.classList.contains('on') && (ap.innerHTML||'').trim()) parts.push(ap);
+  }
+
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p','mm','a4');
   const pw = pdf.internal.pageSize.getWidth();
   const ph = pdf.internal.pageSize.getHeight();
   const PX_TO_MM = 0.2645833333;
-  const canvasWidthMm = canvas.width * PX_TO_MM;
-  const canvasHeightMm = canvas.height * PX_TO_MM;
-  const fitWidth = canvasWidthMm > 0 ? Math.min(1, pw / canvasWidthMm) : 1;
-  const heightAtFitWidth = canvasHeightMm * fitWidth;
-  // الوثيقة مصمّمة لتُطبع على صفحة A4 واحدة، والتصوير بيطلع أطول منها
-  // شوية. القص بيحصل عند ارتفاع ثابت مهما كان اللي هناك، فكان بيقع في
-  // نص خانات التوقيع. فلو الزيادة صغيرة نصغّر الوثيقة كلها لتدخل في
-  // صفحة واحدة بدل ما نقصّها. أطول من كده تفضل تتقسّم زي ما كانت.
-  // التصوير يلتقط تخطيط الشاشة وهو أفسح قليلاً من تخطيط الطباعة، فالوثيقة
-  // التي تُطبع في صفحة واحدة تخرج أطول من A4 بفارق يسير. نصغّرها لتدخل في
-  // صفحة واحدة ما دام الفارق يسيراً فقط؛ وما زاد على ذلك طلب متعدد الصفحات
-  // فعلاً، فيُقسَّم على صفحات بدل أن يُضغط في واحدة.
-  const ONE_PAGE_LIMIT = ph * 1.15;
-  const shrinkToOnePage = heightAtFitWidth > ph && heightAtFitWidth <= ONE_PAGE_LIMIT
-                          && canvasHeightMm > 0;
-  const pdfScale = shrinkToOnePage
-    ? Math.min(pw / canvasWidthMm, ph / canvasHeightMm)
-    : fitWidth;
-  const imgW = canvasWidthMm * pdfScale;
-  const imgH = canvasHeightMm * pdfScale;
-  const offsetX = Math.max(0, (pw - imgW) / 2);
-
-  if(imgH <= ph + 0.5){
-    pdf.addImage(img, imgFormat, offsetX, 0, imgW, imgH);
-    return pdf.output('arraybuffer');
-  }
-
-  // متعدد الصفحات: نقسّم عند أقرب حد آمن قبل نهاية الصفحة بدل القص عند
-  // ارتفاع ثابت، فلا ينشطر صف ولا تنشطر خانات التوقيع.
-  const pxPerMm    = canvas.height / imgH;
-  const pageHeight = ph * pxPerMm;                    // ارتفاع الصفحة بوحدات الكانفس
-  const domToPx    = capturedHeight > 0 ? canvas.height / capturedHeight : 0;
-  const breaksPx   = domToPx ? safeBreaks.map(v=>v*domToPx) : [];
-  const MIN_FILL   = pageHeight * 0.55;               // لا نترك صفحة شبه فارغة
-
-  const slices = [];
-  let y = 0, guard = 0;
-  while(y < canvas.height - 1 && guard++ < 60){
-    let end = y + pageHeight;
-    if(end >= canvas.height){ end = canvas.height; }
-    else {
-      const fits = breaksPx.filter(b => b > y + MIN_FILL && b <= end);
-      if(fits.length) end = fits[fits.length - 1];
-    }
-    slices.push({ y, h: Math.max(1, Math.round(end - y)) });
-    y = end;
-  }
-
   const cut = document.createElement('canvas');
   const cx  = cut.getContext('2d');
-  slices.forEach((sl, idx)=>{
-    if(idx > 0) pdf.addPage();
-    cut.width  = canvas.width;
-    cut.height = sl.h;
-    cx.fillStyle = '#ffffff';
-    cx.fillRect(0, 0, cut.width, cut.height);
-    cx.drawImage(canvas, 0, sl.y, canvas.width, sl.h, 0, 0, canvas.width, sl.h);
-    const part = imgFormat === 'JPEG' ? cut.toDataURL('image/jpeg', imgQuality) : cut.toDataURL('image/png');
-    pdf.addImage(part, imgFormat, offsetX, 0, imgW, sl.h / pxPerMm);
-  });
+  let firstPage = true;
+
+  for(const part of parts){
+    const { canvas, safeBreaks, capturedHeight } = await captureDocElement(part, captureScale);
+    if(!canvas || !canvas.width || !canvas.height) continue;
+    const canvasWidthMm  = canvas.width  * PX_TO_MM;
+    const canvasHeightMm = canvas.height * PX_TO_MM;
+    // العرض دائماً عرض A4 كامل — لا تصغير يترك هوامش بيضاء
+    const pdfScale = canvasWidthMm > 0 ? Math.min(1, pw / canvasWidthMm) : 1;
+    const imgW = canvasWidthMm * pdfScale;
+    const imgH = canvasHeightMm * pdfScale;
+    const offsetX = Math.max(0, (pw - imgW) / 2);
+
+    const pxPerMm  = canvas.height / imgH;
+    const pageHeight = ph * pxPerMm;
+    const domToPx  = capturedHeight > 0 ? canvas.height / capturedHeight : 0;
+    const breaksPx = domToPx ? safeBreaks.map(v=>v*domToPx) : [];
+    const MIN_FILL = pageHeight * 0.55;
+
+    const slices = [];
+    let y = 0, guard = 0;
+    while(y < canvas.height - 1 && guard++ < 60){
+      let end = y + pageHeight;
+      if(end >= canvas.height){ end = canvas.height; }
+      else {
+        const fits = breaksPx.filter(b => b > y + MIN_FILL && b <= end);
+        if(fits.length) end = fits[fits.length - 1];
+      }
+      slices.push({ y, h: Math.max(1, Math.round(end - y)) });
+      y = end;
+    }
+
+    for(const sl of slices){
+      if(!firstPage) pdf.addPage();
+      firstPage = false;
+      cut.width = canvas.width; cut.height = sl.h;
+      cx.fillStyle = '#ffffff';
+      cx.fillRect(0, 0, cut.width, cut.height);
+      cx.drawImage(canvas, 0, sl.y, canvas.width, sl.h, 0, 0, canvas.width, sl.h);
+      const img = imgFormat === 'JPEG' ? cut.toDataURL('image/jpeg', imgQuality) : cut.toDataURL('image/png');
+      pdf.addImage(img, imgFormat, offsetX, 0, imgW, sl.h / pxPerMm);
+    }
+  }
   return pdf.output('arraybuffer');
 }
 
