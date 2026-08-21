@@ -1189,11 +1189,13 @@ const CAPTURE_PRINT_PATCH = `
   .doc-hd,.doc-ftr{position:static !important;inset:auto !important;}
   .sheet-frame .doc-body{padding-top:7mm !important;padding-bottom:6mm !important;}
   #doc-disb.has-appendix .doc-body{padding-top:7mm !important;}
-  .disb-appendix{padding:7mm 0 0 !important;min-height:296mm !important;
+  /* الحشوة الجانبية على الحاوية لا هوامش على الأبناء: ابنٌ بعرض 100%
+     زائد هامش من الجانبين يتجاوز الحدود فيُقصّ طرفه — وهو ما كان يقطع
+     شارة رقم الطلب. والتذييل وحده يمتدّ إلى الحافتين بهامش سالب. */
+  .disb-appendix{padding:7mm 9mm 0 !important;min-height:296mm !important;
     box-sizing:border-box !important;display:flex !important;flex-direction:column !important;}
-  .disb-appendix > *{margin-inline:9mm !important;}
-  .disb-appendix > [data-borrowed-footer]{margin-top:auto !important;margin-inline:0 !important;
-    position:static !important;inset:auto !important;}
+  .disb-appendix > [data-borrowed-footer]{margin-top:auto !important;
+    margin-inline:-9mm !important;position:static !important;inset:auto !important;}
   html,body{height:auto !important;overflow:visible !important;}
 `;
 /* نطبّقه على المستند الحقيقي لا على النسخة: html2canvas يقيس العنصر
