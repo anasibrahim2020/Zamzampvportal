@@ -1179,23 +1179,17 @@ function collectPrintRules(){
    داخل صورة واحدة. نعيدهما إلى التدفّق بالترتيب الصحيح — والتذييل يسبق
    المتن في الشجرة لأن TFOOT كذلك — ونلغي الحشوة التي كانت تعوّض مكانهما. */
 const CAPTURE_PRINT_PATCH = `
-  /* ارتفاع الورقة كاملاً حتى يستقرّ التذييل في قاعها كما يُطبع تماماً،
-     لا بعد المحتوى مباشرة وتحته فراغ. */
-  .sheet-frame{display:flex !important;flex-direction:column !important;
-    min-height:296mm !important;box-sizing:border-box !important;}
+  /* نلتقط الترويسة والتذييل والمتن كلٌّ على حدة ثم نركّب الصفحات بأنفسنا،
+     فلا حاجة للتثبيت ولا للحشوة التي كانت تعوّض مكانهما. */
+  .sheet-frame{display:flex !important;flex-direction:column !important;}
   .sheet-frame > thead{order:0 !important;}
   .sheet-frame > tbody{order:1 !important;}
-  .sheet-frame > tfoot{order:2 !important;margin-top:auto !important;}
+  .sheet-frame > tfoot{order:2 !important;}
   .doc-hd,.doc-ftr{position:static !important;inset:auto !important;}
-  .sheet-frame .doc-body{padding-top:7mm !important;padding-bottom:6mm !important;}
-  #doc-disb.has-appendix .doc-body{padding-top:7mm !important;}
-  /* الحشوة الجانبية على الحاوية لا هوامش على الأبناء: ابنٌ بعرض 100%
-     زائد هامش من الجانبين يتجاوز الحدود فيُقصّ طرفه — وهو ما كان يقطع
-     شارة رقم الطلب. والتذييل وحده يمتدّ إلى الحافتين بهامش سالب. */
-  .disb-appendix{padding:7mm 9mm 0 !important;min-height:296mm !important;
-    box-sizing:border-box !important;display:flex !important;flex-direction:column !important;}
-  .disb-appendix > [data-borrowed-footer]{margin-top:auto !important;
-    margin-inline:-9mm !important;position:static !important;inset:auto !important;}
+  .sheet-frame .doc-body{padding:6mm 9mm !important;}
+  #doc-disb.has-appendix .doc-body{padding:6mm 9mm !important;}
+  .disb-appendix{padding:6mm 9mm !important;min-height:0 !important;
+    box-sizing:border-box !important;display:block !important;}
   html,body{height:auto !important;overflow:visible !important;}
 `;
 /* نطبّقه على المستند الحقيقي لا على النسخة: html2canvas يقيس العنصر
@@ -1288,68 +1282,77 @@ async function generateRequestPDF(docId='doc-disb', opts={}){
   const el = document.getElementById(docId);
   if(!el) throw new Error('doc not found: ' + docId);
 
-  // الملحق شقيق للوثيقة لا ابن لها، فلا يدخل في تصويرها. نلتقطه على حدة
-  // ونضيفه صفحاتٍ تالية، وإلا نزل الملف بالصفحة الأولى وحدها.
-  const parts = [el];
-  if(docId === 'doc-disb'){
-    const ap = document.getElementById('disb-appendix');
-    if(ap && ap.classList.contains('on') && (ap.innerHTML||'').trim()) parts.push(ap);
-  }
-
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p','mm','a4');
   const pw = pdf.internal.pageSize.getWidth();
   const ph = pdf.internal.pageSize.getHeight();
-  const PX_TO_MM = 0.2645833333;
-  const cut = document.createElement('canvas');
-  const cx  = cut.getContext('2d');
-  let firstPage = true;
+
+  // كل صورة تُرسم بعرض الورقة كاملاً، فارتفاعها المطبوع من نسبتها
+  const printedH = (cv)=> cv.height / cv.width * pw;
+  const toURL = (cv)=> imgFormat === 'JPEG' ? cv.toDataURL('image/jpeg', imgQuality) : cv.toDataURL('image/png');
 
   beginPrintLayout();
   try{
-  for(const part of parts){
-    const { canvas, safeBreaks, capturedHeight } = await captureDocElement(part, captureScale, { withFooter: part !== el });
-    if(!canvas || !canvas.width || !canvas.height) continue;
-    const canvasWidthMm  = canvas.width  * PX_TO_MM;
-    const canvasHeightMm = canvas.height * PX_TO_MM;
-    // العرض دائماً عرض A4 كامل — لا تصغير يترك هوامش بيضاء
-    const pdfScale = canvasWidthMm > 0 ? Math.min(1, pw / canvasWidthMm) : 1;
-    const imgW = canvasWidthMm * pdfScale;
-    const imgH = canvasHeightMm * pdfScale;
-    const offsetX = Math.max(0, (pw - imgW) / 2);
+    const hdEl = el.querySelector('.doc-hd');
+    const ftEl = el.querySelector('.doc-ftr');
+    const hd = hdEl ? (await captureDocElement(hdEl, captureScale)).canvas : null;
+    const ft = ftEl ? (await captureDocElement(ftEl, captureScale)).canvas : null;
+    const hdH = hd ? printedH(hd) : 0;
+    const ftH = ft ? printedH(ft) : 0;
+    const hdImg = hd ? toURL(hd) : null;
+    const ftImg = ft ? toURL(ft) : null;
+    const usable = ph - hdH - ftH;                 // ما يتبقّى للمحتوى في كل صفحة
+    if(usable < 20) throw new Error('page chrome too tall');
 
-    const pxPerMm  = canvas.height / imgH;
-    const pageHeight = ph * pxPerMm;
-    const domToPx  = capturedHeight > 0 ? canvas.height / capturedHeight : 0;
-    const breaksPx = domToPx ? safeBreaks.map(v=>v*domToPx) : [];
-    const MIN_FILL = pageHeight * 0.55;
+    // أجزاء المحتوى: متن الطلب، ثم الملحق إن وُجد — وكلٌّ يبدأ صفحة جديدة
+    const parts = [];
+    const body = el.querySelector('.doc-body');
+    if(body) parts.push(body);
+    if(docId === 'doc-disb'){
+      const ap = document.getElementById('disb-appendix');
+      if(ap && ap.classList.contains('on') && (ap.innerHTML||'').trim()) parts.push(ap);
+    }
 
-    const slices = [];
-    let y = 0, guard = 0;
-    while(y < canvas.height - 1 && guard++ < 60){
-      let end = y + pageHeight;
-      if(end >= canvas.height){ end = canvas.height; }
-      else {
-        const fits = breaksPx.filter(b => b > y + MIN_FILL && b <= end);
-        if(fits.length) end = fits[fits.length - 1];
+    const cut = document.createElement('canvas');
+    const cx  = cut.getContext('2d');
+    let firstPage = true;
+
+    for(const part of parts){
+      const { canvas, safeBreaks, capturedHeight } = await captureDocElement(part, captureScale);
+      if(!canvas || !canvas.width || !canvas.height) continue;
+      const pxPerMm  = canvas.width / pw;                 // من بكسل الكانفس إلى مم مطبوعة
+      const pageBody = usable * pxPerMm;                  // ارتفاع المحتوى المتاح بوحدات الكانفس
+      const domToPx  = capturedHeight > 0 ? canvas.height / capturedHeight : 0;
+      const breaksPx = domToPx ? safeBreaks.map(v=>v*domToPx) : [];
+      const MIN_FILL = pageBody * 0.35;
+
+      const slices = [];
+      let y = 0, guard = 0;
+      while(y < canvas.height - 1 && guard++ < 80){
+        let end = y + pageBody;
+        if(end >= canvas.height){ end = canvas.height; }
+        else {
+          const fits = breaksPx.filter(b => b > y + MIN_FILL && b <= end);
+          if(fits.length) end = fits[fits.length - 1];
+          // بقيّة ضئيلة لا تستحقّ صفحة
+          if(canvas.height - end < pageBody * 0.04) end = canvas.height;
+        }
+        slices.push({ y, h: Math.max(1, Math.round(end - y)) });
+        y = end;
       }
-      // بقية أقلّ من 6% من الصفحة لا تستحقّ صفحة مستقلة — نضمّها لهذه
-      if(canvas.height - end < pageHeight * 0.06) end = canvas.height;
-      slices.push({ y, h: Math.max(1, Math.round(end - y)) });
-      y = end;
-    }
 
-    for(const sl of slices){
-      if(!firstPage) pdf.addPage();
-      firstPage = false;
-      cut.width = canvas.width; cut.height = sl.h;
-      cx.fillStyle = '#ffffff';
-      cx.fillRect(0, 0, cut.width, cut.height);
-      cx.drawImage(canvas, 0, sl.y, canvas.width, sl.h, 0, 0, canvas.width, sl.h);
-      const img = imgFormat === 'JPEG' ? cut.toDataURL('image/jpeg', imgQuality) : cut.toDataURL('image/png');
-      pdf.addImage(img, imgFormat, offsetX, 0, imgW, sl.h / pxPerMm);
+      for(const sl of slices){
+        if(!firstPage) pdf.addPage();
+        firstPage = false;
+        if(hdImg) pdf.addImage(hdImg, imgFormat, 0, 0, pw, hdH);
+        cut.width = canvas.width; cut.height = sl.h;
+        cx.fillStyle = '#ffffff';
+        cx.fillRect(0, 0, cut.width, cut.height);
+        cx.drawImage(canvas, 0, sl.y, canvas.width, sl.h, 0, 0, canvas.width, sl.h);
+        pdf.addImage(toURL(cut), imgFormat, 0, hdH, pw, sl.h / pxPerMm);
+        if(ftImg) pdf.addImage(ftImg, imgFormat, 0, ph - ftH, pw, ftH);
+      }
     }
-  }
   }finally{ endPrintLayout(); }
   return pdf.output('arraybuffer');
 }
