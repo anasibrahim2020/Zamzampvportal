@@ -1179,14 +1179,17 @@ function collectPrintRules(){
    داخل صورة واحدة. نعيدهما إلى التدفّق بالترتيب الصحيح — والتذييل يسبق
    المتن في الشجرة لأن TFOOT كذلك — ونلغي الحشوة التي كانت تعوّض مكانهما. */
 const CAPTURE_PRINT_PATCH = `
-  .sheet-frame{display:flex !important;flex-direction:column !important;}
+  /* ارتفاع الورقة كاملاً حتى يستقرّ التذييل في قاعها كما يُطبع تماماً،
+     لا بعد المحتوى مباشرة وتحته فراغ. */
+  .sheet-frame{display:flex !important;flex-direction:column !important;
+    min-height:293mm !important;box-sizing:border-box !important;}
   .sheet-frame > thead{order:0 !important;}
   .sheet-frame > tbody{order:1 !important;}
-  .sheet-frame > tfoot{order:2 !important;}
+  .sheet-frame > tfoot{order:2 !important;margin-top:auto !important;}
   .doc-hd,.doc-ftr{position:static !important;inset:auto !important;}
   .sheet-frame .doc-body{padding-top:7mm !important;padding-bottom:6mm !important;}
   #doc-disb.has-appendix .doc-body{padding-top:7mm !important;}
-  .disb-appendix{padding-top:7mm !important;padding-bottom:6mm !important;}
+  .disb-appendix{padding-top:7mm !important;padding-bottom:6mm !important;min-height:293mm !important;box-sizing:border-box !important;}
   html,body{height:auto !important;overflow:visible !important;}
 `;
 function applyPrintLayoutToClone(cloneDoc){
@@ -1289,6 +1292,8 @@ async function generateRequestPDF(docId='doc-disb', opts={}){
         const fits = breaksPx.filter(b => b > y + MIN_FILL && b <= end);
         if(fits.length) end = fits[fits.length - 1];
       }
+      // بقية أقلّ من 6% من الصفحة لا تستحقّ صفحة مستقلة — نضمّها لهذه
+      if(canvas.height - end < pageHeight * 0.06) end = canvas.height;
       slices.push({ y, h: Math.max(1, Math.round(end - y)) });
       y = end;
     }
