@@ -164,7 +164,7 @@ async function printArchiveAttachment(rowIndex, attIndex){
     const blob = new Blob([bytes], { type:getAttachmentMime(src) });
     const url = URL.createObjectURL(blob);
     const w = window.open(url, '_blank');
-    if(!w){ alert(t('المتصفح منع فتح نافذة الطباعة. اسمح بالـ popups وجرب تاني.')); return; }
+    if(!w){ alert(t('منع المتصفح فتح نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.')); return; }
     w.onload = function(){ try{ w.focus(); w.print(); }catch(e){} };
     setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 900);
   }catch(e){
@@ -249,7 +249,7 @@ async function printArchiveAttachmentsMerged(rowIndex){
     const blob = new Blob([bytes], { type:'application/pdf' });
     const url = URL.createObjectURL(blob);
     const w = window.open(url, '_blank');
-    if(!w){ alert(t('المتصفح منع فتح نافذة الطباعة. اسمح بالـ popups وجرب تاني.')); return; }
+    if(!w){ alert(t('منع المتصفح فتح نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.')); return; }
     w.onload = function(){ try{ w.focus(); w.print(); }catch(e){} };
     setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 900);
   }catch(e){
@@ -306,7 +306,7 @@ async function doLogin(){
       enterApp();
     }
   }catch(e){
-    err.textContent=t('خطأ اتصال بالسيرفر — حاول تاني');
+    err.textContent=t('تعذّر الاتصال بالخادم — حاول مرة أخرى');
     err.style.display='block';
     console.error(e);
   }
@@ -1092,7 +1092,7 @@ async function signAccountsFor(kind){
       const { error } = await sb.from('requests').update({
         accounts_signed_by: CURRENT.name, accounts_signed_at: now.toISOString()
       }).eq('id', EDIT_ID);
-      if(error){ console.error(error); alert(t('تعذّر حفظ الاعتماد — اتأكد إن سياسة التعديل (update) متفعّلة في Supabase (راجع كود SQL في التعليمات).')); }
+      if(error){ console.error(error); alert(t('تعذّر حفظ الاعتماد — تأكّد من تفعيل سياسة التعديل (update) في Supabase (راجع كود SQL في التعليمات).')); }
       else {
         if(EDIT_REQUEST){
           EDIT_REQUEST = { ...EDIT_REQUEST, accounts_signed_by: CURRENT.name, accounts_signed_at: now.toISOString() };
@@ -1487,10 +1487,10 @@ async function persistRequestRecord(kind, rec){
       }
     }
     else { console.error(error); 
-      let msg = t('تعذّر الحفظ — اتأكد إنك مسجّل دخول وإن جدول requests متظبط في Supabase.');
+      let msg = t('تعذّر الحفظ — تأكّد من تسجيل دخولك ومن أن جدول requests مهيّأ في Supabase.');
       if(error.message && error.message.includes('column')){ msg += t('\n\nيلزم تنفيذ أمر SQL التالي في Supabase > SQL Editor:\nALTER TABLE requests ADD COLUMN IF NOT EXISTS attachments_data TEXT;\nALTER TABLE requests ADD COLUMN IF NOT EXISTS transfer_image TEXT;'); }
       if(error.code === '23505' || /duplicate|unique/i.test(error.message||'')){
-        msg += t('\n\nفي طلب ملغي قديم بنفس الرقم. اضغط حفظ مرة تانية بعد تحديث الصفحة، ولو استمر الخطأ افتح الطلب الملغي من الأرشيف وألغيه مرة أخرى لتحرير الرقم.');
+        msg += t('\n\nيوجد طلب ملغى قديم بالرقم نفسه. اضغط حفظ مرة أخرى بعد تحديث الصفحة، فإن استمر الخطأ فافتح الطلب الملغى من الأرشيف وألغِه مرة أخرى لتحرير الرقم.');
       }
       alert(msg); 
     }
@@ -2019,7 +2019,7 @@ async function loadArchive(silent=false){
   if(!canSeeAll && ARC_TAB === 'cancelled') ARC_TAB = 'all';
   if(typeSel && typeSel.value !== ARC_TAB) typeSel.value = ARC_TAB;
   if(!SB_ON){
-    note.innerHTML=t('<div class="arc-note">الأرشيف السحابي غير مفعّل بعد. الطلبات تشتغل وتطبع وتتحمّل عادي.<br>لحفظ الطلبات وعرضها هنا للجميع، أضف رابط ومفتاح Supabase في أعلى كود الملف.</div>');
+    note.innerHTML=t('<div class="arc-note">الأرشيف السحابي غير مفعّل بعد. الطلبات تعمل وتُطبع وتُحمّل بشكل طبيعي.<br>لحفظ الطلبات وعرضها هنا للجميع، أضف رابط ومفتاح Supabase في أعلى كود الملف.</div>');
     body.innerHTML=`<div class="arc-empty">${t('— الأرشيف غير مفعّل —')}</div>`;
     return;
   }
@@ -2322,7 +2322,7 @@ async function downloadTransferImage(rowIndex){
   try{
     const bytes = await getAttachmentBytes(x.transfer_image);
     dl(new Blob([bytes], { type:getAttachmentMime(x.transfer_image) }), getAttachmentLabel(x.transfer_image));
-  }catch(e){ console.error(e); await showMessageDialog({ title:t('تعذّر التنزيل'), message:t('حصل خطأ أثناء تنزيل إثبات التحويل.'), confirmText:t('حسنًا') }); }
+  }catch(e){ console.error(e); await showMessageDialog({ title:t('تعذّر التنزيل'), message:t('حدث خطأ أثناء تنزيل إثبات التحويل.'), confirmText:t('حسنًا') }); }
 }
 
 // حذف إثبات التحويل (المحاسب فقط) — يسمح برفع غيره
@@ -2348,7 +2348,7 @@ async function deleteTransferImage(rowIndex){
       ? { transfer_image:null, transfer_seen:false, transfer_group:null, transfer_group_at:null, transfer_group_note:null }
       : { transfer_image:null, transfer_seen:false };
     const { error } = await sb.from('requests').update(patch).eq('id', x.id);
-    if(error){ console.error(error); await showMessageDialog({ title:t('تعذّر الحذف'), message:t('حصل خطأ أثناء الحذف. حاول مرة أخرى.'), confirmText:t('حسنًا') }); return; }
+    if(error){ console.error(error); await showMessageDialog({ title:t('تعذّر الحذف'), message:t('حدث خطأ أثناء الحذف. حاول مرة أخرى.'), confirmText:t('حسنًا') }); return; }
     loadArchive();
     await showMessageDialog({ title:t('تم الحذف'), message:t('تم حذف إثبات التحويل. يمكنك الآن رفع إثبات جديد.'), confirmText:t('حسنًا') });
   }catch(e){ console.error(e); await showMessageDialog({ title:t('خطأ اتصال'), message:t('تعذّر الحذف. تحقّق من الاتصال وحاول مرة أخرى.'), confirmText:t('حسنًا') }); }
@@ -3099,7 +3099,7 @@ async function startGroupTransfer(){
   if(!SB_ON){ await showMessageDialog({ title:t('الأرشيف غير مفعّل'), message:t('لا يمكن رفع إثبات التحويل بدون اتصال بقاعدة البيانات.'), confirmText:t('حسنًا') }); return; }
   const picked = [...ARC_SELECTED_DATA.values()];
   if(picked.length < 2){
-    await showMessageDialog({ title:t('اختر طلبين على الأقل'), message:t('التحويل المجمّع بيربط أكتر من طلب بإثبات تحويل واحد. حدّد طلبين أو أكتر.'), confirmText:t('حسنًا') });
+    await showMessageDialog({ title:t('اختر طلبين على الأقل'), message:t('التحويل المجمّع يربط أكثر من طلب بإثبات تحويل واحد. حدّد طلبين أو أكثر.'), confirmText:t('حسنًا') });
     return;
   }
   const total = picked.reduce((s,r)=>s+(Number(r.amount)||0), 0);
@@ -3141,7 +3141,7 @@ async function startGroupTransfer(){
       title:t('تعذّر إتمام التحويل المجمّع'),
       message: /column|transfer_group/i.test(msg)
         ? t('أعمدة التحويل المجمّع غير موجودة. يُرجى تنفيذ الأوامر التالية في Supabase > SQL Editor:\n\n')+TRANSFER_GROUP_SQL
-        : t('حصل خطأ أثناء رفع الإثبات أو ربط الطلبات. تحقّق من الاتصال وحاول مرة أخرى.'),
+        : t('حدث خطأ أثناء رفع الإثبات أو ربط الطلبات. تحقّق من الاتصال وحاول مرة أخرى.'),
       confirmText:t('حسنًا')
     });
   } finally { hideBusyOverlay(); }
@@ -3173,7 +3173,7 @@ async function deleteTransferGroup(gid){
   }catch(e){
     console.error(e);
     hideBusyOverlay();
-    await showMessageDialog({ title:t('تعذّر الحذف'), message:t('حصل خطأ أثناء حذف المجموعة. حاول مرة أخرى.'), confirmText:t('حسنًا') });
+    await showMessageDialog({ title:t('تعذّر الحذف'), message:t('حدث خطأ أثناء حذف المجموعة. حاول مرة أخرى.'), confirmText:t('حسنًا') });
   } finally { hideBusyOverlay(); }
 }
 
@@ -3492,20 +3492,20 @@ async function loadHome(){
       html += homeSection('بانتظار اعتمادك', 'طلبات موقّعة لم تُعتمد بعد', pending.length,
         pending.length ? pending.map(x=>homeRow(x,
           `<button class="hbtn sm primary" onclick="event.stopPropagation();reviewFromHome(${x.id})">${t('مراجعة واعتماد')}</button>`)).join('')
-        : homeEmpty(ARC_ICONS.sign,'مفيش طلبات مستنية اعتمادك','لا توجد مهام معلّقة'), false);
+        : homeEmpty(ARC_ICONS.sign,'لا توجد طلبات بانتظار اعتمادك','لا توجد مهام معلّقة'), false);
       html += homeSection('جاهزة للتحويل', 'طلبات معتمدة لم تُحوّل بعد', toPay.length,
         toPay.length ? `<div class="h-paybar"><span>${t('إجمالي جاهز للتحويل')}</span>
              <b>${formatMoney(payTotal)} ${t('ر.ق')}</b>
              <button class="hbtn primary" onclick="startBatchFromHome()">${ARC_ICONS.layers}${t('تحويل مجمّع')}</button></div>`
             + toPay.map(x=>homeRow(x,
               `<button class="hbtn sm ghost" onclick="event.stopPropagation();uploadProofFromHome(${x.id})">${ARC_ICONS.upload}${t('رفع الإثبات')}</button>`)).join('')
-        : homeEmpty(ARC_ICONS.upload,'مفيش طلبات جاهزة للتحويل','هتظهر هنا بعد الاعتماد'), false);
+        : homeEmpty(ARC_ICONS.upload,'لا توجد طلبات جاهزة للتحويل','ستظهر هنا بعد الاعتماد'), false);
     } else {
       const mine = live.filter(r=>r.created_by===CURRENT.name).sort((a,b)=>(b.id||0)-(a.id||0));
       const waiting = mine.filter(r=>!r.transfer_image);
       html += homeSection('طلباتي', 'طلبات قيد التنفيذ', waiting.length,
         waiting.length ? waiting.map(x=>homeRow(x,'')).join('')
-        : homeEmpty(ARC_ICONS.doc,'مفيش طلبات قيد التنفيذ','ابدأ بطلب صرف جديد'), false);
+        : homeEmpty(ARC_ICONS.doc,'لا توجد طلبات قيد التنفيذ','ابدأ بطلب صرف جديد'), false);
       const done = mine.filter(r=>r.transfer_image);
       if(done.length) html += homeSection('طلبات محوّلة', 'أحدث التحويلات', done.length,
         done.map(x=>homeRow(x,'')).join(''), false);
