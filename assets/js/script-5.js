@@ -1155,8 +1155,51 @@ async function activeCacheVersion(){
     return hit || '—';
   }catch(_e){ return '—'; }
 }
+/* قواعد @media print مجمَّعة نصّاً — نحقنها في النسخة المستنسخة وقت
+   التصوير حتى تُلتقط الوثيقة بتخطيط الطباعة لا بتخطيط الشاشة. من غير
+   ذلك يخرج الملف المنزَّل أطول وأفسح من المطبوع فلا يطابقه أبداً. */
+let PRINT_RULES_CACHE = null;
+function collectPrintRules(){
+  if(PRINT_RULES_CACHE !== null) return PRINT_RULES_CACHE;
+  let out = '';
+  for(const sheet of document.styleSheets){
+    let rules;
+    try{ rules = sheet.cssRules; }catch(_e){ continue; }   // ورقة من نطاق آخر
+    if(!rules) continue;
+    for(const rule of rules){
+      if(rule.type === CSSRule.MEDIA_RULE && /\bprint\b/.test(rule.conditionText || rule.media.mediaText)){
+        for(const inner of rule.cssRules) out += inner.cssText + '\n';
+      }
+    }
+  }
+  PRINT_RULES_CACHE = out;
+  return out;
+}
+/* الترويسة والتذييل مثبّتان بالنسبة للصفحة عند الطباعة، وهذا بلا معنى
+   داخل صورة واحدة. نعيدهما إلى التدفّق بالترتيب الصحيح — والتذييل يسبق
+   المتن في الشجرة لأن TFOOT كذلك — ونلغي الحشوة التي كانت تعوّض مكانهما. */
+const CAPTURE_PRINT_PATCH = `
+  .sheet-frame{display:flex !important;flex-direction:column !important;}
+  .sheet-frame > thead{order:0 !important;}
+  .sheet-frame > tbody{order:1 !important;}
+  .sheet-frame > tfoot{order:2 !important;}
+  .doc-hd,.doc-ftr{position:static !important;inset:auto !important;}
+  .sheet-frame .doc-body{padding-top:7mm !important;padding-bottom:6mm !important;}
+  #doc-disb.has-appendix .doc-body{padding-top:7mm !important;}
+  .disb-appendix{padding-top:7mm !important;padding-bottom:6mm !important;}
+  html,body{height:auto !important;overflow:visible !important;}
+`;
+function applyPrintLayoutToClone(cloneDoc){
+  const st = cloneDoc.createElement('style');
+  st.textContent = collectPrintRules() + CAPTURE_PRINT_PATCH;
+  (cloneDoc.head || cloneDoc.documentElement).appendChild(st);
+}
 /* تلتقط عنصراً واحداً وتُرجع الكانفس مع حدود القص الآمنة داخله */
 async function captureDocElement(el, captureScale){
+  // الملحق مخفي على الشاشة، وhtml2canvas يقيس العنصر الأصلي قبل الاستنساخ،
+  // فلو ظلّ مخفياً خرجت صورته بعرض شبه معدوم. نُظهره أثناء التصوير فقط.
+  const wasDisplay = el.style.display;
+  if(getComputedStyle(el).display === 'none') el.style.display = 'block';
   const hidden = [...el.querySelectorAll('.attach-zone, .attach-list, #attach-list, .attach-item, #disb-attach-sec, .add-row-btn')];
   const originalDisplay = hidden.map(node=>[node, node.style.display]);
   const originalStyles = {
@@ -1179,11 +1222,15 @@ async function captureDocElement(el, captureScale){
       });
     safeBreaks.sort((a,b)=>a-b);
     canvas = await html2canvas(el,{scale:captureScale,backgroundColor:'#ffffff',useCORS:true,
-      onclone:(cloneDoc)=>{ try{ normalizeModernColors(cloneDoc); }catch(_e){} },
+      onclone:(cloneDoc)=>{
+        try{ applyPrintLayoutToClone(cloneDoc); }catch(_e){}
+        try{ normalizeModernColors(cloneDoc); }catch(_e){}
+      },
       scrollX:0, scrollY:0, windowWidth:el.scrollWidth, windowHeight:el.scrollHeight,
       ignoreElements:(n)=>n.classList&&n.classList.contains('no-print')});
   }finally{
     originalDisplay.forEach(([node, value])=>{ node.style.display = value; });
+    el.style.display = wasDisplay;
     el.style.width = originalStyles.width; el.style.maxWidth = originalStyles.maxWidth;
     el.style.margin = originalStyles.margin; el.style.boxShadow = originalStyles.boxShadow;
     el.style.borderRadius = originalStyles.borderRadius; el.style.transform = originalStyles.transform;
