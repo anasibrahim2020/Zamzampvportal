@@ -1182,14 +1182,18 @@ const CAPTURE_PRINT_PATCH = `
   /* ارتفاع الورقة كاملاً حتى يستقرّ التذييل في قاعها كما يُطبع تماماً،
      لا بعد المحتوى مباشرة وتحته فراغ. */
   .sheet-frame{display:flex !important;flex-direction:column !important;
-    min-height:293mm !important;box-sizing:border-box !important;}
+    min-height:296mm !important;box-sizing:border-box !important;}
   .sheet-frame > thead{order:0 !important;}
   .sheet-frame > tbody{order:1 !important;}
   .sheet-frame > tfoot{order:2 !important;margin-top:auto !important;}
   .doc-hd,.doc-ftr{position:static !important;inset:auto !important;}
   .sheet-frame .doc-body{padding-top:7mm !important;padding-bottom:6mm !important;}
   #doc-disb.has-appendix .doc-body{padding-top:7mm !important;}
-  .disb-appendix{padding-top:7mm !important;padding-bottom:6mm !important;min-height:293mm !important;box-sizing:border-box !important;}
+  .disb-appendix{padding:7mm 0 0 !important;min-height:296mm !important;
+    box-sizing:border-box !important;display:flex !important;flex-direction:column !important;}
+  .disb-appendix > *{margin-inline:9mm !important;}
+  .disb-appendix > [data-borrowed-footer]{margin-top:auto !important;margin-inline:0 !important;
+    position:static !important;inset:auto !important;}
   html,body{height:auto !important;overflow:visible !important;}
 `;
 function applyPrintLayoutToClone(cloneDoc){
@@ -1198,11 +1202,22 @@ function applyPrintLayoutToClone(cloneDoc){
   (cloneDoc.head || cloneDoc.documentElement).appendChild(st);
 }
 /* تلتقط عنصراً واحداً وتُرجع الكانفس مع حدود القص الآمنة داخله */
-async function captureDocElement(el, captureScale){
+async function captureDocElement(el, captureScale, opts={}){
   // الملحق مخفي على الشاشة، وhtml2canvas يقيس العنصر الأصلي قبل الاستنساخ،
   // فلو ظلّ مخفياً خرجت صورته بعرض شبه معدوم. نُظهره أثناء التصوير فقط.
   const wasDisplay = el.style.display;
   if(getComputedStyle(el).display === 'none') el.style.display = 'block';
+  // الملحق يُصوَّر وحده فلا تذييل فيه، والمطبوع يحمل التذييل في قاع كل
+  // صفحة. نستعير نسخة منه لهذه اللقطة فقط ثم نزيلها.
+  let borrowedFooter = null;
+  if(opts.withFooter){
+    const src = document.querySelector('#doc-disb .doc-ftr, #doc-cancel .doc-ftr');
+    if(src){
+      borrowedFooter = src.cloneNode(true);
+      borrowedFooter.setAttribute('data-borrowed-footer','1');
+      el.appendChild(borrowedFooter);
+    }
+  }
   const hidden = [...el.querySelectorAll('.attach-zone, .attach-list, #attach-list, .attach-item, #disb-attach-sec, .add-row-btn')];
   const originalDisplay = hidden.map(node=>[node, node.style.display]);
   const originalStyles = {
@@ -1233,6 +1248,7 @@ async function captureDocElement(el, captureScale){
       ignoreElements:(n)=>n.classList&&n.classList.contains('no-print')});
   }finally{
     originalDisplay.forEach(([node, value])=>{ node.style.display = value; });
+    if(borrowedFooter && borrowedFooter.parentNode) borrowedFooter.parentNode.removeChild(borrowedFooter);
     el.style.display = wasDisplay;
     el.style.width = originalStyles.width; el.style.maxWidth = originalStyles.maxWidth;
     el.style.margin = originalStyles.margin; el.style.boxShadow = originalStyles.boxShadow;
@@ -1267,7 +1283,7 @@ async function generateRequestPDF(docId='doc-disb', opts={}){
   let firstPage = true;
 
   for(const part of parts){
-    const { canvas, safeBreaks, capturedHeight } = await captureDocElement(part, captureScale);
+    const { canvas, safeBreaks, capturedHeight } = await captureDocElement(part, captureScale, { withFooter: part !== el });
     if(!canvas || !canvas.width || !canvas.height) continue;
     const canvasWidthMm  = canvas.width  * PX_TO_MM;
     const canvasHeightMm = canvas.height * PX_TO_MM;
