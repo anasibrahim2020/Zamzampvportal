@@ -2829,10 +2829,39 @@ function restorePrintTitle(){
 async function printCancelDoc(reqNo){
   setPrintTitle(getPrintFilename('cancel', reqNo));
   commitValuesForPrint();
+  if(isIOSWebKit()){
+    const win = window.open('', '_blank');
+    try{
+      await printViaPDF('doc-cancel', getPrintFilename('cancel', reqNo), win);
+    }catch(e){
+      console.error(e);
+      if(win && !win.closed) win.close();
+      alert(t('تعذّر تجهيز ملف الطلب.') + '\n\n' + (e.message || e));
+    }finally{ restorePrintTitle(); }
+    return;
+  }
   window.print();
 }
 
 /* === طباعة طلب الصرف: وحده يجهّز PDF الطلب والمرفقات المنفصلة === */
+/* على iOS كل المتصفحات تعمل بمحرك WebKit، وترقيم الصفحات فيه عند
+   الطباعة لا يضع التذييل المثبّت في قاع الصفحة فيقع فوق المحتوى.
+   فبدل ترك الترقيم للمحرك نولّد الـPDF بأنفسنا — وهو مقيس ومضبوط على
+   A4 — ونفتحه ليطبعه المستخدم. أما على الحاسب فالطباعة المباشرة سليمة
+   فنتركها كما هي. */
+function isIOSWebKit(){
+  const ua = navigator.userAgent || '';
+  const iOS = /iPad|iPhone|iPod/.test(ua)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);   // iPadOS يتنكّر كماك
+  return iOS;
+}
+async function printViaPDF(docId, name, win){
+  const bytes = await generateRequestPDF(docId);
+  const url = URL.createObjectURL(new Blob([bytes], { type:'application/pdf' }));
+  if(win && !win.closed){ win.location.href = url; }
+  else { dl(new Blob([bytes], { type:'application/pdf' }), name + '.pdf'); }
+  setTimeout(()=>URL.revokeObjectURL(url), 60000);
+}
 async function printDisbDoc(reqNo){
   if(!ensureDisbRowsPrintable()) return;
   setPrintTitle(getPrintFilename('disb', reqNo));
@@ -2848,6 +2877,18 @@ async function printDisbDoc(reqNo){
   } else {
     window.LAST_REQUEST_PDF = null;
     updateRequestPdfStatus();
+  }
+  if(isIOSWebKit()){
+    // النافذة تُفتح الآن داخل إيماءة المستخدم، وإلا منعها المتصفح بعد الانتظار
+    const win = window.open('', '_blank');
+    try{
+      await printViaPDF('doc-disb', getPrintFilename('disb', reqNo), win);
+    }catch(e){
+      console.error(e);
+      if(win && !win.closed) win.close();
+      alert(t('تعذّر تجهيز ملف الطلب.') + '\n\n' + (e.message || e));
+    }finally{ restorePrintTitle(); clearDisbPrintAppendix(); }
+    return;
   }
   window.print();
 }
