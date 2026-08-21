@@ -1814,7 +1814,7 @@ function renderCommentsOverlay(i){
     if(editing){
       return `
         <div class="cmt-item editing">
-          <div class="cmt-item-hd"><div class="cmt-who"><b>${escapeHtml(c.by||'—')}</b><span class="cmt-role">${escapeHtml(commentRoleLabel(c.role))}</span></div>${commentVisBadge(c.visibility)}</div>
+          <div class="cmt-item-hd"><div class="cmt-who"><b>${escapeHtml(personName(c.by)||'—')}</b><span class="cmt-role">${escapeHtml(commentRoleLabel(c.role))}</span></div>${commentVisBadge(c.visibility)}</div>
           <textarea id="cmt-edit-input" rows="3" maxlength="500" class="cmt-edit-area">${escapeHtml(c.text||'')}</textarea>
           <div class="cmt-foot"><span class="cmt-time">${escapeHtml(when)}</span>
             <span class="cmt-actions">
@@ -1827,7 +1827,7 @@ function renderCommentsOverlay(i){
     const canMod = canModifyComment(x, c);
     return `
       <div class="cmt-item">
-        <div class="cmt-item-hd"><div class="cmt-who"><b>${escapeHtml(c.by||'—')}</b><span class="cmt-role">${escapeHtml(commentRoleLabel(c.role))}</span></div>${commentVisBadge(c.visibility)}</div>
+        <div class="cmt-item-hd"><div class="cmt-who"><b>${escapeHtml(personName(c.by)||'—')}</b><span class="cmt-role">${escapeHtml(commentRoleLabel(c.role))}</span></div>${commentVisBadge(c.visibility)}</div>
         <div class="cmt-text">${escapeHtml(c.text||'')}</div>
         <div class="cmt-foot"><span class="cmt-time">${escapeHtml(when)}</span>
           ${canMod ? `<span class="cmt-actions">
