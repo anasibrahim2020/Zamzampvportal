@@ -1113,6 +1113,48 @@ async function signAccountsFor(kind){
     if(btn){ btn.disabled=false; btn.innerHTML=o; }
   }
 }
+/* سفاري يرجّع بعض الألوان المحسوبة بصيغة color(srgb …) — من color-mix
+   أو أي دالة لون حديثة — وhtml2canvas 1.4.1 لا يعرف قراءتها فيفشل
+   التصوير كله برسالة "unsupported color function". نحوّلها إلى rgb
+   على النسخة المستنسخة قبل التصوير، فلا يبقى للمشكلة مصدر أصلاً.
+   نكتبها بـ important لأن قواعد الطباعة تستخدمه، وبدونه لا يُطبَّق. */
+const MODERN_COLOR_PROPS = [
+  ['color','color'], ['backgroundColor','background-color'],
+  ['borderTopColor','border-top-color'], ['borderRightColor','border-right-color'],
+  ['borderBottomColor','border-bottom-color'], ['borderLeftColor','border-left-color'],
+  ['outlineColor','outline-color'], ['boxShadow','box-shadow'],
+  ['textDecorationColor','text-decoration-color'], ['columnRuleColor','column-rule-color'],
+  ['caretColor','caret-color'], ['fill','fill'], ['stroke','stroke'],
+  ['backgroundImage','background-image'],
+];
+function normalizeModernColors(doc){
+  const chan = (x)=> Math.round(Math.min(1, Math.max(0, parseFloat(x) || 0)) * 255);
+  const conv = (v)=> v.replace(
+    /color\(\s*(?:srgb|srgb-linear|display-p3|a98-rgb|prophoto-rgb|rec2020)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.%]+))?\s*\)/g,
+    (_m, r, g, b, a)=> a === undefined
+      ? `rgb(${chan(r)}, ${chan(g)}, ${chan(b)})`
+      : `rgba(${chan(r)}, ${chan(g)}, ${chan(b)}, ${parseFloat(a)})`);
+  const view = doc.defaultView || window;
+  const nodes = [doc.documentElement, doc.body, ...doc.querySelectorAll('*')];
+  for(const node of nodes){
+    if(!node || !node.style) continue;
+    let cs; try{ cs = view.getComputedStyle(node); }catch(_e){ continue; }
+    if(!cs) continue;
+    for(const [js, css] of MODERN_COLOR_PROPS){
+      const val = cs[js];
+      if(val && val.indexOf('color(') !== -1) node.style.setProperty(css, conv(val), 'important');
+    }
+  }
+}
+/* النسخة الفعلية المخزَّنة على الجهاز — تُلحَق برسائل الأعطال حتى
+   نعرف فوراً إن كان الجهاز يشغّل نسخة قديمة بدل التخمين. */
+async function activeCacheVersion(){
+  try{
+    const keys = await caches.keys();
+    const hit = keys.find(k => k.indexOf('zamzam-v') === 0);
+    return hit || '—';
+  }catch(_e){ return '—'; }
+}
 async function generateRequestPDF(docId='doc-disb', opts={}){
   const captureScale = opts.scale || 3;                    // دقة الالتقاط
   const imgFormat = (opts.format || 'PNG').toUpperCase();  // PNG للطباعة، JPEG لتصغير حجم الملف
@@ -1141,6 +1183,7 @@ async function generateRequestPDF(docId='doc-disb', opts={}){
   try{
     await new Promise(requestAnimationFrame);
     canvas = await html2canvas(el,{scale:captureScale,backgroundColor:'#ffffff',useCORS:true,
+      onclone:(cloneDoc)=>{ try{ normalizeModernColors(cloneDoc); }catch(_e){} },
       scrollX:0,
       scrollY:0,
       windowWidth:el.scrollWidth,
@@ -2251,7 +2294,8 @@ async function downloadRequestPDF(i){
     dl(new Blob([bytes], { type:'application/pdf' }), no.replace(/\s+/g,'_') + '.pdf');
   }catch(e){
     console.error(e);
-    alert(t('تعذّر تجهيز ملف الطلب.') + '\n\n' + (e.message || e));
+    const ver = await activeCacheVersion();
+    alert(t('تعذّر تجهيز ملف الطلب.') + '\n\n' + (e.message || e) + '\n\n[' + ver + ']');
   }finally{
     if(note) note.remove();
     if(x.doc_type!=='cancel' && typeof clearDisbPrintAppendix === 'function') clearDisbPrintAppendix();
