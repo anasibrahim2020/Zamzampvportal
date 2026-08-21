@@ -1763,9 +1763,11 @@ function canAddComment(row){
   return true;
 }
 // تعديل/حذف: قبل الاعتماد وغير الملغى فقط، والكاتب نفسه فقط
+// صاحب التعليق يعدّله أو يمسحه في أي وقت.
+// الاعتماد يقفل الطلب نفسه، لكن التعليق ملاحظة جانبية وصاحبها
+// أولى بها — وإضافة التعليقات مسموحة بعد الاعتماد أصلًا.
 function canModifyComment(row, c){
   if(!CURRENT || !row || !c) return false;
-  if(row.accounts_signed_by || row.cancelled) return false;
   return c.user === CURRENT.user;
 }
 function commentRoleLabel(role){
@@ -1831,8 +1833,8 @@ function renderCommentsOverlay(i){
         <div class="cmt-text">${escapeHtml(c.text||'')}</div>
         <div class="cmt-foot"><span class="cmt-time">${escapeHtml(when)}</span>
           ${canMod ? `<span class="cmt-actions">
-            <button class="cmt-link" onclick="startEditComment(${i}, '${escAttr(c.id)}')">تعديل</button>
-            <button class="cmt-link danger" onclick="deleteComment(${i}, '${escAttr(c.id)}')">حذف</button>
+            <button class="cmt-link" onclick="startEditComment(${i}, '${escAttr(c.id)}')">${t('تعديل')}</button>
+            <button class="cmt-link danger" onclick="deleteComment(${i}, '${escAttr(c.id)}')">${t('حذف')}</button>
           </span>` : ''}
         </div>
       </div>`;

@@ -8,6 +8,7 @@ let LANG = 'ar';
 try{ LANG = localStorage.getItem(LANG_KEY) || 'ar'; }catch(e){ LANG = 'ar'; }
 
 const I18N_EN = {
+  'تعديل':'Edit',
   'طلب معتمد بانتظار التحويل':'Approved request awaiting transfer',
   'اعتمده':'Approved by',
   'جاري تجهيز الملف...':'Preparing the file…',
