@@ -10,7 +10,6 @@ try{ LANG = localStorage.getItem(LANG_KEY) || 'ar'; }catch(e){ LANG = 'ar'; }
 const I18N_EN = {
   'طلب معتمد بانتظار التحويل':'Approved request awaiting transfer',
   'اعتمده':'Approved by',
-  'تم تحويل الطلب':'The request has been transferred',
   'جاري تجهيز الملف...':'Preparing the file…',
   'تعذّر تجهيز ملف الطلب.':'Could not prepare the request file.',
   // رسائل تشخيص رفع المرفقات

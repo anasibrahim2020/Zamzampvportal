@@ -3310,33 +3310,29 @@ function buildNotifs(rows){
     const mine  = x.created_by === me;
     const party = x.doc_type === 'cancel' ? (x.invoice_ref||'') : (x.beneficiary||'');
 
-    // بانتظار اعتماد المحاسب
+    // 1) الموظف قدّم الطلب → المحاسب
     if(role === 'accountant' && x.signed_by && !x.accounts_signed_by){
       push(x.signed_at, 'clock', t('بانتظار اعتمادك'), no + (party ? ' · ' + party : ''), x.id);
     }
-    // اتعتمد
+    // 2) المحاسب اعتمد → صاحب الطلب + الإدارة
     if(x.accounts_signed_by){
-      if(mine) push(x.accounts_signed_at, 'check', t('تم اعتماد طلبك'), no + (party ? ' · ' + party : ''), x.id);
-      else if(role === 'accountant' && !x.transfer_image)
-        push(x.accounts_signed_at, 'upload', t('جاهز للتحويل'), no + (party ? ' · ' + party : ''), x.id);
-      // الإدارة تتابع الاعتمادات — نفس التنبيه اللي بيوصلها بالبريد
-      else if(role === 'viewer' && !x.transfer_image)
+      if(mine)
+        push(x.accounts_signed_at, 'check', t('تم اعتماد طلبك'),
+             no + (party ? ' · ' + party : ''), x.id);
+      else if(role === 'viewer')
         push(x.accounts_signed_at, 'check', t('طلب معتمد بانتظار التحويل'),
              no + ' · ' + t('اعتمده') + ' ' + personName(x.accounts_signed_by||'')
                 + (party ? ' · ' + party : ''), x.id);
     }
-    // اتحوّل — لصاحب الطلب وللإدارة
-    if(x.transfer_image && (mine || role === 'viewer'))
-      push(x.transfer_group_at || x.accounts_signed_at, 'money',
-           mine ? t('تم تحويل طلبك') : t('تم تحويل الطلب'),
+    // 3) المحاسب رفع إثبات التحويل → صاحب الطلب وحده
+    if(x.transfer_image && mine)
+      push(x.transfer_group_at || x.accounts_signed_at, 'money', t('تم تحويل طلبك'),
            no + (party ? ' · ' + party : ''), x.id);
 
-    // تعليقات
+    // 4) التعليقات — حسب اختيار كاتبها وحده، من غير أي شرط إضافي
     getRequestComments(x).forEach(c=>{
       if(!c || !c.at || c.by === me) return;
       if(!canSeeComment(c)) return;
-      const relevant = mine || role === 'accountant' || role === 'viewer';
-      if(!relevant) return;
       push(c.at, 'comment', t('تعليق جديد'),
            no + ' · ' + personName(c.by||'') + ' — ' + String(c.text||'').slice(0, 48), x.id);
     });

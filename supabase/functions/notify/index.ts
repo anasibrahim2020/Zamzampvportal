@@ -234,6 +234,32 @@ Deno.serve(async (req) => {
     }
     const pushBody = `طلب ${reqNo} اعتمده ${record.accounts_signed_by}${supplier ? ` — ${supplier}` : ""} — ${amount} ر.ق`;
     for (const n of VIEWER_NAMES) tasks.push(sendPush(n, "📝 طلب معتمد جاهز للتحويل", pushBody));
+
+    // ونفس الحدث يروح لصاحب الطلب — هو أول من يعنيه اعتماد طلبه
+    const owner = DIRECTORY[record.created_by ?? ""];
+    if (owner) {
+      const ownerSubject = `Your Payment Request Has Been Approved — ${reqNo}`;
+      const ownerLines = [
+        `Dear ${record.created_by},`,
+        `Your payment request has been approved by the Accounts Department.`,
+        `<b>Request No:</b> ${reqNo}`,
+      ];
+      if (supplier) ownerLines.push(`<b>Supplier:</b> ${supplier}`);
+      ownerLines.push(
+        `<b>Amount:</b> ${amount} QAR`,
+        `<b>Approved by:</b> ${record.accounts_signed_by}`,
+        `You will be notified again once the transfer has been made.`,
+        `Best regards,<br/>Zamzam Hajj &amp; Umrah`,
+      );
+      const ownerMail = buildEmail("Payment Request Approved", ownerLines);
+      const ownerWa = `✅ *Your request has been approved*`
+        + (supplier ? `\nSupplier: ${supplier}` : "")
+        + `\nRequest No: ${reqNo}\nAmount: ${amount} QAR\nApproved by: ${record.accounts_signed_by}\n\n${PORTAL_URL}`;
+      if (owner.email) tasks.push(sendEmail(owner.email, ownerSubject, ownerMail.html, ownerMail.text));
+      tasks.push(sendWhatsApp(owner.phone, owner.wa_apikey, ownerWa));
+      tasks.push(sendPush(record.created_by, "✅ تم اعتماد طلبك",
+        `طلب ${reqNo}${supplier ? ` — ${supplier}` : ""} — ${amount} ر.ق اعتمده ${record.accounts_signed_by}`));
+    }
   }
 
   await Promise.allSettled(tasks);
