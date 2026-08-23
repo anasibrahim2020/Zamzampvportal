@@ -2,25 +2,15 @@
 // نسخة بسيطة: تخلّي التطبيق قابل للتثبيت، وتسرّع فتح الملفات الثابتة.
 // ملاحظة: البيانات (Supabase) دايمًا من النت — مابنعملهاش cache.
 
-const CACHE = 'zamzam-v167';
+const CACHE = 'zamzam-v169';
 const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './assets/css/styles.css',
-  './assets/css/cost-center-toggle.css',
+  // الخطوط والصور فقط: ثابتة ولا تتغيّر. أما HTML وCSS وJS فلا تُخزَّن
+  // إطلاقاً حتى يفتح التطبيق دائماً على آخر نسخة كأي موقع عادي.
   './assets/fonts/inter-latin.woff2',
   './assets/fonts/plex-arabic-400.woff2',
   './assets/fonts/plex-arabic-500.woff2',
   './assets/fonts/plex-arabic-600.woff2',
   './assets/fonts/plex-arabic-700.woff2',
-  './assets/js/i18n.js',
-  './assets/js/script-1.js',
-  './assets/js/script-2.js',
-  './assets/js/script-3.js',
-  './assets/js/script-4.js',
-  './assets/js/script-5.js',
-  './assets/js/push.js',
   './assets/images/image-5fa147e6c3d5.png',
   './assets/images/icon-192.png',
   './assets/images/badge-96.png',
@@ -71,26 +61,19 @@ self.addEventListener('fetch', (e) => {
     || url.pathname === '/' || url.pathname.endsWith('/');
 
   if (isCode) {
-    // من النت أولاً ليصل التحديث فوراً، ولا نقبل إلا رداً سليماً؛
-    // وإلا فالنسخة المخزَّنة الصالحة أولى من صفحة خطأ.
-    e.respondWith((async () => {
-      try{
-        const res = await fetch(req);
-        if(isCacheable(res)){ putIfGood(req, res); return res; }
-        const hit = await caches.match(req);
-        if(hit) return hit;
-        return res;                                       // لا بديل: نمرّر الرد كما هو
-      }catch(_e){
-        const hit = await caches.match(req);
-        if(hit) return hit;
-        // التنقّل وحده يستحقّ صفحة الواجهة بديلاً؛ ملفٌّ آخر لا يُستبدل بـHTML
+    // من الشبكة دائماً ولا نخزّنه أبداً: هذا ما جعل أجهزة تعلق على نسخة
+    // قديمة أو على صفحة خطأ محفوظة مكان الملف. التنقّل وحده يحصل على
+    // صفحة الواجهة المخزَّنة إن انقطعت الشبكة، وذلك لعرض رسالة لا لتشغيل
+    // نسخة قديمة.
+    e.respondWith(
+      fetch(req, { cache: 'no-store' }).catch(async () => {
         if(isDoc){
           const shell = await caches.match('./index.html');
           if(shell) return shell;
         }
-        throw _e;
-      }
-    })());
+        return new Response('', { status: 504, statusText: 'offline' });
+      })
+    );
     return;
   }
 
