@@ -2,7 +2,7 @@
 // نسخة بسيطة: تخلّي التطبيق قابل للتثبيت، وتسرّع فتح الملفات الثابتة.
 // ملاحظة: البيانات (Supabase) دايمًا من النت — مابنعملهاش cache.
 
-const CACHE = 'zamzam-v166';
+const CACHE = 'zamzam-v167';
 const ASSETS = [
   './',
   './index.html',
@@ -47,36 +47,61 @@ self.addEventListener('activate', (e) => {
 //  • Supabase وأي حاجة خارجية → النت مباشرة
 //  • ملفات الكود (html/css/js) → النت الأول عشان التحديث يوصل فوراً، والكاش احتياطي لو مفيش نت
 //  • الصور والخطوط → الكاش الأول (مابتتغيّرش وبتوفّر سرعة وبيانات)
+// نخزّن الردود الناجحة فقط. تخزين رد خطأ — كصفحة تحقّق أمني بحالة 403 —
+// يضع HTML مكان ملف الأنماط أو الكود، فيرفضه المتصفح وتظهر الصفحة بلا
+// تنسيق حتى بعد عودة الخادم. وهذا ما حدث فعلاً.
+function isCacheable(res){
+  return !!res && res.ok && res.status === 200 && (res.type === 'basic' || res.type === 'default');
+}
+function putIfGood(req, res){
+  if(!isCacheable(res)) return;
+  const copy = res.clone();
+  caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+}
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;                       // الكتابة دايمًا للنت
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;        // Supabase وغيره: من النت
 
-  const isCode = req.mode === 'navigate'
+  const isDoc  = req.mode === 'navigate';
+  const isCode = isDoc
     || /\.(?:html|css|js|json)$/i.test(url.pathname)
     || url.pathname === '/' || url.pathname.endsWith('/');
 
   if (isCode) {
-    // Network-first: أحدث نسخة دايمًا، ولو النت واقع نرجع للكاش
-    e.respondWith(
-      fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
-        return res;
-      }).catch(() => caches.match(req).then((hit) => hit || caches.match('./index.html')))
-    );
+    // من النت أولاً ليصل التحديث فوراً، ولا نقبل إلا رداً سليماً؛
+    // وإلا فالنسخة المخزَّنة الصالحة أولى من صفحة خطأ.
+    e.respondWith((async () => {
+      try{
+        const res = await fetch(req);
+        if(isCacheable(res)){ putIfGood(req, res); return res; }
+        const hit = await caches.match(req);
+        if(hit) return hit;
+        return res;                                       // لا بديل: نمرّر الرد كما هو
+      }catch(_e){
+        const hit = await caches.match(req);
+        if(hit) return hit;
+        // التنقّل وحده يستحقّ صفحة الواجهة بديلاً؛ ملفٌّ آخر لا يُستبدل بـHTML
+        if(isDoc){
+          const shell = await caches.match('./index.html');
+          if(shell) return shell;
+        }
+        throw _e;
+      }
+    })());
     return;
   }
 
-  // Cache-first للأصول الثابتة
-  e.respondWith(
-    caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-      const copy = res.clone();
-      caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
-      return res;
-    }).catch(() => caches.match('./index.html')))
-  );
+  // الصور والخطوط: الكاش أولاً
+  e.respondWith((async () => {
+    const hit = await caches.match(req);
+    if(hit) return hit;
+    const res = await fetch(req);
+    putIfGood(req, res);
+    return res;
+  })());
 });
 
 // ═══ إشعارات Push — تظهر حتى والتطبيق مقفول (باللوجو) ═══
