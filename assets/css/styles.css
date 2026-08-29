@@ -2102,3 +2102,10 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
 .zz-update:hover{background:var(--indigo-d);}
 @keyframes zzUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 @media print{.zz-update{display:none !important;}}
+
+/* الأزرار على شاشات اللمس: 44px هو أصغر هدف لمسٍ مريح، وأزرار النوافذ
+   كانت 37px — وأهمّها زرّ تفعيل الإشعارات على الموبايل. */
+@media (pointer:coarse),(max-width:640px){
+  .acd-btn{min-height:44px !important;}
+  .ntf-push{min-height:44px !important;}
+}
