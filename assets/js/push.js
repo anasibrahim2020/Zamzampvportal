@@ -64,19 +64,16 @@
     return window.matchMedia('(display-mode: standalone)').matches
         || window.navigator.standalone === true;
   }
-  function askedKey(u) { return 'zamzam-push-asked-' + (u || 'x'); }
-  function alreadyAsked(u) { try { return !!localStorage.getItem(askedKey(u)); } catch (e) { return false; } }
-  function markAsked(u) { try { localStorage.setItem(askedKey(u), '1'); } catch (e) {} }
 
   var TT = (typeof t === 'function') ? t : function (x) { return x; };
 
-  async function showPushDialog(userName) {
-    if (alreadyAsked(userName)) return;
+  async function showPushDialog(userName, force) {
+    // تظهر في كل مرة يُفتح فيها التطبيق ما دامت الإشعارات غير مفعّلة —
+    // لا مرة واحدة فقط: من رفضها مرة كان لا يصله شيء على جهازه إلى الأبد.
     if (typeof showConfirmDialog !== 'function') return;
 
     // آيفون من المتصفح: الدفع مش مدعوم أصلاً — نوريه الخطوة الصح
     if (isIOS() && !isStandalone()) {
-      markAsked(userName);
       if (typeof showMessageDialog === 'function') {
         showMessageDialog({
           title: TT('فعّل إشعارات الطلبات'),
@@ -107,7 +104,6 @@
       confirmText: TT('تفعيل الإشعارات'),
       cancelText: TT('ليس الآن')
     });
-    markAsked(userName);
     if (!ok) return;
     try {
       var p = await Notification.requestPermission();
@@ -134,9 +130,20 @@
     setTimeout(function () { showPushDialog(userName); }, 1200);
   };
 
-  // نداء يدوي احتياطي لو حبينا نربطه بزر تاني
+  /* حالة الإشعارات على هذا الجهاز — تستخدمها الواجهة لعرض زر التفعيل */
+  window.pushStatus = function () {
+    if (!supported()) return isIOS() && !isStandalone() ? 'ios-needs-install' : 'unsupported';
+    if (isIOS() && !isStandalone()) return 'ios-needs-install';
+    if (Notification.permission === 'granted') return 'granted';
+    if (Notification.permission === 'denied') return 'denied';
+    return 'default';
+  };
+
+  /* تفعيل يدوي من زرّ في الواجهة — يفتح النافذة حتى لو سبق رفضها */
   window.enablePush = function () {
     var n = currentUserName();
-    if (n) window.initPush({ name: n });
+    if (!n) return;
+    if (supported() && Notification.permission === 'granted') { subscribe(n); return; }
+    showPushDialog(n, true);
   };
 })();

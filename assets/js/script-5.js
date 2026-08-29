@@ -3588,7 +3588,8 @@ const NOTIF_ICONS = {
   check:'<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg>',
   upload:'<svg viewBox="0 0 24 24"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg>',
   money:'<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2.5"></circle></svg>',
-  comment:'<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"></path></svg>'
+  comment:'<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"></path></svg>',
+  bell:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>',
 };
 function toggleNotifPanel(ev){
   if(ev) ev.stopPropagation();
@@ -3598,7 +3599,20 @@ function toggleNotifPanel(ev){
   closeUserMenu && closeUserMenu();
   if(open){ panel.classList.remove('on'); return; }
   const seen = notifSeenAt();
-  panel.innerHTML = NOTIFS.length ? `
+  // صفّ دائم لتفعيل إشعارات الموبايل: النافذة التلقائية تظهر مرة واحدة،
+  // ومن رفضها كان يفقد أي طريق لتفعيلها بعد ذلك — فلا يصله شيء على جهازه.
+  const pushRow = (()=>{
+    if(typeof window.pushStatus !== 'function') return '';
+    const st = window.pushStatus();
+    if(st === 'granted' || st === 'unsupported') return '';
+    const label = st === 'ios-needs-install' ? t('أضف البوابة إلى الشاشة الرئيسية لاستقبال الإشعارات')
+                : st === 'denied'            ? t('الإشعارات محظورة — فعّلها من إعدادات المتصفح')
+                :                              t('فعّل إشعارات الموبايل');
+    return `<button class="ntf-push" onclick="closeNotifPanel();enablePush()">
+      ${NOTIF_ICONS.bell || ''}<span>${escapeHtml(label)}</span></button>`;
+  })();
+
+  panel.innerHTML = pushRow + (NOTIFS.length ? `
     <div class="ntf-head">
       <b>${escapeHtml(t('الإشعارات'))}</b>
       <button class="ntf-clear" onclick="markNotifsSeen();toggleNotifPanel(event)">${escapeHtml(t('تحديد الكل كمقروء'))}</button>
@@ -3609,7 +3623,7 @@ function toggleNotifPanel(ev){
         <span class="ntf-txt"><b>${escapeHtml(n.title)}</b><span>${escapeHtml(n.body)}</span>
           <em>${escapeHtml(formatArchiveDateTime ? formatArchiveDateTime(n.at) : String(n.at).slice(0,16))}</em></span>
       </button>`).join('')}</div>`
-    : `<div class="ntf-empty">${escapeHtml(t('لا توجد إشعارات'))}</div>`;
+    : `<div class="ntf-empty">${escapeHtml(t('لا توجد إشعارات'))}</div>`);
   panel.classList.add('on');
   markNotifsSeen();
 }

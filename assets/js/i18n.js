@@ -8,6 +8,9 @@ let LANG = 'ar';
 try{ LANG = localStorage.getItem(LANG_KEY) || 'ar'; }catch(e){ LANG = 'ar'; }
 
 const I18N_EN = {
+  'فعّل إشعارات الموبايل':'Enable mobile notifications',
+  'أضف البوابة إلى الشاشة الرئيسية لاستقبال الإشعارات':'Add the portal to your Home Screen to receive notifications',
+  'الإشعارات محظورة — فعّلها من إعدادات المتصفح':'Notifications are blocked — enable them in your browser settings',
   'تعديل':'Edit',
   'طلب معتمد بانتظار التحويل':'Approved request awaiting transfer',
   'اعتمده':'Approved by',
