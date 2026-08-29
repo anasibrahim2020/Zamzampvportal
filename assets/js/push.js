@@ -27,7 +27,8 @@
   }
 
   async function saveSubscription(sub, userName) {
-    if (typeof sb === 'undefined' || !sb) return;
+    // الخروج الصامت هنا كان يجعل subscribe تُبلّغ بالنجاح دون أن تحفظ شيئاً
+    if (typeof sb === 'undefined' || !sb) throw new Error('Supabase غير مهيّأ');
     var j = sub.toJSON();
     // نُرجع الخطأ ولا نبتلعه: فشل الحفظ صامتاً يعني أن المستخدم يرى
     // «تم التفعيل» ولا يصله شيء أبداً، وهو ما حدث فعلاً حين كانت
