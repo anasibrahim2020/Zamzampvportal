@@ -1,31 +1,27 @@
 -- ═══════════════════════════════════════════════════════════════
---  فحص اشتراكات إشعارات الموبايل
+--  فحص اشتراكات إشعارات الموبايل — من يستقبلها ومن لا
 --  شغّله في:  Supabase Dashboard > SQL Editor
---  (محرّر SQL يتجاوز RLS فيُظهر الصفوف كلها)
+--  (المحرّر يتجاوز RLS فيُظهر كل الصفوف)
+--
+--  استعلام واحد عمداً: المحرّر لا يعرض إلا نتيجة آخر أمر.
 -- ═══════════════════════════════════════════════════════════════
 
--- 1) مَن سجّل جهازه لاستقبال الإشعارات؟
-SELECT user_name          AS "المستخدم",
-       count(*)           AS "عدد الأجهزة",
-       max(created_at)    AS "آخر تسجيل"
-FROM   public.push_subscriptions
-GROUP  BY user_name
-ORDER  BY user_name;
-
--- 2) هل الإدارة تحديداً مسجّلة؟
---    إن كانت النتيجة صفراً فلن يصل إليها إشعار مهما كان الكود سليماً،
---    ويلزم أن تفتح البوابة من أيقونة الشاشة الرئيسية وتفعّل الإشعارات.
-SELECT CASE WHEN count(*) > 0
-            THEN '✅ مسجّلة — ' || count(*) || ' جهاز'
-            ELSE '❌ غير مسجّلة — لن يصلها إشعار'
-       END AS "حالة الإدارة"
-FROM   public.push_subscriptions
-WHERE  user_name = 'إبراهيم سبل';
-
--- 3) تفاصيل الأجهزة (لمعرفة نوع الجهاز والمتصفح)
-SELECT user_name AS "المستخدم",
-       left(endpoint, 42) || '…' AS "عنوان الدفع",
-       left(coalesce(ua,'—'), 60) AS "الجهاز",
-       created_at AS "التسجيل"
-FROM   public.push_subscriptions
-ORDER  BY created_at DESC;
+WITH directory(user_name, role_label) AS (
+  VALUES ('أنس إبراهيم',  'المحاسبة'),
+         ('عمرو محمد',    'المبيعات'),
+         ('أحمد طه',      'العمليات'),
+         ('إبراهيم سبل',  'الإدارة')
+)
+SELECT d.user_name                       AS "المستخدم",
+       d.role_label                      AS "الدور",
+       CASE WHEN count(p.id) > 0
+            THEN '✅ مسجّل'
+            ELSE '❌ غير مسجّل'
+       END                               AS "الحالة",
+       count(p.id)                       AS "الأجهزة",
+       to_char(max(p.created_at), 'YYYY-MM-DD HH24:MI') AS "آخر تسجيل",
+       left(coalesce(max(p.ua), '—'), 46) AS "الجهاز"
+FROM   directory d
+LEFT   JOIN public.push_subscriptions p ON p.user_name = d.user_name
+GROUP  BY d.user_name, d.role_label
+ORDER  BY d.role_label;
