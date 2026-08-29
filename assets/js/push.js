@@ -29,15 +29,17 @@
   async function saveSubscription(sub, userName) {
     if (typeof sb === 'undefined' || !sb) return;
     var j = sub.toJSON();
-    try {
-      await sb.from('push_subscriptions').upsert({
-        user_name: userName,
-        endpoint: sub.endpoint,
-        p256dh: j.keys.p256dh,
-        auth: j.keys.auth,
-        ua: (navigator.userAgent || '').slice(0, 180)
-      }, { onConflict: 'endpoint' });
-    } catch (e) { console.warn('[push] save failed', e); }
+    // نُرجع الخطأ ولا نبتلعه: فشل الحفظ صامتاً يعني أن المستخدم يرى
+    // «تم التفعيل» ولا يصله شيء أبداً، وهو ما حدث فعلاً حين كانت
+    // صلاحيات الجدول ترفض الكتابة.
+    var res = await sb.from('push_subscriptions').upsert({
+      user_name: userName,
+      endpoint: sub.endpoint,
+      p256dh: j.keys.p256dh,
+      auth: j.keys.auth,
+      ua: (navigator.userAgent || '').slice(0, 180)
+    }, { onConflict: 'endpoint' });
+    if (res && res.error) throw res.error;
   }
 
   async function subscribe(userName) {
@@ -51,7 +53,11 @@
         });
       }
       await saveSubscription(sub, userName);
-    } catch (e) { console.warn('[push] subscribe failed', e); }
+      return true;
+    } catch (e) {
+      console.warn('[push] subscribe failed', e);
+      return e;
+    }
   }
 
   /* ───── نافذة تفعيل الإشعارات ─────
@@ -108,13 +114,24 @@
     try {
       var p = await Notification.requestPermission();
       if (p === 'granted') {
-        subscribe(userName);
+        // ننتظر نتيجة التسجيل: الإذن وحده لا يكفي، فالجهاز لا يصله شيء
+        // ما لم يُحفَظ اشتراكه. إعلان النجاح قبل التأكّد يخفي العطل.
+        var r = await subscribe(userName);
         if (typeof showMessageDialog === 'function') {
-          showMessageDialog({
-            title: TT('تم تفعيل الإشعارات'),
-            message: TT('سيصلك إشعار على هذا الجهاز عند كل حدث يخصّك.'),
-            confirmText: TT('حسنًا')
-          });
+          if (r === true) {
+            showMessageDialog({
+              title: TT('تم تفعيل الإشعارات'),
+              message: TT('سيصلك إشعار على هذا الجهاز عند كل حدث يخصّك.'),
+              confirmText: TT('حسنًا')
+            });
+          } else {
+            showMessageDialog({
+              title: TT('تعذّر تفعيل الإشعارات'),
+              message: TT('سُمح بالإذن لكن تعذّر تسجيل الجهاز على الخادم، فلن تصل الإشعارات.')
+                + '\n\n' + ((r && (r.message || r.hint)) || ''),
+              confirmText: TT('حسنًا')
+            });
+          }
         }
       }
     } catch (e) { console.warn('[push] permission failed', e); }

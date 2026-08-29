@@ -8,6 +8,8 @@ let LANG = 'ar';
 try{ LANG = localStorage.getItem(LANG_KEY) || 'ar'; }catch(e){ LANG = 'ar'; }
 
 const I18N_EN = {
+  'تعذّر تفعيل الإشعارات':'Could not enable notifications',
+  'سُمح بالإذن لكن تعذّر تسجيل الجهاز على الخادم، فلن تصل الإشعارات.':'Permission was granted, but the device could not be registered on the server, so notifications will not arrive.',
   'فعّل إشعارات الموبايل':'Enable mobile notifications',
   'أضف البوابة إلى الشاشة الرئيسية لاستقبال الإشعارات':'Add the portal to your Home Screen to receive notifications',
   'الإشعارات محظورة — فعّلها من إعدادات المتصفح':'Notifications are blocked — enable them in your browser settings',
