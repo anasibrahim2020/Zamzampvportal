@@ -73,10 +73,49 @@
 
   var TT = (typeof t === 'function') ? t : function (x) { return x; };
 
+  function showRegisterFailed(err) {
+    if (typeof showMessageDialog !== 'function') return;
+    showMessageDialog({
+      title: TT('تعذّر تفعيل الإشعارات'),
+      message: TT('سُمح بالإذن لكن تعذّر تسجيل الجهاز على الخادم، فلن تصل الإشعارات.')
+        + ((err && (err.message || err.hint)) ? '\n\n' + (err.message || err.hint) : ''),
+      confirmText: TT('حسنًا')
+    });
+  }
+
   async function showPushDialog(userName, force) {
     // تظهر في كل مرة يُفتح فيها التطبيق ما دامت الإشعارات غير مفعّلة —
     // لا مرة واحدة فقط: من رفضها مرة كان لا يصله شيء على جهازه إلى الأبد.
     if (typeof showConfirmDialog !== 'function') return;
+
+    // الجهاز لا يدعم الإشعارات إطلاقاً — نقولها بدل الصمت
+    if (!supported() && !(isIOS() && !isStandalone())) {
+      if (typeof showMessageDialog === 'function') {
+        showMessageDialog({
+          title: TT('الإشعارات غير مدعومة'),
+          message: TT('هذا المتصفح لا يدعم إشعارات الأجهزة. جرّب من متصفح آخر أو من التطبيق المثبّت.'),
+          confirmText: TT('حسنًا')
+        });
+      }
+      return;
+    }
+
+    // سبق رفض الإذن: المتصفح لن يسأل ثانية، فنشرح كيف يُرفع الحظر
+    if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+      if (typeof showMessageDialog === 'function') {
+        showMessageDialog({
+          title: TT('الإشعارات محظورة'),
+          message: TT('سبق رفض الإذن على هذا الجهاز، والمتصفح لن يسأل مرة أخرى.'),
+          details: [
+            { label: TT('الخطوة ١'), value: TT('اضغط رمز القفل بجوار عنوان الموقع') },
+            { label: TT('الخطوة ٢'), value: TT('غيّر «الإشعارات» إلى «سماح»') },
+            { label: TT('الخطوة ٣'), value: TT('أعد تحميل الصفحة') }
+          ],
+          confirmText: TT('حسنًا')
+        });
+      }
+      return;
+    }
 
     // آيفون من المتصفح: الدفع مش مدعوم أصلاً — نوريه الخطوة الصح
     if (isIOS() && !isStandalone()) {
@@ -124,14 +163,7 @@
               message: TT('سيصلك إشعار على هذا الجهاز عند كل حدث يخصّك.'),
               confirmText: TT('حسنًا')
             });
-          } else {
-            showMessageDialog({
-              title: TT('تعذّر تفعيل الإشعارات'),
-              message: TT('سُمح بالإذن لكن تعذّر تسجيل الجهاز على الخادم، فلن تصل الإشعارات.')
-                + '\n\n' + ((r && (r.message || r.hint)) || ''),
-              confirmText: TT('حسنًا')
-            });
-          }
+          } else { showRegisterFailed(r); }
         }
       }
     } catch (e) { console.warn('[push] permission failed', e); }
@@ -140,10 +172,14 @@
   /* النداء الرئيسي — يُستدعى من enterApp() بعد الدخول */
   window.initPush = function (current) {
     var userName = (current && current.name) || currentUserName();
-    if (!userName || !supported()) return;
-    if (Notification.permission === 'granted') { subscribe(userName); return; }
-    if (Notification.permission === 'denied') return;
-    // default: نافذة واضحة تشرح وتطلب الإذن بضغطة المستخدم
+    if (!userName) return;
+    // الإذن ممنوح: نسجّل ونتحقّق. الفشل هنا كان يمرّ بصمت، فيظن المستخدم
+    // أن الإشعارات تعمل ولا يصله شيء أبداً.
+    if (supported() && Notification.permission === 'granted') {
+      subscribe(userName).then(function (r) { if (r !== true) showRegisterFailed(r); });
+      return;
+    }
+    // كل ما عدا ذلك — غير مدعومة، أو مرفوضة، أو لم تُطلب — تشرحه النافذة
     setTimeout(function () { showPushDialog(userName); }, 1200);
   };
 

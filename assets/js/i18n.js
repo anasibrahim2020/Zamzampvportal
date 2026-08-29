@@ -8,6 +8,13 @@ let LANG = 'ar';
 try{ LANG = localStorage.getItem(LANG_KEY) || 'ar'; }catch(e){ LANG = 'ar'; }
 
 const I18N_EN = {
+  'الإشعارات غير مدعومة':'Notifications are not supported',
+  'هذا المتصفح لا يدعم إشعارات الأجهزة. جرّب من متصفح آخر أو من التطبيق المثبّت.':'This browser does not support device notifications. Try another browser, or the installed app.',
+  'الإشعارات محظورة':'Notifications are blocked',
+  'سبق رفض الإذن على هذا الجهاز، والمتصفح لن يسأل مرة أخرى.':'Permission was refused on this device, and the browser will not ask again.',
+  'اضغط رمز القفل بجوار عنوان الموقع':'Tap the lock icon next to the address',
+  'غيّر «الإشعارات» إلى «سماح»':'Set “Notifications” to “Allow”',
+  'أعد تحميل الصفحة':'Reload the page',
   'تعذّر تفعيل الإشعارات':'Could not enable notifications',
   'سُمح بالإذن لكن تعذّر تسجيل الجهاز على الخادم، فلن تصل الإشعارات.':'Permission was granted, but the device could not be registered on the server, so notifications will not arrive.',
   'فعّل إشعارات الموبايل':'Enable mobile notifications',
