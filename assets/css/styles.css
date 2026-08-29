@@ -2132,3 +2132,41 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
 @media (prefers-reduced-transparency: reduce){
   .topbar,.nav{backdrop-filter:none !important;}
 }
+
+/* ══════════════════════════════════════════════════════════
+   التغذية الراجعة على اللمس
+   الواجهة فيها 135 حالة :hover مقابل 14 :active — و:hover لا
+   معنى له على الشاشة اللمسية، وهي جهاز العمل الأساسي هنا. فكان
+   الضغط بلا أثر مرئي حتى يُفلت الإصبع. القاعدة تستجيب لحظة
+   الضغط: الأزرار تنضغط قليلاً، والصفوف تعتم بلا حركة — لأن
+   تحرّك صفٍّ داخل قائمة يشوّش القراءة.
+══════════════════════════════════════════════════════════ */
+@media screen and (hover:none){
+  button:active,[role="button"]:active,.btn:active,
+  .rl-go:active,.rl-more:active,.rl-cnt:active,
+  .arc-mini:active,.arc-bulk-btn:active,.arc-time-btn:active,
+  .arc-group-clear:active,.tb-chip:active,.h-all:active,
+  .btn-sign:active,.btn-print:active,.btn-clear:active,
+  .arc-refresh-btn:active,.nav-btn:active,.hbtn:active{
+    filter:brightness(.93);
+  }
+  button:active,[role="button"]:active,.btn:active,
+  .hbtn:active,.btn-sign:active,.btn-print:active,.btn-clear:active{
+    transform:scale(.97);
+  }
+  /* الصفوف وعناصر القوائم: إعتام بلا انكماش */
+  .rl-row:active,.ntf-item:active,.ntf-push:active,
+  .arc-menu-item:active,.tbm-item:active,.attach-item:active,
+  .del-row:active{
+    filter:brightness(.95);
+    transform:none;
+  }
+}
+
+/* من يطلب تقليل الحركة: يبقى الإعتام ويسقط الانكماش */
+@media screen and (hover:none) and (prefers-reduced-motion:reduce){
+  button:active,[role="button"]:active,.btn:active,
+  .hbtn:active,.btn-sign:active,.btn-print:active,.btn-clear:active{
+    transform:none;
+  }
+}
