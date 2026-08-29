@@ -33,14 +33,26 @@
     // نُرجع الخطأ ولا نبتلعه: فشل الحفظ صامتاً يعني أن المستخدم يرى
     // «تم التفعيل» ولا يصله شيء أبداً، وهو ما حدث فعلاً حين كانت
     // صلاحيات الجدول ترفض الكتابة.
-    var res = await sb.from('push_subscriptions').upsert({
+    var row = {
       user_name: userName,
       endpoint: sub.endpoint,
       p256dh: j.keys.p256dh,
       auth: j.keys.auth,
       ua: (navigator.userAgent || '').slice(0, 180)
-    }, { onConflict: 'endpoint' });
-    if (res && res.error) throw res.error;
+    };
+    // إدخال عادي لا upsert: فـupsert هو INSERT ... ON CONFLICT DO UPDATE،
+    // وهذا يحتاج رؤية الصف المتعارض أي صلاحية SELECT — ولا سياسة قراءة
+    // على الجدول عمداً (القراءة للـEdge Function وحدها)، فكانت العملية
+    // تُرفض كلها. الإدخال وحده يمرّ، والتكرار يعني الجهاز مسجّل أصلاً.
+    var res = await sb.from('push_subscriptions').insert(row);
+    if (res && res.error) {
+      var dup = res.error.code === '23505'
+        || /duplicate key|already exists/i.test(res.error.message || '');
+      if (!dup) throw res.error;
+      // نحدّث بيانات الجهاز المسجّل — التحديث لا يحتاج قراءة
+      var upd = await sb.from('push_subscriptions').update(row).eq('endpoint', sub.endpoint);
+      if (upd && upd.error) throw upd.error;
+    }
   }
 
   async function subscribe(userName) {
