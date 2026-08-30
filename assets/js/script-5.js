@@ -10,6 +10,7 @@ const USER_MAP = {
   'ahmed_taha':   { email:'ahmed_taha@zamzam.app',   name:'أحمد طه',     name_en:'Ahmed Taha',    role:'sales',      dept:'قسم العمليات',    dept_en:'Operation Department', phone:'' },
   'amr_mohamed':  { email:'amr_mohamed@zamzam.app',  name:'عمرو محمد',    name_en:'Amr Mohamed',   role:'sales',      dept:'قسم المبيعات',    dept_en:'Sales Department', phone:'' },
   'ibrahim_sabl': { email:'ibrahim_sabl@zamzam.app', name:'إبراهيم سبل',  name_en:'Ibrahim Sabl',  role:'viewer',     dept:'فريق الإدارة',    dept_en:'Management Team', phone:'' },
+  'mohamed_rashid':{ email:'mohamed_rashid@zamzam.app', name:'محمد راشد',   name_en:'Mohamed Rashid', role:'viewer',    dept:'فريق الإدارة',    dept_en:'Management Team', phone:'' },
 };
 
 // 2) Supabase — لازم تكمّلهم عشان الدخول والأرشيف يشتغلوا (المفتاح ده آمن يتحط هنا)

@@ -18,6 +18,8 @@ const DIRECTORY: Record<string, User> = {
   "أحمد طه":      { email: "ahmed_yo_333@yahoo.com",     phone: "97477330803", wa_apikey: "5794125", role: "sales" },
   "عمرو محمد":    { email: "a.mosaed007@gmail.com",      phone: "97450400878", wa_apikey: "9677900", role: "sales" },
   "إبراهيم سبل":  { email: "contact.zamzamqa@gmail.com", phone: "", wa_apikey: "", role: "viewer" },
+  // ↓ ضع بريده الحقيقي ليصله إشعار البريد؛ إشعار الموبايل يعمل بدونه
+  "محمد راشد":    { email: "", phone: "", wa_apikey: "", role: "viewer" },
 };
 const ACCOUNTANTS = Object.values(DIRECTORY).filter((u) => u.role === "accountant");
 const VIEWERS     = Object.values(DIRECTORY).filter((u) => u.role === "viewer");
