@@ -594,6 +594,7 @@ function getDisbClientRows(){
     idx: idx + 1,
     invoice: tr.querySelector('.c-inv')?.value || '',
     share: tr.querySelector('.c-amt')?.value || '0.00',
+    src: tr.querySelector('td')?.dataset.src || '',
     tr
   }));
 }
@@ -673,7 +674,7 @@ function renderAppendixClientRows(rows){
     <table class="appendix-table">
       <thead><tr><th style="width:10%">#</th><th style="width:58%"><span dir="rtl">${t('رقم فاتورة العميل')}</span> - <span dir="ltr">Odoo</span><small>Client Invoice No. - Odoo</small></th><th style="width:32%">${t('النصيب ر.ق')}<small>Share QAR</small></th></tr></thead>
       <tbody>${rows.map(r=>`
-        <tr><td class="num">${r.idx}</td><td>${escapeHtml(r.invoice || '—')}</td><td class="num">${escapeHtml(r.share || '0.00')}</td></tr>
+        <tr><td class="num">${r.idx}</td><td>${r.src?`<span class="ap-src">${escapeHtml(r.src)}</span>`:''}${escapeHtml(r.invoice || '—')}</td><td class="num">${escapeHtml(r.share || '0.00')}</td></tr>
       `).join('')}</tbody>
       <tfoot><tr class="appendix-total"><td colspan="2">${t('إجمالي مركز التكلفة · Total Cost Center')}</td><td class="num">${escapeHtml(document.getElementById('client-total')?.textContent || '0.00')}</td></tr></tfoot>
     </table>`;
@@ -731,12 +732,15 @@ function recalcSupplier(){
 addSupplierRow(); // start with one row
 
 /* ── فواتير العميل — نصيب كل فاتورة من فاتورة المورّد ── */
-function addClientRow(inv='',amt='', skipLimit=false){
+function addClientRow(inv='',amt='', skipLimit=false, src=''){
   if(!skipLimit && !canAddDisbTableRow()) return;
   const tb=document.getElementById('client-rows');
   const tr=document.createElement('tr');
+  // src = رقم فاتورة المورّد اللي المركز ده تبعها. بيتكتب كسمة على الخانة
+  // ويظهر بـCSS جوه نفس الخانة — عشان ما يتزوّدش ولا صف ويفضل تقسيم
+  // الصفحات والملحق شايف نفس العدد بالظبط.
   tr.innerHTML=`
-    <td><input type="text" class="c-inv" placeholder="${t('رقم فاتورة العميل - ‎Odoo')}" data-i18n-attr="placeholder|رقم فاتورة العميل - ‎Odoo" value="${inv}"></td>
+    <td${src?` data-src="${escAttr(src)}"`:''}><input type="text" class="c-inv" placeholder="${t('رقم فاتورة العميل - ‎Odoo')}" data-i18n-attr="placeholder|رقم فاتورة العميل - ‎Odoo" value="${inv}"></td>
     <td class="amt-cell"><input type="text" class="c-amt" placeholder="0.00" value="${amt}" oninput="handleClientAmt(this)"></td>
     <td class="no-print"><button class="del-row" onclick="this.closest('tr').remove();recalcClient()">✕</button></td>`;
   tb.appendChild(tr);
@@ -1509,6 +1513,7 @@ function collectDisb(){
   const cli=[...document.querySelectorAll('#client-rows tr')].map(tr=>({
     invoice: tr.querySelector('.c-inv')?.value||'',
     share:   parseAmt(tr.querySelector('.c-amt')?.value||0),
+    src:     tr.querySelector('td')?.dataset.src||'',
   })).filter(r=>r.invoice||r.share);
   return {
     doc_type:'disb',
@@ -2689,7 +2694,7 @@ function loadDisbFromRow(x){
   const cli=document.getElementById('client-rows'); cli.innerHTML='';
   let carr=[]; try{ carr=JSON.parse(x.client_inv_json||'[]'); }catch(e){ carr=[]; }
   if(!Array.isArray(carr)||!carr.length) carr=[{invoice:'',share:''}];
-  carr.forEach(c=>addClientRow(c.invoice||'', c.share?fmtAmt(String(c.share)):'', true));
+  carr.forEach(c=>addClientRow(c.invoice||'', c.share?fmtAmt(String(c.share)):'', true, c.src||''));
   recalcClient();
   // المرفقات المحفوظة — تُحمّل مباشرة لتكون ATTACHED هي المرجع الوحيد (تسمح بالحذف الصحيح)
   ATTACHED = [];

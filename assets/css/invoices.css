@@ -197,3 +197,29 @@
   .qf-chip{min-height:36px;}
   .iv-tools input,.iv-tools select{height:40px;}
 }
+
+/* ══════════════════════════════════════════════════════════
+   ربط مركز التكلفة بفاتورة المورّد
+   الاسم بيتكتب جوه الخانة الموجودة، مش في صف أو عمود جديد،
+   عشان عدّاد الصفوف وتقسيم الصفحات والملحق يفضلوا شايفين
+   نفس العدد بالظبط — فأوامر الطباعة ما اتلمستش.
+══════════════════════════════════════════════════════════ */
+#client-rows td[data-src]::before,
+.appendix-table .ap-src{
+  content:attr(data-src);
+  display:block;
+  font-family:'Inter',sans-serif;
+  font-size:8.5px;
+  font-weight:700;
+  letter-spacing:.6px;
+  color:var(--teal);
+  direction:ltr;
+  text-align:start;
+  line-height:1.3;
+  margin-bottom:1px;
+}
+/* في الملحق الاسم بيتحط على نفس السطر قبل الرقم. لو اتحط في سطر
+   لوحده بيزوّد ارتفاع كل مجموعة، وده وحده كان بيطلع صفحة تالتة
+   في أكبر طلب (٢٤ صف). مقيس. */
+.appendix-table .ap-src{content:none;display:inline;font-size:8px;margin-bottom:0;line-height:inherit;}
+.appendix-table .ap-src::after{content:' · ';color:var(--n4);font-weight:700;}
