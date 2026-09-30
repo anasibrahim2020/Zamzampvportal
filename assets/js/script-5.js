@@ -3432,6 +3432,11 @@ function refreshDynamicUI(){
     if(typeof closeArchiveTimePopover === 'function') closeArchiveTimePopover();
     if(document.getElementById('page-arc')?.classList.contains('on') && typeof loadArchive === 'function') loadArchive();
     if(typeof updateTransferSelectUI === 'function') updateTransferSelectUI();
+    // سجل الفواتير: الشريط والشارات والجدول كلها مرسومة من JS، فبتتعاد مع اللغة
+    if(typeof renderInvImportBar === 'function') renderInvImportBar();
+    if(typeof invMarkLinkedRows === 'function') invMarkLinkedRows();
+    if(typeof renderInvoices === 'function' && typeof INV_LOADED !== 'undefined' && INV_LOADED
+       && document.getElementById('page-inv')?.classList.contains('on')) renderInvoices();
   }catch(e){ console.warn('refreshDynamicUI', e); }
 }
 

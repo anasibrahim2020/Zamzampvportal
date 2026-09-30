@@ -68,30 +68,60 @@
 .iv-bar-line .vl{font-size:14px;font-weight:700;color:var(--ink);direction:ltr;text-align:end;font-variant-numeric:tabular-nums;}
 .iv-bar-line .vl em{font-style:normal;font-size:10px;color:var(--txt-3);}
 
-/* ── نموذج التسجيل ── */
-.qf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
-.qf-f{display:flex;flex-direction:column;gap:5px;}
-.qf-f.full{grid-column:1/-1;}
-.qf-f label{font-size:11px;font-weight:700;color:var(--txt-2);}
-.qf-f label em{font-style:normal;color:var(--stop);}
-.qf-f label small{font-weight:700;color:var(--txt-3);margin-inline-start:4px;direction:ltr;unicode-bidi:isolate;display:inline-block;}
-.qf-f input,.qf-f select{font-size:13px !important;height:40px;}
+/* ── نموذج التسجيل — نفس لغة نماذج الوثيقة ──
+   الحقل سطر تحته خط، والعنوان عربي نيلي فوق إنجليزي تيل كابيتال.
+   الإنجليزي بيختفي لوحده في الواجهة الإنجليزية بقاعدة html.lang-en .en. */
+.qf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;}
+.qf-f{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.qf-f.full,.acd-card .sec-title.full{grid-column:1/-1;}
+.acd-card .sec-title{margin:6px 0 2px;}
+.acd-card .sec-title:first-child{margin-top:0;}
+.qf-f label{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:2px;line-height:1.3;}
+.qf-f label .ar{font-size:11px;font-weight:700;color:var(--indigo);}
+.qf-f label .en{font-family:'Inter',sans-serif;font-size:9px;font-weight:700;color:var(--teal);
+  letter-spacing:1px;text-transform:uppercase;}
+.qf-f label .req{font-style:normal;font-weight:700;color:var(--stop);}
+.acd-card .qf-f input:not([type=checkbox]):not([type=radio]):not([type=file]),
+.acd-card .qf-f select{width:100%;border:none;border-bottom:2px solid var(--border);
+  border-radius:0;padding:6px 2px;height:auto;background:transparent;outline:none;
+  font-family:'PlexAr','Inter',sans-serif;font-size:13px;line-height:1.45;color:var(--ink);
+  font-weight:600;transition:border-color .15s;box-shadow:none;}
+.acd-card .qf-f input:not([type=checkbox]):not([type=radio]):focus,
+.acd-card .qf-f select:focus{border-color:var(--teal);}
+.acd-card .qf-f input:not([type=checkbox])::placeholder{color:var(--txt-3);font-weight:500;}
+.acd-card .qf-f input[type=date]{direction:ltr;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
+.acd-card .qf-f input[type=date]::-webkit-calendar-picker-indicator{opacity:.45;cursor:pointer;margin-inline-start:auto;}
 .qf-f input.ltr{direction:ltr;text-align:start;}
+/* علامة زمزم في رأس النافذة — نفس إيقاع ترويسة الوثيقة */
+.acd-head.iv-head{display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.iv-mark{flex:0 0 auto;height:38px;display:flex;align-items:center;}
+.iv-mark img{height:100%;width:auto;display:block;}
 .qf-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;align-items:center;}
 .qf-chip{background:var(--n0);border:1px solid var(--border);border-radius:999px;padding:6px 12px;
   font-family:'PlexAr',sans-serif;font-size:11px;font-weight:700;color:var(--txt-2);cursor:pointer;}
 .qf-chip:hover{background:var(--indigo-t);}
 .qf-chip.on{background:var(--indigo-t);border-color:var(--indigo);color:var(--indigo-d);}
-.qf-drop{grid-column:1/-1;border:1px dashed var(--n4);border-radius:10px;padding:14px;text-align:center;
-  font-size:12px;font-weight:700;color:var(--txt-3);background:var(--n1);cursor:pointer;}
-.qf-drop svg{width:18px;height:18px;stroke:var(--indigo-l);stroke-width:1.8;fill:none;display:block;margin:0 auto 6px;}
-.qf-drop.has{border-style:solid;border-color:var(--teal);color:var(--teal);background:var(--teal-t);}
+/* منطقة المرفق ومفاتيح مركز التكلفة: نفس عناصر طلب الصرف،
+   فبتاخد شكلها من styles.css وما بنزوّدش هنا غير الموضع. */
+.acd-card .attach-zone.iv-drop{grid-column:1/-1;margin-bottom:0;padding:14px;}
+.acd-card .attach-zone.iv-drop.has{border-style:solid;border-color:var(--teal);background:var(--tint-g);}
+.acd-card .attach-zone.iv-drop .big svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;}
+.acd-card .iv-cost-actions{flex-wrap:wrap;margin-bottom:0;margin-top:2px;}
+.acd-card .iv-cost-actions .add-row-btn,.acd-card .iv-cost-actions .cost-toggle{min-width:0;min-height:38px;}
+.acd-card .iv-cost-actions .add-row-btn{padding:8px 14px;font-size:12px;margin-bottom:0;}
+.acd-card .iv-cost-actions .add-row-btn svg{width:13px;height:13px;stroke:currentColor;stroke-width:2;fill:none;}
+.acd-card .iv-cost-actions .cost-toggle{padding:8px 14px;font-size:12px;}
+.acd-card .iv-cost-actions .cost-toggle input{width:16px;height:16px;padding:0;flex:0 0 auto;}
 .qf-err{grid-column:1/-1;background:var(--stop-bg);border:1px solid var(--stop-line);border-radius:10px;
   padding:9px 12px;font-size:11.5px;font-weight:700;color:var(--stop);}
-.qf-cc-row{display:grid;grid-template-columns:minmax(0,1fr) 130px 36px;gap:8px;align-items:center;margin-bottom:8px;}
-.qf-cc-row .del{background:transparent;border:1px solid var(--border);border-radius:8px;height:40px;
-  cursor:pointer;color:var(--txt-3);font-size:15px;font-family:inherit;}
-.qf-cc-row .del:hover{background:var(--stop-bg);color:var(--stop);border-color:var(--stop-line);}
+.qf-cc-row{display:grid;grid-template-columns:minmax(0,1fr) 130px 30px;gap:10px;align-items:end;margin-bottom:10px;}
+.acd-card .qf-cc-row input{width:100%;border:none;border-bottom:2px solid var(--border);border-radius:0;
+  padding:6px 2px;background:transparent;outline:none;font-family:'PlexAr','Inter',sans-serif;
+  font-size:13px;font-weight:600;color:var(--ink);transition:border-color .15s;}
+.acd-card .qf-cc-row input:focus{border-bottom-color:var(--teal);}
+.qf-cc-row .del{background:transparent;border:none;border-bottom:2px solid transparent;height:30px;
+  cursor:pointer;color:var(--txt-3);font-size:14px;font-family:inherit;line-height:1;}
+.qf-cc-row .del:hover{color:var(--stop);}
 .qf-rem{margin-inline-start:auto;font-size:11px;font-weight:700;color:var(--green);}
 .qf-rem.bad{color:var(--stop);}
 
@@ -111,8 +141,12 @@
   border:1px solid var(--green-l);border-radius:10px;}
 .pk-sum span{font-size:11.5px;font-weight:700;color:var(--indigo);}
 .pk-sum b{margin-inline-start:auto;font-size:17px;font-weight:700;color:var(--green);direction:ltr;font-variant-numeric:tabular-nums;}
-.pk-search{margin-bottom:8px;}
-.pk-search input{font-size:12px !important;height:36px;}
+.pk-search{margin-bottom:10px;}
+.acd-card .pk-search input{width:100%;border:none;border-bottom:2px solid var(--border);border-radius:0;
+  padding:7px 2px;background:transparent;outline:none;font-family:'PlexAr','Inter',sans-serif;
+  font-size:12.5px;font-weight:600;color:var(--ink);transition:border-color .15s;}
+.acd-card .pk-search input:focus{border-bottom-color:var(--teal);}
+.acd-card .pk-search input::placeholder{color:var(--txt-3);font-weight:500;}
 .pk-empty{padding:26px 12px;text-align:center;font-size:12px;font-weight:700;color:var(--txt-3);}
 
 /* ── شريط الاستيراد داخل طلب الصرف ── */

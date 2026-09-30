@@ -593,6 +593,7 @@ const I18N_EN = {
   /* ── زر اللغة ── */
   'English':'العربية',
   // ── سجل فواتير الموردين ──
+  'بيانات الفاتورة':'Invoice Details',
   'الفواتير المستحقة':'Outstanding Invoices',
   'كل فاتورة وصلت ولم تُسدَّد بعد':'Every invoice received and not yet paid',
   'تسجيل فاتورة':'Log Invoice',

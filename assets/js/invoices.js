@@ -410,56 +410,64 @@ function openInvoiceForm(id){
   ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,19,33,.55);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);overflow:auto;';
   ov.innerHTML = `
     <div class="acd-card" role="dialog" aria-modal="true" style="width:min(560px,100%);max-height:92vh;display:flex;flex-direction:column">
-      <div class="acd-head">
-        <div class="acd-title">${row ? t('تعديل فاتورة مورّد') : t('تسجيل فاتورة مورّد')}</div>
-        <div class="acd-cap">${row ? 'Edit Supplier Invoice' : 'New Supplier Invoice'}</div>
+      <div class="acd-head iv-head">
+        <div>
+          <div class="acd-title">${row ? t('تعديل فاتورة مورّد') : t('تسجيل فاتورة مورّد')}</div>
+          <div class="acd-cap">Supplier Invoice</div>
+        </div>
+        <span class="iv-mark"><img src="assets/images/image-5fa147e6c3d5.png" alt="Zamzam"></span>
       </div>
       <div class="acd-body" style="overflow:auto">
         <div class="qf-grid">
+          <div class="sec-title full"><span class="ar">${t('بيانات الفاتورة')}</span><span class="en">Invoice Details</span></div>
           <div class="qf-f">
-            <label>${t('المورّد')} <em>*</em><small>Supplier</small></label>
+            <label><span class="ar">${t('المورّد')}</span><span class="en">Supplier</span> <em class="req">*</em></label>
             <input type="text" id="iv-sup" list="iv-sup-list" value="${escAttr(row?row.supplier:'')}"
               placeholder="${escAttr(t('اكتب أو اختر'))}">
             <datalist id="iv-sup-list">${INV_SUPS.map(s=>`<option value="${escAttr(s)}"></option>`).join('')}</datalist>
           </div>
           <div class="qf-f">
-            <label>${t('رقم الفاتورة')} <em>*</em><small>Invoice No</small></label>
+            <label><span class="ar">${t('رقم الفاتورة')}</span><span class="en">Invoice No.</span> <em class="req">*</em></label>
             <input type="text" id="iv-no" class="ltr" value="${escAttr(row?row.inv_no:'')}">
           </div>
           <div class="qf-f full">
-            <label>${t('بيان مختصر')} <em>*</em><small>Description</small></label>
+            <label><span class="ar">${t('بيان مختصر')}</span><span class="en">Description</span> <em class="req">*</em></label>
             <input type="text" id="iv-desc" value="${escAttr(row?row.descr:'')}"
               placeholder="${escAttr(t('مثال: إقامة مكة — الدفعة الأولى'))}">
           </div>
           <div class="qf-f">
-            <label>${t('المبلغ (ر.ق)')} <em>*</em><small>Amount</small></label>
+            <label><span class="ar">${t('المبلغ (ر.ق)')}</span><span class="en">Amount QAR</span> <em class="req">*</em></label>
             <input type="text" id="iv-amt" class="ltr" inputmode="decimal" style="font-weight:700"
               value="${row?formatMoney(row.amount):''}" oninput="invFmtField(this)" placeholder="0.00">
           </div>
           <div class="qf-f">
-            <label>${t('تاريخ الفاتورة')}<small>Invoice Date</small></label>
+            <label><span class="ar">${t('تاريخ الفاتورة')}</span><span class="en">Invoice Date</span></label>
             <input type="date" id="iv-date" value="${escAttr(row?(row.inv_date||''):TODAY)}">
           </div>
           <div class="qf-f full">
-            <label>${t('موعد الدفع المتوقّع')}<small>Expected Payment</small></label>
+            <label><span class="ar">${t('موعد الدفع المتوقّع')}</span><span class="en">Expected Payment</span></label>
             <div class="qf-chips" id="iv-due-chips"></div>
             <input type="date" id="iv-due" value="${escAttr(INV_FORM.due)}"
               style="margin-top:6px;${INV_FORM.dueMode==='date'?'':'display:none'}" onchange="invDuePicked(this.value)">
           </div>
+          <div class="sec-title full"><span class="ar">${t('مركز التكلفة')}</span><span class="en">Cost Center</span></div>
           <div class="qf-f full">
-            <label>${t('مركز التكلفة — رقم فاتورة العميل (Odoo)')}<small>Cost Center</small></label>
+            <label><span class="ar">${t('رقم فاتورة العميل - ‎Odoo')}</span><span class="en">Client Invoice No.</span></label>
             <div id="iv-cc"></div>
-            <div class="qf-chips">
-              <button type="button" class="qf-chip" onclick="invAddCc()">+ ${t('إضافة مركز تكلفة')}</button>
-              <label class="qf-chip" style="cursor:pointer">
-                <input type="checkbox" id="iv-general" ${INV_FORM.general?'checked':''} onchange="invToggleGeneral(this.checked)"
-                  style="width:14px;height:14px;margin-inline-end:5px;vertical-align:-2px">${t('فاتورة عامة')}</label>
+            <div class="cost-actions iv-cost-actions">
+              <button type="button" class="add-row-btn" onclick="invAddCc()">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                <span>${t('إضافة مركز تكلفة')}</span></button>
+              <label class="cost-toggle">
+                <input type="checkbox" id="iv-general" ${INV_FORM.general?'checked':''} onchange="invToggleGeneral(this.checked)">
+                <span>${t('فاتورة عامة')}</span></label>
               <span class="qf-rem" id="iv-rem"></span>
             </div>
           </div>
-          <div class="qf-drop${INV_FORM.attachment?' has':''}" id="iv-drop" onclick="document.getElementById('iv-file').click()">
-            ${INV_ICONS.clip}
-            <span id="iv-drop-txt">${INV_FORM.attachment ? t('مرفق محفوظ — اضغط للاستبدال') : t('صورة الفاتورة (اختياري)')}</span>
+          <div class="attach-zone iv-drop full${INV_FORM.attachment?' has':''}" id="iv-drop"
+            role="button" tabindex="0" onclick="document.getElementById('iv-file').click()"
+            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('iv-file').click()}">
+            <div class="big">${INV_ICONS.clip}<span id="iv-drop-txt">${INV_FORM.attachment ? t('مرفق محفوظ — اضغط للاستبدال') : t('صورة الفاتورة (اختياري)')}</span></div>
           </div>
           <input type="file" id="iv-file" accept="application/pdf,image/*" style="display:none" onchange="invFilePicked(this)">
           <div class="qf-err" id="iv-err" style="display:none"></div>
@@ -577,6 +585,7 @@ function invFilePicked(input){
   const txt  = document.getElementById('iv-drop-txt');
   if(txt)  txt.textContent = f ? f.name : (INV_FORM.attachment ? t('مرفق محفوظ — اضغط للاستبدال') : t('صورة الفاتورة (اختياري)'));
   if(drop) drop.classList.toggle('has', !!(f || INV_FORM.attachment));
+  if(drop) drop.classList.add('attach-zone');
 }
 function invShowErr(msg){
   const box = document.getElementById('iv-err');
@@ -785,7 +794,7 @@ function invRenderPicker(selected){
     <div class="acd-card" role="dialog" aria-modal="true" style="width:min(620px,100%);max-height:92vh;display:flex;flex-direction:column">
       <div class="acd-head">
         <div class="acd-title">${t('اختيار من الفواتير المسجّلة')}</div>
-        <div class="acd-cap">Link Registered Invoices</div>
+        <div class="acd-cap">Supplier Invoices</div>
       </div>
       <div class="acd-body" style="overflow:auto">
         <div class="pk-search"><input type="search" id="pk-q" value="${escAttr(INV_PICK_Q)}"
