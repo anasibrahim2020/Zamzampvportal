@@ -71,19 +71,20 @@
 /* ── نموذج التسجيل — نفس لغة نماذج الوثيقة ──
    الحقل سطر تحته خط، والعنوان عربي نيلي فوق إنجليزي تيل كابيتال.
    الإنجليزي بيختفي لوحده في الواجهة الإنجليزية بقاعدة html.lang-en .en. */
-.qf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;}
+.qf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 22px;}
 .qf-f{display:flex;flex-direction:column;gap:2px;min-width:0;}
 .qf-f.full,.acd-card .sec-title.full{grid-column:1/-1;}
-.acd-card .sec-title{margin:6px 0 2px;}
-.acd-card .sec-title:first-child{margin-top:0;}
-.qf-f label{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:2px;line-height:1.3;}
+#app-confirm-overlay .acd-card .acd-body{padding:22px 26px 14px;}
+.acd-card .sec-title{margin:10px 0 2px;padding-bottom:7px;}
+.acd-card .qf-grid>.sec-title:first-child{margin-top:0;}
+.qf-f label{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px;line-height:1.3;}
 .qf-f label .ar{font-size:11px;font-weight:700;color:var(--indigo);}
 .qf-f label .en{font-family:'Inter',sans-serif;font-size:9px;font-weight:700;color:var(--teal);
   letter-spacing:1px;text-transform:uppercase;}
 .qf-f label .req{font-style:normal;font-weight:700;color:var(--stop);}
 .acd-card .qf-f input:not([type=checkbox]):not([type=radio]):not([type=file]),
 .acd-card .qf-f select{width:100%;border:none;border-bottom:2px solid var(--border);
-  border-radius:0;padding:6px 2px;height:auto;background:transparent;outline:none;
+  border-radius:0;padding:9px 2px;height:auto;background:transparent;outline:none;
   font-family:'PlexAr','Inter',sans-serif;font-size:13px;line-height:1.45;color:var(--ink);
   font-weight:600;transition:border-color .15s;box-shadow:none;}
 .acd-card .qf-f input:not([type=checkbox]):not([type=radio]):focus,
@@ -92,21 +93,27 @@
 .acd-card .qf-f input[type=date]{direction:ltr;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
 .acd-card .qf-f input[type=date]::-webkit-calendar-picker-indicator{opacity:.45;cursor:pointer;margin-inline-start:auto;}
 .qf-f input.ltr{direction:ltr;text-align:start;}
-/* علامة زمزم في رأس النافذة — نفس إيقاع ترويسة الوثيقة */
-.acd-head.iv-head{display:flex;align-items:center;justify-content:space-between;gap:16px;}
-.iv-mark{flex:0 0 auto;height:38px;display:flex;align-items:center;}
+/* رأس النافذة = ترويسة الوثيقة: تدرّج زمزم، والعلامة على خلفية بيضاء.
+   مقصور على نوافذ الفواتير وحدها، فنوافذ الموقع التانية زي ما هي. */
+#app-confirm-overlay .acd-head.iv-head{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  background:var(--grad) !important;background-image:var(--grad) !important;
+  border-bottom:none !important;padding:18px 26px !important;}
+#app-confirm-overlay .acd-head.iv-head *{color:#fff !important;}
+#app-confirm-overlay .acd-head.iv-head .acd-title{font-size:19px;line-height:1.3;}
+#app-confirm-overlay .acd-head.iv-head .acd-cap{opacity:.82;margin-top:5px;}
+.iv-mark{flex:0 0 auto;height:46px;background:#fff;border-radius:8px;padding:5px 9px;display:flex;align-items:center;}
 .iv-mark img{height:100%;width:auto;display:block;}
-.qf-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;align-items:center;}
+.qf-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;align-items:center;}
 .qf-chip{background:var(--n0);border:1px solid var(--border);border-radius:999px;padding:6px 12px;
   font-family:'PlexAr',sans-serif;font-size:11px;font-weight:700;color:var(--txt-2);cursor:pointer;}
 .qf-chip:hover{background:var(--indigo-t);}
 .qf-chip.on{background:var(--indigo-t);border-color:var(--indigo);color:var(--indigo-d);}
 /* منطقة المرفق ومفاتيح مركز التكلفة: نفس عناصر طلب الصرف،
    فبتاخد شكلها من styles.css وما بنزوّدش هنا غير الموضع. */
-.acd-card .attach-zone.iv-drop{grid-column:1/-1;margin-bottom:0;padding:14px;}
+.acd-card .attach-zone.iv-drop{grid-column:1/-1;margin-bottom:0;margin-top:4px;padding:18px;}
 .acd-card .attach-zone.iv-drop.has{border-style:solid;border-color:var(--teal);background:var(--tint-g);}
 .acd-card .attach-zone.iv-drop .big svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;}
-.acd-card .iv-cost-actions{flex-wrap:wrap;margin-bottom:0;margin-top:2px;}
+.acd-card .iv-cost-actions{flex-wrap:wrap;margin-bottom:0;margin-top:10px;gap:14px;}
 .acd-card .iv-cost-actions .add-row-btn,.acd-card .iv-cost-actions .cost-toggle{min-width:0;min-height:38px;}
 .acd-card .iv-cost-actions .add-row-btn{padding:8px 14px;font-size:12px;margin-bottom:0;}
 .acd-card .iv-cost-actions .add-row-btn svg{width:13px;height:13px;stroke:currentColor;stroke-width:2;fill:none;}
@@ -114,9 +121,9 @@
 .acd-card .iv-cost-actions .cost-toggle input{width:16px;height:16px;padding:0;flex:0 0 auto;}
 .qf-err{grid-column:1/-1;background:var(--stop-bg);border:1px solid var(--stop-line);border-radius:10px;
   padding:9px 12px;font-size:11.5px;font-weight:700;color:var(--stop);}
-.qf-cc-row{display:grid;grid-template-columns:minmax(0,1fr) 130px 30px;gap:10px;align-items:end;margin-bottom:10px;}
+.qf-cc-row{display:grid;grid-template-columns:minmax(0,1fr) 140px 30px;gap:14px;align-items:end;margin-bottom:14px;}
 .acd-card .qf-cc-row input{width:100%;border:none;border-bottom:2px solid var(--border);border-radius:0;
-  padding:6px 2px;background:transparent;outline:none;font-family:'PlexAr','Inter',sans-serif;
+  padding:9px 2px;background:transparent;outline:none;font-family:'PlexAr','Inter',sans-serif;
   font-size:13px;font-weight:600;color:var(--ink);transition:border-color .15s;}
 .acd-card .qf-cc-row input:focus{border-bottom-color:var(--teal);}
 .qf-cc-row .del{background:transparent;border:none;border-bottom:2px solid transparent;height:30px;

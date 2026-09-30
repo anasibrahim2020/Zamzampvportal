@@ -17,6 +17,16 @@
         return true;
       }
     }
+    /* نافذة تسجيل فاتورة مورّد مفتوحة وفيها كتابة: نفس الحماية.
+       من غير ده التحديث التلقائي كان يعيد التحميل ويضيّع اللي اتكتب. */
+    var ivf = document.querySelectorAll('#app-confirm-overlay .qf-f input, #app-confirm-overlay .qf-cc-row input');
+    for(var k=0;k<ivf.length;k++){
+      var iel = ivf[k], iv = (iel.value||'').trim();
+      if(!iv) continue;
+      if(iel.type==='checkbox'||iel.type==='radio'||iel.type==='date'||iel.type==='file') continue;
+      if(iv === (iel.getAttribute('value')||'').trim()) continue;
+      return true;
+    }
     return false;
   }
   function applyUpdate(){ try{ location.reload(); }catch(e){} }
