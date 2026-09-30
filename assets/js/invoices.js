@@ -95,6 +95,31 @@ function invCostLabel(row){
   return { text: cc.length > 1 ? first + ' +' + (cc.length-1) : first, gen:false };
 }
 
+/* مركز تكلفة واحد = الفاتورة كلها على عميل واحد، فالنصيب هو المبلغ كله.
+   بنملاه لوحده بدل ما الموظف يعيد كتابة نفس الرقم — ولو كتبه بإيده ما بنلمسوش. */
+function invAutoShare(){
+  if(!INV_FORM || INV_FORM.general) return;
+  const rows = [...document.querySelectorAll('#iv-cc .qf-cc-row')];
+  if(rows.length !== 1) return;
+  const inv = rows[0].querySelector('.cc-inv');
+  const amt = rows[0].querySelector('.cc-amt');
+  if(!inv || !amt) return;
+  if(!String(inv.value||'').trim()) return;
+  if(parseAmt(amt.value) > 0) return;
+  const total = parseAmt(document.getElementById('iv-amt')?.value || 0);
+  if(!(total > 0)) return;
+  amt.value = formatMoney(total);
+  invRenderRemainder();
+}
+/* نفس القاعدة وقت الربط، للفواتير اللي اتسجّلت قبل كده بنصيب فاضي */
+function invCostRowsFor(row){
+  const cc = invCostCenters(row);
+  if(cc.length === 1 && cc[0].inv && !(Number(cc[0].amt) > 0)){
+    return [{ inv: cc[0].inv, amt: Number(row.amount) || 0 }];
+  }
+  return cc;
+}
+
 /* ── الحالة — بتتحسب، مش بتتكتب بإيد حد ── */
 function invLinkedRequest(row){
   if(!row || !row.request_id) return null;
@@ -494,6 +519,7 @@ function invFmtField(el){
   el.value = fmtAmt(el.value);
   const np = Math.max(0, pos + (el.value.length - oldLen));
   el.setSelectionRange(np, np);
+  if(el.id === 'iv-amt') invAutoShare();
   invRenderRemainder();
 }
 function invRenderDueChips(){
@@ -556,7 +582,7 @@ function invRenderCc(){
   if(INV_FORM.general){ box.innerHTML = ''; invRenderRemainder(); return; }
   box.innerHTML = INV_FORM.cc.map((c,i)=>`
     <div class="qf-cc-row">
-      <input type="text" class="cc-inv ltr" value="${escAttr(c.inv||'')}" placeholder="INV/2026/0000">
+      <input type="text" class="cc-inv ltr" value="${escAttr(c.inv||'')}" placeholder="INV/2026/0000" onchange="invAutoShare()">
       <input type="text" class="cc-amt ltr" value="${escAttr(c.amt||'')}" inputmode="decimal"
         placeholder="${escAttr(t('النصيب'))}" data-i18n-attr="placeholder|النصيب" oninput="invFmtField(this)">
       <button type="button" class="del" onclick="invDelCc(${i})" aria-label="${escAttr(t('حذف'))}">✕</button>
@@ -619,6 +645,7 @@ async function saveInvoice(){
   const cc = general ? [] : INV_FORM.cc
     .map(c=>({ inv:String(c.inv||'').trim(), amt:parseAmt(c.amt) }))
     .filter(c=> c.inv || c.amt);
+  if(cc.length === 1 && cc[0].inv && !(cc[0].amt > 0)) cc[0].amt = amount;
   const ccSum = cc.reduce((a,c)=>a+c.amt, 0);
   if(ccSum - amount > 0.009){
     invShowErr(t('مجموع مراكز التكلفة أكبر من مبلغ الفاتورة.'));
@@ -885,7 +912,7 @@ function invApplyPick(){
   // الحد الأقصى لصفوف الطلب — نفس الحد الموجود أصلاً
   const supEmpty = invRowIsEmpty('#supplier-rows tr', ['.s-name','.s-inv','.s-amt']);
   const cliEmpty = invRowIsEmpty('#client-rows tr', ['.c-inv','.c-amt']);
-  const ccCount  = picked.reduce((a,r)=> a + (r.is_general ? 0 : invCostCenters(r).filter(c=>c.inv||c.amt).length), 0);
+  const ccCount  = picked.reduce((a,r)=> a + (r.is_general ? 0 : invCostRowsFor(r).filter(c=>c.inv||c.amt).length), 0);
   const after = getDisbTableRowsCount() - (supEmpty?1:0) - (cliEmpty?1:0) + picked.length + ccCount;
   if(after > MAX_DISB_TABLE_ROWS){
     document.getElementById('app-confirm-overlay')?.remove();
@@ -905,7 +932,7 @@ function invApplyPick(){
   picked.forEach(r=>{
     addSupplierRow(escAttr(r.supplier||''), escAttr(r.inv_no||''), formatMoney(r.amount), true);
     if(!r.is_general){
-      invCostCenters(r).forEach(c=>{
+      invCostRowsFor(r).forEach(c=>{
         if(!c.inv && !c.amt) return;
         anyCc = true;
         addClientRow(escAttr(c.inv||''), c.amt ? formatMoney(c.amt) : '', true);
