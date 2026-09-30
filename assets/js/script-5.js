@@ -437,10 +437,10 @@ async function loadSupplierNames(){
 /* ══════════════════════════════════════════
    NAVIGATION
 ══════════════════════════════════════════ */
-const APP_PAGES = ['home','cancel','disb','arc'];
+const APP_PAGES = ['home','cancel','disb','arc','inv'];
 // الصفحة الأم لكل شاشة — الرجوع بيوديك لها.
 // الرئيسية مالهاش أم، فالرجوع منها بيخرج من التطبيق زي ما هو متوقّع.
-let PAGE_PARENT = { home:null, disb:'home', cancel:'home', arc:'home' };
+let PAGE_PARENT = { home:null, disb:'home', cancel:'home', arc:'home', inv:'home' };
 function setFormParent(parent){ PAGE_PARENT.disb = parent; PAGE_PARENT.cancel = parent; }
 function currentPage(){
   return APP_PAGES.find(x=>document.getElementById('page-'+x)?.classList.contains('on')) || 'home';
@@ -456,6 +456,8 @@ function showPage(p, opts){
   document.getElementById('nav-arc').classList.toggle('on', p==='arc');
   if (p==='arc') loadArchive();
   if (p==='home') loadHome();
+  if (p==='inv'  && typeof loadInvoices === 'function') loadInvoices();
+  if (p==='disb' && typeof onDisbPageShown === 'function') onDisbPageShown();
   window.scrollTo(0,0);
   if(!(opts && opts.fromHistory)){
     try{
@@ -1657,6 +1659,12 @@ async function persistRequestRecord(kind, rec){
         EDIT_ID = data.id;
         EDIT_REQUEST = { ...rec, id:data.id };
       }
+      // ربط فواتير الموردين المختارة بالطلب. بيتمّ في جدول الفواتير وحده،
+      // فلو فشل ما بيأثرش على الطلب المحفوظ بأي شكل.
+      if(kind === 'disb' && typeof syncLinkedInvoices === 'function'){
+        try{ await syncLinkedInvoices(EDIT_ID, rec.req_no); }
+        catch(err){ console.error(err); }
+      }
     }
     else { console.error(error); 
       let msg = t('تعذّر الحفظ — تأكّد من تسجيل دخولك ومن أن جدول requests مهيّأ في Supabase.');
@@ -2840,6 +2848,7 @@ function clearDisb(){
   if(row) row.style.display = (CURRENT && CURRENT.role==='accountant') ? 'flex' : 'none';
   EDIT_ID=null;
   EDIT_REQUEST=null;
+  if(typeof invClearPicked === 'function') invClearPicked();
   updateFormMode('disb');
   refreshNextRequestNo('disb');
 }

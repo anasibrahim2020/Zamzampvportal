@@ -1,0 +1,158 @@
+/* ══════════════════════════════════════════════════════════
+   سجل فواتير الموردين — الباب الجديد
+   ملف منفصل عن styles.css عن قصد: مفيش سطر واحد هنا
+   بيلمس أوامر الطباعة أو شكل طلب الصرف. الإخفاء وقت الطباعة
+   بيتمّ بالكلاسات الموجودة أصلاً (.no-print و .page:not(.on)).
+══════════════════════════════════════════════════════════ */
+
+/* ── لوحة الأرقام ── */
+.iv-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px;}
+.iv-kpi{background:var(--n0);border:1px solid var(--border);border-radius:12px;padding:12px 14px;
+  border-inline-start:3px solid var(--n4);display:flex;flex-direction:column;gap:4px;}
+.iv-kpi .lbl{font-size:11px;font-weight:700;color:var(--txt-3);}
+.iv-kpi .val{font-size:21px;font-weight:700;color:var(--ink);direction:ltr;text-align:start;font-variant-numeric:tabular-nums;}
+.iv-kpi .val em{font-style:normal;font-size:10px;font-weight:700;color:var(--txt-3);margin-inline-start:4px;}
+.iv-kpi .sub{font-size:11px;font-weight:600;color:var(--txt-3);}
+.iv-kpi.all{border-inline-start-color:var(--indigo);} .iv-kpi.all .val{color:var(--indigo);}
+.iv-kpi.week{border-inline-start-color:var(--wait);} .iv-kpi.week .val{color:var(--wait);}
+.iv-kpi.late{border-inline-start-color:var(--stop);} .iv-kpi.late .val{color:var(--stop);}
+.iv-kpi.link{border-inline-start-color:var(--teal);} .iv-kpi.link .val{color:var(--teal);}
+
+/* ── شريط الأدوات ── */
+.iv-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line-2);}
+.iv-tools input,.iv-tools select{font-size:12px !important;height:34px;padding:0 10px;}
+.iv-tools .grow{flex:1 1 200px;min-width:0;}
+
+/* ── صف الفاتورة ── */
+.ivrow{display:grid;grid-template-columns:118px minmax(0,1fr) 148px 116px 124px 132px 104px;
+  align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line-2);cursor:pointer;}
+.ivrow:last-child{border-bottom:none;}
+.ivrow:hover{background:var(--indigo-t);}
+.ivrow-no{font-size:13px;font-weight:700;color:var(--indigo);direction:ltr;text-align:start;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ivrow-main{min-width:0;}
+.ivrow-main b{display:block;font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ivrow-main span{display:block;font-size:11px;font-weight:600;color:var(--txt-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ivrow-cc{font-size:11px;font-weight:700;color:var(--teal);direction:ltr;text-align:start;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ivrow-cc.gen{color:var(--txt-3);}
+.ivrow-due{font-size:11px;font-weight:700;color:var(--txt-2);}
+.ivrow-due i{display:block;font-style:normal;font-size:10px;font-weight:700;color:var(--txt-3);}
+.ivrow-due.is-late{color:var(--stop);} .ivrow-due.is-late i{color:var(--stop);}
+.ivrow-amt{font-size:15px;font-weight:700;color:var(--ink);direction:ltr;text-align:end;
+  font-variant-numeric:tabular-nums;justify-self:end;}
+.ivrow-amt em{font-style:normal;font-size:10px;font-weight:700;color:var(--txt-3);}
+.ivrow-st{justify-self:end;}
+.ivrow-st .lk{display:block;margin-top:3px;font-size:10px;font-weight:700;color:var(--teal);direction:ltr;text-align:end;}
+.ivrow-act{justify-self:end;}
+.ivrow.is-paid{opacity:.62;}
+
+/* ── تجميع بالمورّد ── */
+.iv-grp{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--tint);border-bottom:1px solid var(--line-2);}
+.iv-grp b{font-size:13px;font-weight:700;color:var(--n8);}
+.iv-grp .cnt{font-size:10px;font-weight:700;color:var(--n0);background:var(--n5);border-radius:999px;padding:2px 7px;}
+.iv-grp .sum{margin-inline-start:auto;font-size:15px;font-weight:700;color:var(--indigo);direction:ltr;font-variant-numeric:tabular-nums;}
+.iv-grp .sum em{font-style:normal;font-size:10px;color:var(--txt-3);}
+
+/* ── الالتزامات القادمة ── */
+.iv-bars{padding:14px 16px;display:flex;flex-direction:column;gap:12px;}
+.iv-bar-line{display:grid;grid-template-columns:130px minmax(0,1fr) 132px;align-items:center;gap:12px;}
+.iv-bar-line .nm{font-size:12px;font-weight:700;color:var(--txt-2);}
+.iv-bar-line .nm i{display:block;font-style:normal;font-size:10px;color:var(--txt-3);}
+.iv-bar-track{height:10px;border-radius:999px;background:var(--n2);overflow:hidden;}
+.iv-bar-fill{height:100%;border-radius:999px;background:var(--indigo);}
+.iv-bar-line.w0 .iv-bar-fill{background:var(--stop);}
+.iv-bar-line.w1 .iv-bar-fill{background:var(--wait);}
+.iv-bar-line.w2 .iv-bar-fill{background:var(--teal);}
+.iv-bar-line.w3 .iv-bar-fill{background:var(--n4);}
+.iv-bar-line .vl{font-size:14px;font-weight:700;color:var(--ink);direction:ltr;text-align:end;font-variant-numeric:tabular-nums;}
+.iv-bar-line .vl em{font-style:normal;font-size:10px;color:var(--txt-3);}
+
+/* ── نموذج التسجيل ── */
+.qf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.qf-f{display:flex;flex-direction:column;gap:5px;}
+.qf-f.full{grid-column:1/-1;}
+.qf-f label{font-size:11px;font-weight:700;color:var(--txt-2);}
+.qf-f label em{font-style:normal;color:var(--stop);}
+.qf-f label small{font-weight:700;color:var(--txt-3);margin-inline-start:4px;direction:ltr;unicode-bidi:isolate;display:inline-block;}
+.qf-f input,.qf-f select{font-size:13px !important;height:40px;}
+.qf-f input.ltr{direction:ltr;text-align:start;}
+.qf-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;align-items:center;}
+.qf-chip{background:var(--n0);border:1px solid var(--border);border-radius:999px;padding:6px 12px;
+  font-family:'PlexAr',sans-serif;font-size:11px;font-weight:700;color:var(--txt-2);cursor:pointer;}
+.qf-chip:hover{background:var(--indigo-t);}
+.qf-chip.on{background:var(--indigo-t);border-color:var(--indigo);color:var(--indigo-d);}
+.qf-drop{grid-column:1/-1;border:1px dashed var(--n4);border-radius:10px;padding:14px;text-align:center;
+  font-size:12px;font-weight:700;color:var(--txt-3);background:var(--n1);cursor:pointer;}
+.qf-drop svg{width:18px;height:18px;stroke:var(--indigo-l);stroke-width:1.8;fill:none;display:block;margin:0 auto 6px;}
+.qf-drop.has{border-style:solid;border-color:var(--teal);color:var(--teal);background:var(--teal-t);}
+.qf-err{grid-column:1/-1;background:var(--stop-bg);border:1px solid var(--stop-line);border-radius:10px;
+  padding:9px 12px;font-size:11.5px;font-weight:700;color:var(--stop);}
+.qf-cc-row{display:grid;grid-template-columns:minmax(0,1fr) 130px 36px;gap:8px;align-items:center;margin-bottom:8px;}
+.qf-cc-row .del{background:transparent;border:1px solid var(--border);border-radius:8px;height:40px;
+  cursor:pointer;color:var(--txt-3);font-size:15px;font-family:inherit;}
+.qf-cc-row .del:hover{background:var(--stop-bg);color:var(--stop);border-color:var(--stop-line);}
+.qf-rem{margin-inline-start:auto;font-size:11px;font-weight:700;color:var(--green);}
+.qf-rem.bad{color:var(--stop);}
+
+/* ── منتقي الفواتير داخل طلب الصرف ── */
+.pk-row{display:grid;grid-template-columns:22px 108px minmax(0,1fr) 128px 116px;gap:10px;align-items:center;
+  padding:10px 4px;border-bottom:1px solid var(--line-2);cursor:pointer;}
+.pk-row:last-child{border-bottom:none;}
+.pk-row input{width:17px;height:17px;accent-color:var(--indigo);}
+.pk-no{font-size:12px;font-weight:700;color:var(--indigo);direction:ltr;text-align:start;}
+.pk-main b{display:block;font-size:12.5px;font-weight:700;color:var(--ink);}
+.pk-main span{display:block;font-size:10.5px;font-weight:600;color:var(--txt-3);}
+.pk-cc{font-size:10.5px;font-weight:700;color:var(--teal);direction:ltr;text-align:start;}
+.pk-amt{font-size:13px;font-weight:700;direction:ltr;text-align:end;font-variant-numeric:tabular-nums;color:var(--ink);}
+.pk-amt em{font-style:normal;font-size:9.5px;color:var(--txt-3);}
+.pk-list{max-height:46vh;overflow:auto;}
+.pk-sum{display:flex;align-items:center;gap:8px;padding:11px 14px;margin-top:10px;background:var(--tint-g);
+  border:1px solid var(--green-l);border-radius:10px;}
+.pk-sum span{font-size:11.5px;font-weight:700;color:var(--indigo);}
+.pk-sum b{margin-inline-start:auto;font-size:17px;font-weight:700;color:var(--green);direction:ltr;font-variant-numeric:tabular-nums;}
+.pk-search{margin-bottom:8px;}
+.pk-search input{font-size:12px !important;height:36px;}
+.pk-empty{padding:26px 12px;text-align:center;font-size:12px;font-weight:700;color:var(--txt-3);}
+
+/* ── شريط الاستيراد داخل طلب الصرف ── */
+.iv-import{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--indigo-t);
+  border:1px solid var(--indigo-l);border-radius:10px;padding:10px 14px;margin-bottom:10px;}
+.iv-import p{margin:0;font-size:11.5px;font-weight:700;color:var(--indigo-d);}
+.iv-import svg.lead{width:17px;height:17px;stroke:var(--indigo);stroke-width:2;fill:none;flex:0 0 auto;}
+.iv-import .hbtn{margin-inline-start:auto;}
+.lk-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;color:var(--teal);
+  background:var(--teal-t);border:1px solid var(--teal-l);border-radius:999px;padding:2px 7px;
+  margin-inline-start:6px;vertical-align:middle;}
+.lk-badge svg{width:9px;height:9px;stroke:currentColor;stroke-width:2.4;fill:none;}
+
+@media (max-width:900px){
+  .iv-kpis{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .ivrow{grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:'no st' 'main main' 'cc due' 'amt act';gap:6px 10px;padding:12px;}
+  .ivrow-no{grid-area:no;}
+  .ivrow-main{grid-area:main;}
+  .ivrow-cc{grid-area:cc;}
+  .ivrow-due{grid-area:due;justify-self:end;text-align:end;}
+  .ivrow-amt{grid-area:amt;justify-self:start;text-align:start;}
+  .ivrow-st{grid-area:st;justify-self:end;}
+  .ivrow-act{grid-area:act;justify-self:end;}
+  .qf-grid{grid-template-columns:1fr;}
+  .iv-bar-line{grid-template-columns:110px minmax(0,1fr);grid-template-areas:'nm vl' 'tr tr';gap:6px 10px;}
+  .iv-bar-line .nm{grid-area:nm;}
+  .iv-bar-line .vl{grid-area:vl;}
+  .iv-bar-track{grid-area:tr;}
+  .pk-row{grid-template-columns:22px minmax(0,1fr) auto;
+    grid-template-areas:'ck no amt' 'ck main main' 'ck cc cc';gap:4px 10px;}
+  .pk-row input{grid-area:ck;align-self:start;margin-top:3px;}
+  .pk-no{grid-area:no;}
+  .pk-main{grid-area:main;}
+  .pk-cc{grid-area:cc;}
+  .pk-amt{grid-area:amt;}
+  .qf-cc-row{grid-template-columns:minmax(0,1fr) 110px 36px;}
+  .iv-import .hbtn{margin-inline-start:0;width:100%;justify-content:center;}
+}
+@media (pointer:coarse),(max-width:640px){
+  .qf-chip{min-height:36px;}
+  .iv-tools input,.iv-tools select{height:40px;}
+}
