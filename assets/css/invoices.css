@@ -18,10 +18,27 @@
 .iv-kpi.late{border-inline-start-color:var(--stop);} .iv-kpi.late .val{color:var(--stop);}
 .iv-kpi.link{border-inline-start-color:var(--teal);} .iv-kpi.link .val{color:var(--teal);}
 
-/* ── شريط الأدوات ── */
-.iv-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line-2);}
-.iv-tools input,.iv-tools select{font-size:12px !important;height:34px;padding:0 10px;}
-.iv-tools .grow{flex:1 1 200px;min-width:0;}
+/* ── شريط الأدوات — نفس فلاتر الأرشيف بالحرف ── */
+.iv-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  padding:12px 16px;border-bottom:1px solid var(--line-2);}
+/* البحث زي بحث الأرشيف، والقوائم بتاخد كلاس الموقع arc-sel-f نفسه */
+.iv-tools input{
+  border:1px solid var(--indigo-l);
+  border-radius:8px;
+  padding:8px 12px;
+  height:38px;
+  font-family:'PlexAr',sans-serif;
+  font-size:13px;
+  outline:none;
+  background:var(--n0);
+  color:var(--indigo);
+  transition:border-color .15s,box-shadow .15s;}
+.iv-tools input:focus{border-color:var(--teal);box-shadow:0 1px 2px rgba(20,24,46,.06);}
+.iv-tools input::placeholder{color:var(--txt-3);font-weight:500;}
+.iv-tools .grow{flex:1 1 240px;min-width:0;}
+.iv-tools .arc-sel-f{flex:0 1 auto;min-width:0;}
+/* زر التجميع بنفس ارتفاع الحقول عشان السطر يبقى متحاذي */
+.iv-tools .hbtn{height:38px;}
 
 /* ── صف الفاتورة ── */
 .ivrow{display:grid;grid-template-columns:118px minmax(0,1fr) 148px 116px 124px 132px 104px;
@@ -195,7 +212,14 @@
 }
 @media (pointer:coarse),(max-width:640px){
   .qf-chip{min-height:36px;}
-  .iv-tools input,.iv-tools select{height:40px;}
+  .iv-tools input{min-height:38px;}
+}
+/* على الموبايل: البحث سطر لوحده، والباقي اتنين في السطر */
+@media (max-width:640px){
+  .iv-tools{gap:8px;}
+  .iv-tools .grow{flex:1 1 100%;}
+  .iv-tools .arc-sel-f,.iv-tools .hbtn{flex:1 1 calc(50% - 4px);min-width:0;}
+  .iv-tools .hbtn{justify-content:center;}
 }
 
 /* ══════════════════════════════════════════════════════════

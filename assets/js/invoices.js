@@ -249,7 +249,7 @@ function invKpiBar(){
 
 function invToolbar(){
   const sel = (id, val, opts) =>
-    `<select id="${id}" onchange="invSetFilter('${id}', this.value)">` +
+    `<select class="arc-sel-f" id="${id}" onchange="invSetFilter('${id}', this.value)">` +
     opts.map(o=>`<option value="${o[0]}"${o[0]===val?' selected':''}>${t(o[1])}</option>`).join('') +
     '</select>';
   return `<div class="iv-tools">
