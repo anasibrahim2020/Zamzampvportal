@@ -2174,3 +2174,23 @@ html[dir=ltr] .rl-row.rl-need-proof{box-shadow:inset 4px 0 0 var(--mark-proof) !
 /* على iOS يومض مستطيل رمادي افتراضي عند اللمس. صار لدينا الآن أثر ضغط
    مصمَّم، فالوميض يزدحم معه ويبدو غريباً — نطفئه ونُبقي أثرنا. */
 html{-webkit-tap-highlight-color:transparent;}
+
+/* ══════════════════════════════════════════════════════════
+   الطلب المفتوح للقراءة فقط
+   الأزرار جوّه الوثيقة بتتعطّل فعلاً (setDocumentLocked)، بس كانت
+   شكلها زي الشغّالة بالظبط — فالواحد يضغط «إضافة فاتورة مورّد»
+   وما يحصلش حاجة ويفتكرها بايظة. القاعدة دي بتخلّي المعطّل يبان
+   معطّل. مقصورة على [data-locked="1"]، فالطلب العادي زي ما هو،
+   وكل دول مخفيين وقت الطباعة أصلاً.
+══════════════════════════════════════════════════════════ */
+.doc[data-locked="1"] .add-row-btn:disabled,
+.doc[data-locked="1"] .del-row:disabled,
+.doc[data-locked="1"] .cost-toggle input:disabled{
+  opacity:.38;
+  cursor:not-allowed;
+}
+.doc[data-locked="1"] .add-row-btn:disabled:hover{
+  background:var(--n0);
+  border-color:var(--teal);
+}
+.doc[data-locked="1"] .add-row-btn:disabled:active{transform:none;}
