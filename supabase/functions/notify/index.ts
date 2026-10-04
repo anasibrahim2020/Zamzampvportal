@@ -124,10 +124,12 @@ async function deleteSubscription(endpoint: string) {
       { method: "DELETE", headers: { apikey: SB_SERVICE, Authorization: `Bearer ${SB_SERVICE}` } });
   } catch (_e) { /* ignore */ }
 }
-async function sendPush(userName: string, title: string, body: string, url?: string) {
+async function sendPush(userName: string, title: string, body: string, url?: string, tag?: string) {
   if (!PUSH_ON || !userName) return;
   const subs = await getSubscriptions(userName);
-  const payload = JSON.stringify({ title, body, url: url || PORTAL_URL });
+  // الوسم يخلّي إشعارات العملية الواحدة (استلام أو إيداع دفعة كاملة)
+  // تحلّ محلّ بعضها على الجهاز بدل أن تتكدّس إشعارًا لكل إيصال.
+  const payload = JSON.stringify({ title, body, url: url || PORTAL_URL, tag });
   await Promise.allSettled(subs.map(async (s) => {
     try {
       await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload);
@@ -175,6 +177,104 @@ Deno.serve(async (req) => {
   const amount = amtVal != null ? amtVal.toLocaleString("en-US", { minimumFractionDigits: 2 }) : "—";
   const supplier = supplierNames(record);
   const tasks: Promise<unknown>[] = [];
+
+  // ══════════════════════════════════════════
+  //  الخزنة — cash_receipts
+  //  الويبهوك يصل لكل صف على حدة، فنستخدم وسمًا موحّدًا للعملية
+  //  حتى تظهر الدفعة إشعارًا واحدًا على الجهاز.
+  // ══════════════════════════════════════════
+  if (payload?.table === "cash_receipts") {
+    const money = (v: unknown) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n.toLocaleString("en-US", { minimumFractionDigits: 2 }) : "—";
+    };
+    const amt = money(record.amount);
+    const invNo = record.inv_no ?? "—";
+    const emp = record.created_by ?? "موظف";
+
+    // 1) الموظف سجّل كاش جديد → المحاسب + الإدارة
+    if (payload?.type === "INSERT") {
+      const subject = `Cash Received — ${invNo}`;
+      const lines = [
+        `Dear Accounts Team,`,
+        `<b>${emp}</b> has logged cash received from a client.`,
+        `<b>Client Invoice:</b> ${invNo}`,
+        `<b>Amount:</b> ${amt} QAR`,
+        `It is now held by the employee until you collect it.`,
+        `Best regards,<br/>Zamzam Hajj &amp; Umrah`,
+      ];
+      const mail = buildEmail("Cash Received", lines);
+      const wa = `💵 *Cash logged*\nEmployee: ${emp}\nInvoice: ${invNo}\nAmount: ${amt} QAR\n\n${PORTAL_URL}`;
+      for (const acc of ACCOUNTANTS) {
+        if (acc.email) tasks.push(sendEmail(acc.email, subject, mail.html, mail.text));
+        tasks.push(sendWhatsApp(acc.phone, acc.wa_apikey, wa));
+      }
+      const body = `${emp} سجّل ${amt} ر.ق — ${invNo}`;
+      for (const n of ACCOUNTANT_NAMES) tasks.push(sendPush(n, "💵 كاش جديد في الخزنة", body));
+      for (const n of VIEWER_NAMES)     tasks.push(sendPush(n, "💵 كاش جديد في الخزنة", body));
+    }
+
+    // 2) المحاسب استلم → الموظف صاحب الإيصال + الإدارة
+    if (payload?.type === "UPDATE"
+        && record.status === "with_accountant" && oldRecord?.status !== "with_accountant") {
+      const by = record.received_by ?? "المحاسب";
+      const tag = `cash-recv-${record.received_at ?? ""}-${emp}`;
+      const owner = DIRECTORY[emp];
+      if (owner) {
+        const subject = `Cash Collected — ${invNo}`;
+        const lines = [
+          `Dear ${emp},`,
+          `<b>${by}</b> has collected the cash you were holding.`,
+          `<b>Client Invoice:</b> ${invNo}`,
+          `<b>Amount:</b> ${amt} QAR`,
+          `It is no longer on your balance in the vault.`,
+          `Best regards,<br/>Zamzam Hajj &amp; Umrah`,
+        ];
+        const mail = buildEmail("Cash Collected", lines);
+        const wa = `✅ *Cash collected*\nBy: ${by}\nInvoice: ${invNo}\nAmount: ${amt} QAR\n\n${PORTAL_URL}`;
+        if (owner.email) tasks.push(sendEmail(owner.email, subject, mail.html, mail.text));
+        tasks.push(sendWhatsApp(owner.phone, owner.wa_apikey, wa));
+      }
+      tasks.push(sendPush(emp, "✅ المحاسب استلم الكاش",
+        `${by} استلم منك ${amt} ر.ق — ${invNo}`, undefined, tag));
+      for (const n of VIEWER_NAMES) {
+        tasks.push(sendPush(n, "✅ استلام كاش",
+          `${by} استلم من ${emp} ${amt} ر.ق`, undefined, `${tag}-mgmt`));
+      }
+    }
+
+    // 3) الإيداع في البنك → الإدارة (وصاحب الإيصال)
+    if (payload?.type === "UPDATE"
+        && record.status === "deposited" && oldRecord?.status !== "deposited") {
+      const depNo = record.deposit_no ?? "—";
+      const bank = record.deposit_bank ? ` — ${record.deposit_bank}` : "";
+      const by = record.deposited_by ?? "المحاسب";
+      const tag = `cash-dep-${depNo}`;
+      const subject = `Bank Deposit — ${depNo}`;
+      const lines = [
+        `Dear Management,`,
+        `<b>${by}</b> has deposited collected cash at the bank.`,
+        `<b>Deposit No:</b> ${depNo}`,
+        record.deposit_bank ? `<b>Bank:</b> ${record.deposit_bank}` : `<b>Client Invoice:</b> ${invNo}`,
+        `<b>Amount (this receipt):</b> ${amt} QAR`,
+        `The deposit slip is attached in the portal.`,
+        `Best regards,<br/>Zamzam Hajj &amp; Umrah`,
+      ];
+      const mail = buildEmail("Bank Deposit", lines);
+      const wa = `🏦 *Bank deposit*\nDeposit No: ${depNo}${bank}\nAmount: ${amt} QAR\nBy: ${by}\n\n${PORTAL_URL}`;
+      for (const name of VIEWER_NAMES) {
+        const u = DIRECTORY[name];
+        if (u?.email) tasks.push(sendEmail(u.email, subject, mail.html, mail.text));
+        if (u) tasks.push(sendWhatsApp(u.phone, u.wa_apikey, wa));
+        tasks.push(sendPush(name, "🏦 إيداع بنكي", `${depNo}${bank} — ${amt} ر.ق`, undefined, tag));
+      }
+      tasks.push(sendPush(emp, "🏦 أُودِع في البنك",
+        `${invNo} — ${amt} ر.ق ضمن ${depNo}`, undefined, `${tag}-${emp}`));
+    }
+
+    await Promise.allSettled(tasks);
+    return new Response(JSON.stringify({ ok: true, sent: tasks.length }), { headers: { "Content-Type": "application/json" } });
+  }
 
   // 1) طلب صرف جديد → المحاسب
   if (payload?.type === "INSERT" && record.doc_type === "disb") {
