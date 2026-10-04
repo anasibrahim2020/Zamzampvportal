@@ -765,7 +765,7 @@ function openHandoverForm(){
           </div>
           <div class="sec-title full"><span class="ar" data-i18n="المستلِم">${t('المستلِم')}</span><span class="en">Recipient</span></div>
           <div class="qf-f full">
-            <label><span class="ar" data-i18n="الزميل المستلِم">${t('الزميل المستلِم')}</span><span class="en">Accountant</span> <em class="req">*</em></label>
+            <label><span class="ar" data-i18n="الزميل المستلِم">${t('الزميل المستلِم')}</span><span class="en">Colleague</span> <em class="req">*</em></label>
             <select id="ho-to">${others.map(n=>`<option value="${escAttr(n)}">${escapeHtml(personName(n))}</option>`).join('')}</select>
           </div>
           <div class="qf-f full">
