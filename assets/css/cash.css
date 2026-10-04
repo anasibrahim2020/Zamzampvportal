@@ -73,3 +73,24 @@
   .cash-act{grid-area:act;justify-self:start;}
   .cash-selbar .hbtn{margin-inline-start:0;flex:1 1 100%;justify-content:center;}
 }
+
+/* ── حالة «قيد التسليم» ── */
+.st-move{color:var(--indigo);background:var(--indigo-t);border-color:var(--indigo-l);}
+
+/* ── لوحة تسليم وارد بانتظار القبول ── */
+.ho-in{border-color:var(--indigo-l);}
+.ho-in .h-sec-hd{background:var(--indigo-t);border-bottom-color:var(--indigo-l);}
+.ho-body{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;}
+.ho-sum{font-size:13px;font-weight:700;color:var(--txt-2);}
+.ho-sum b{font-size:17px;color:var(--indigo);direction:ltr;font-variant-numeric:tabular-nums;
+  margin-inline-start:6px;}
+.ho-acts{display:flex;align-items:center;gap:8px;margin-inline-start:auto;flex-wrap:wrap;}
+
+/* تلميح أسفل نافذة التسليم */
+.opt-hint{grid-column:1/-1;margin:2px 0 0;font-size:11.5px;font-weight:600;color:var(--txt-2);
+  line-height:1.7;border-inline-start:3px solid var(--indigo-l);padding-inline-start:11px;}
+
+@media (max-width:640px){
+  .ho-acts{margin-inline-start:0;width:100%;}
+  .ho-acts .hbtn{flex:1 1 calc(50% - 4px);justify-content:center;}
+}

@@ -15,7 +15,8 @@ const CASH_ICONS = {
   check:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>',
   bank:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-6 9 6"></path><path d="M5 10v9"></path><path d="M19 10v9"></path><path d="M9 10v9"></path><path d="M15 10v9"></path><path d="M3 20h18"></path></svg>',
   excel:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg>',
-  clip:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg>'
+  clip:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg>',
+  move:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 4 7l4 4"></path><path d="M4 7h16"></path><path d="m16 21 4-4-4-4"></path><path d="M20 17H4"></path></svg>'
 };
 
 /* ── الصلاحيات: المحاسب يستلم ويودع، والإدارة تعرض فقط ── */
@@ -29,12 +30,33 @@ function cashCanEdit(row){
   return row.created_by === CURRENT.name;
 }
 
+// الحائز الحالي للنقدية: من انتقلت إليه بالنقل، وإلا صاحب المرحلة —
+// الموظف الذي استلمها من العميل قبل استلام المحاسب، والمحاسب بعده.
+function cashHolder(row){
+  if(!row) return '';
+  if(row.held_by) return row.held_by;
+  return (row.status === 'with_employee') ? (row.created_by || '') : (row.received_by || '');
+}
+function cashPending(row){ return !!row && row.handover_state === 'pending'; }
+// من يصحّ نقل العهدة إليه: زملاء المرحلة نفسها، عدا نفسي
+function cashPeers(){
+  try{
+    const role = CURRENT && CURRENT.role;
+    if(role !== 'sales' && role !== 'accountant') return [];
+    return Object.values(USER_MAP)
+      .filter(u => u.role === role && u.name !== CURRENT.name)
+      .map(u => u.name);
+  }catch(e){ return []; }
+}
+
 function cashStatus(row){
   if(!row) return { key:'with_employee', label:'مع الموظف', cls:'st-emp' };
   if(row.status === 'deposited')       return { key:'deposited',       label:'مودعة',       cls:'st-dep'  };
-  if(row.status === 'with_accountant') return { key:'with_accountant', label:'مع المحاسب',  cls:'st-acct' };
+  if(cashPending(row))                 return { key:'handover', label:'قيد التسليم', cls:'st-move' };
+  if(row.status === 'with_accountant') return { key:'with_accountant', label:'مع المحاسب', cls:'st-acct' };
   return { key:'with_employee', label:'مع الموظف', cls:'st-emp' };
 }
+
 // ما زال ضمن التحصيل: لم يصل البنك بعد
 function cashInVault(row){ return cashStatus(row).key !== 'deposited'; }
 
@@ -99,15 +121,18 @@ function cashRenderHead(){
    العرض
 ══════════════════════════════════════════ */
 function cashEmployees(){
-  return [...new Set(CASH_ROWS.map(r=>String(r.created_by||'').trim()).filter(Boolean))].sort();
+  const names = [];
+  CASH_ROWS.forEach(r=>{ names.push(String(r.created_by||'').trim(), String(cashHolder(r)||'').trim()); });
+  return [...new Set(names.filter(Boolean))].sort();
 }
 function cashFiltered(){
   const q = CASH_FILTER.q.trim().toLowerCase();
   let list = CASH_ROWS.filter(r=>{
     const k = cashStatus(r).key;
     if(CASH_FILTER.status === 'open'  && k === 'deposited')        return false;
-    if(CASH_FILTER.status === 'emp'   && k !== 'with_employee')    return false;
-    if(CASH_FILTER.status === 'acct'  && k !== 'with_accountant')  return false;
+    if(CASH_FILTER.status === 'emp'   && r.status !== 'with_employee')   return false;
+    if(CASH_FILTER.status === 'acct'  && r.status !== 'with_accountant') return false;
+    if(CASH_FILTER.status === 'move'  && k !== 'handover')         return false;
     if(CASH_FILTER.status === 'dep'   && k !== 'deposited')        return false;
     if(CASH_FILTER.emp && String(r.created_by||'') !== CASH_FILTER.emp) return false;
     if(q){
@@ -128,7 +153,7 @@ function cashKpis(){
   const sum  = rows => rows.reduce((a,r)=>a+(Number(r.amount)||0), 0);
   const vault = CASH_ROWS.filter(cashInVault);
   const withEmp  = vault.filter(r=>cashStatus(r).key === 'with_employee');
-  const withAcct = vault.filter(r=>cashStatus(r).key === 'with_accountant');
+  const withAcct = vault.filter(r=>r.status === 'with_accountant');
   const now = new Date();
   const monthKey = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
   const deposited = CASH_ROWS.filter(r=> cashStatus(r).key === 'deposited'
@@ -156,8 +181,9 @@ function cashCountLabel(n){
 /* رصيد كل موظف: ما لم يستلمه المحاسب منه بعد */
 function cashPerEmployee(){
   const map = {};
-  CASH_ROWS.filter(r=>cashStatus(r).key === 'with_employee').forEach(r=>{
-    const k = String(r.created_by||'—');
+  // الحائز هو الأساس: لو سلّمها زميله وقبِلها، تنتقل إلى رصيد الزميل
+  CASH_ROWS.filter(r=>r.status === 'with_employee').forEach(r=>{
+    const k = String(cashHolder(r) || r.created_by || '—');
     map[k] = map[k] || { total:0, count:0 };
     map[k].total += Number(r.amount)||0;
     map[k].count += 1;
@@ -190,7 +216,8 @@ function cashToolbar(){
       placeholder="${escAttr(t('بحث برقم الفاتورة أو الموظف'))}">
     ${sel('cash-emp', CASH_FILTER.emp, [['','كل الموظفين']].concat(cashEmployees().map(n=>[n, personName(n)])))}
     ${sel('cash-status', CASH_FILTER.status,
-      [['open','لم يُودَع'],['all','الكل'],['emp','مع الموظفين'],['acct','مع المحاسب'],['dep','مودعة']])}
+      [['open','لم يُودَع'],['all','الكل'],['emp','مع الموظفين'],['acct','مع المحاسب'],
+       ['move','قيد التسليم'],['dep','مودعة']])}
     ${sel('cash-sort', CASH_FILTER.sort, [['new','ترتيب: الأحدث'],['old','الأقدم'],['amount','الأعلى مبلغًا']])}
   </div>`;
 }
@@ -220,15 +247,36 @@ function cashRow(row){
     <span class="cash-amt">${formatMoney(row.amount)} <em>${t('ر.ق')}</em></span>
     <span class="cash-st"><span class="arc-status ${st.cls}"><i></i>${t(st.label)}</span>
       ${row.deposit_no ? `<span class="lk">${escapeHtml(row.deposit_no)}</span>`
-        : (st.key==='with_accountant' && row.received_by ? `<span class="lk">${escapeHtml(personName(row.received_by))}</span>` : '')}</span>
+        : st.key==='handover' ? `<span class="lk">${t('إلى')} ${escapeHtml(personName(row.handover_to||''))}</span>`
+        : (st.key==='with_accountant' && cashHolder(row) ? `<span class="lk">${escapeHtml(personName(cashHolder(row)))}</span>` : '')}</span>
     <span class="cash-act">${act}</span>
   </div>`;
 }
 // الصف قابل للتحديد حسب الوضع: الاستلام لما مع الموظف، والإيداع لما مع المحاسب
 function cashRowPickable(row){
   if(CASH_MODE === 'receive') return cashStatus(row).key === 'with_employee';
-  if(CASH_MODE === 'deposit') return cashStatus(row).key === 'with_accountant';
+  if(CASH_MODE === 'deposit'){
+    return row.status === 'with_accountant' && !cashPending(row)
+        && cashHolder(row) === (CURRENT && CURRENT.name);
+  }
+  // النقل: ما بعهدتي في مرحلتي، ولا شيء قيد النقل
+  if(CASH_MODE === 'handover'){
+    return row.status === cashMyStage() && !cashPending(row)
+        && cashHolder(row) === (CURRENT && CURRENT.name);
+  }
   return false;
+}
+// ما بعهدتي الآن — مرحلتي حسب دوري
+function cashMyStage(){
+  return (CURRENT && CURRENT.role === 'accountant') ? 'with_accountant' : 'with_employee';
+}
+function cashMine(){
+  return CASH_ROWS.filter(r=> r.status === cashMyStage() && !cashPending(r)
+    && cashHolder(r) === (CURRENT && CURRENT.name));
+}
+// طلبات نقل واردة إليّ بانتظار قبولي
+function cashIncoming(){
+  return CASH_ROWS.filter(r=> cashPending(r) && r.handover_to === (CURRENT && CURRENT.name));
 }
 
 function renderCash(){
@@ -247,30 +295,40 @@ function renderCash(){
 
   let bar = '';
   if(CASH_MODE){
-    const isRec = CASH_MODE === 'receive';
+    const act = CASH_MODE === 'receive'
+      ? { fn:'cashConfirmReceive()', icon:CASH_ICONS.check, label:'استلام الكاش' }
+      : CASH_MODE === 'handover'
+        ? { fn:'openHandoverForm()', icon:CASH_ICONS.move, label:'تسليم العهدة' }
+        : { fn:'openDepositForm()',  icon:CASH_ICONS.bank, label:'إيداع في البنك' };
     bar = `<div class="cash-selbar">
       <span>${t('المحدّد:')} ${cashCountLabel(picked.length)}</span>
       <b>${formatMoney(pickedSum)} ${t('ر.ق')}</b>
       <button class="hbtn ghost" onclick="cashExitMode()">${t('إلغاء')}</button>
       <button class="hbtn primary" ${picked.length?'':'disabled style="opacity:.55;cursor:default"'}
-        onclick="${isRec?'cashConfirmReceive()':'openDepositForm()'}">
-        ${isRec?CASH_ICONS.check:CASH_ICONS.bank}${t(isRec?'استلام الكاش':'إيداع في البنك')}</button>
+        onclick="${act.fn}">${act.icon}${t(act.label)}</button>
     </div>`;
   } else if(list.length){
     bar = `<div class="h-paybar"><span>${t('لم يُودَع بعد')}</span>
       <b>${formatMoney(shown)} ${t('ر.ق')}</b>${cashModeButtons()}</div>`;
   }
 
-  body.innerHTML = cashKpis() + cashPerEmployee()
+  body.innerHTML = cashIncomingPanel() + cashKpis() + cashPerEmployee()
     + `<section class="h-sec">${cashToolbar()}${inner}${bar}</section>`;
   if(typeof translateStaticNodes === 'function') translateStaticNodes();
 }
 function cashModeButtons(){
-  if(!cashIsAccountant()) return '';
-  const emp  = CASH_ROWS.filter(r=>cashStatus(r).key === 'with_employee').length;
-  const acct = CASH_ROWS.filter(r=>cashStatus(r).key === 'with_accountant').length;
-  return (emp  ? `<button class="hbtn ghost" onclick="cashEnterMode('receive')">${CASH_ICONS.check}${t('استلام من الموظفين')}</button>` : '')
-       + (acct ? `<button class="hbtn primary" onclick="cashEnterMode('deposit')">${CASH_ICONS.bank}${t('إيداع في البنك')}</button>` : '');
+  if(!cashCanWrite()) return '';
+  const mine  = cashMine().length;
+  const peers = cashPeers().length;
+  const emp   = CASH_ROWS.filter(r=>cashStatus(r).key === 'with_employee').length;
+  let out = '';
+  if(cashIsAccountant() && emp)
+    out += `<button class="hbtn ghost" onclick="cashEnterMode('receive')">${CASH_ICONS.check}${t('استلام من الموظفين')}</button>`;
+  if(mine && peers)
+    out += `<button class="hbtn ghost" onclick="cashEnterMode('handover')">${CASH_ICONS.move}${t('تسليم لزميل')}</button>`;
+  if(cashIsAccountant() && mine)
+    out += `<button class="hbtn primary" onclick="cashEnterMode('deposit')">${CASH_ICONS.bank}${t('إيداع في البنك')}</button>`;
+  return out;
 }
 
 function cashSetFilter(id, value){
@@ -285,9 +343,14 @@ function cashSetFilter(id, value){
   }
 }
 function cashEnterMode(mode){
-  if(!cashIsAccountant()) return;
+  // التسليم لأي زميل يحوز نقدية؛ الاستلام والإيداع للمحاسب وحده
+  if(mode === 'handover'){ if(!cashCanWrite()) return; }
+  else if(!cashIsAccountant()) return;
   CASH_MODE = mode; CASH_SEL.clear();
-  CASH_FILTER.status = (mode === 'receive') ? 'emp' : 'acct';
+  CASH_FILTER.status = (mode === 'receive') ? 'emp'
+                     : (mode === 'handover') ? (cashMyStage() === 'with_employee' ? 'emp' : 'acct')
+                     : 'acct';
+  CASH_FILTER.emp = '';
   renderCash();
 }
 function cashExitMode(){ CASH_MODE = null; CASH_SEL.clear(); renderCash(); }
@@ -646,6 +709,204 @@ async function saveDeposit(){
     depShowErr(t('تعذّر رفع صورة الإيداع — حاول مرة أخرى.'));
     if(btn){ btn.disabled = false; btn.textContent = t('تأكيد الإيداع'); }
   }
+}
+
+/* ══════════════════════════════════════════
+   تسليم العهدة بين الزملاء
+   المال لا ينتقل إلا بقبول المستلِم. الرفض يُعيده كما كان.
+══════════════════════════════════════════ */
+let HO_FORM = null;
+
+function nextHandoverNo(){
+  let max = 0;
+  CASH_ROWS.forEach(r=>{
+    const m = String(r.handover_no||'').match(/^HO-(\d+)$/i);
+    if(m) max = Math.max(max, parseInt(m[1], 10) || 0);
+  });
+  return 'HO-' + String(max + 1).padStart(4, '0');
+}
+
+function openHandoverForm(){
+  const picked = CASH_ROWS.filter(r=>CASH_SEL.has(r.id) && cashRowPickable(r));
+  if(!picked.length) return;
+  const others = cashAccountants().filter(n=>n !== (CURRENT && CURRENT.name));
+  if(!others.length){
+    showMessageDialog({ title:t('لا يوجد زميل آخر'),
+      message:t('التسليم يحتاج زميلًا آخر بنفس الدور.'), confirmText:t('حسنًا') });
+    return;
+  }
+  HO_FORM = { ids: picked.map(r=>r.id) };
+  const total = picked.reduce((a,r)=>a+(Number(r.amount)||0), 0);
+  const old = document.getElementById('app-confirm-overlay');
+  if(old) old.remove();
+  const ov = document.createElement('div');
+  ov.id = 'app-confirm-overlay'; ov.dir = 'rtl';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,19,33,.55);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);overflow:auto;';
+  ov.innerHTML = `
+    <div class="acd-card" role="dialog" aria-modal="true" style="width:min(560px,100%);max-height:92vh;display:flex;flex-direction:column">
+      <div class="acd-head iv-head">
+        <div><div class="acd-title" data-i18n="تسليم العهدة">${t('تسليم العهدة')}</div>
+        <div class="acd-cap">Cash Handover</div></div>
+        <span class="iv-mark"><img src="assets/images/image-5fa147e6c3d5.png" alt="Zamzam"></span>
+      </div>
+      <div class="acd-body" style="overflow:auto">
+        <div class="qf-grid">
+          <div class="sec-title full"><span class="ar" data-i18n="الإيصالات المسلَّمة">${t('الإيصالات المسلَّمة')}</span><span class="en">Receipts</span></div>
+          <div class="qf-f full" style="gap:0">
+            <div class="dep-list">${picked.map(r=>`
+              <div class="pk-row"><span style="width:0"></span>
+                <span class="pk-no">${escapeHtml(r.inv_no||'—')}</span>
+                <div class="pk-main"><b>${escapeHtml(personName(r.created_by||'—'))}</b>
+                  <span>${cashFmtDate(r.receipt_date)}</span></div>
+                <span class="pk-cc"></span>
+                <span class="pk-amt">${formatMoney(r.amount)} <em>${t('ر.ق')}</em></span>
+              </div>`).join('')}</div>
+            <div class="pk-sum"><span data-i18n="إجمالي التسليم">${t('إجمالي التسليم')}</span><b>${formatMoney(total)} ${t('ر.ق')}</b></div>
+          </div>
+          <div class="sec-title full"><span class="ar" data-i18n="المستلِم">${t('المستلِم')}</span><span class="en">Recipient</span></div>
+          <div class="qf-f full">
+            <label><span class="ar" data-i18n="الزميل المستلِم">${t('الزميل المستلِم')}</span><span class="en">Accountant</span> <em class="req">*</em></label>
+            <select id="ho-to">${others.map(n=>`<option value="${escAttr(n)}">${escapeHtml(personName(n))}</option>`).join('')}</select>
+          </div>
+          <div class="qf-f full">
+            <label><span class="ar" data-i18n="ملاحظة">${t('ملاحظة')}</span><span class="en">Note</span></label>
+            <input type="text" id="ho-note" placeholder="${escAttr(t('اختياري'))}" data-i18n-attr="placeholder|اختياري">
+          </div>
+          <div class="qf-err" id="ho-err" style="display:none"></div>
+          <p class="opt-hint full" data-i18n="لا تنتقل العهدة إلا بعد قبول المستلِم. حتى ذلك الحين تبقى باسمك.">${t('لا تنتقل العهدة إلا بعد قبول المستلِم. حتى ذلك الحين تبقى باسمك.')}</p>
+        </div>
+      </div>
+      <div class="acd-foot">
+        <button class="acd-btn acd-cancel" onclick="hoClose()" data-i18n="رجوع">${t('رجوع')}</button>
+        <button class="acd-btn acd-confirm" id="ho-save" onclick="sendHandover()" data-i18n="إرسال الطلب">${t('إرسال الطلب')}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', e=>{ if(e.target === ov) hoClose(); });
+}
+function hoClose(){ document.getElementById('app-confirm-overlay')?.remove(); HO_FORM = null; }
+
+async function sendHandover(){
+  if(!HO_FORM) return;
+  const to = document.getElementById('ho-to')?.value || '';
+  const note = (document.getElementById('ho-note')?.value || '').trim();
+  if(!to){ const e=document.getElementById('ho-err'); if(e){ e.textContent=t('اختر الزميل المستلِم.'); e.style.display='block'; } return; }
+  const btn = document.getElementById('ho-save');
+  if(btn){ btn.disabled = true; btn.textContent = t('جاري الإرسال...'); }
+  try{
+    const no = nextHandoverNo();
+    const { error } = await sb.from('cash_receipts').update({
+      handover_no: no, handover_to: to,
+      handover_by: CURRENT?.name || null,
+      handover_at: new Date().toISOString(),
+      handover_state: 'pending',
+      handover_note: note || null,
+      updated_at: new Date().toISOString()
+    }).in('id', HO_FORM.ids);
+    if(error){
+      console.error(error);
+      const e=document.getElementById('ho-err'); if(e){ e.textContent=t('تعذّر الإرسال — ') + (error.message||''); e.style.display='block'; }
+      if(btn){ btn.disabled = false; btn.textContent = t('إرسال الطلب'); }
+      return;
+    }
+    const total = CASH_ROWS.filter(r=>HO_FORM.ids.includes(r.id)).reduce((a,r)=>a+(Number(r.amount)||0), 0);
+    hoClose(); cashExitMode(); await loadCash();
+    showMessageDialog({ title:t('أُرسل طلب التسليم'), subtitle:'Cash Handover', message:'',
+      details:[
+        { label:t('رقم التسليم'), value:no, ltr:true },
+        { label:t('إلى'), value: personName(to) },
+        { label:t('الإجمالي'), value: formatMoney(total) + ' ' + t('ر.ق'), ltr:true }
+      ],
+      note: t('تبقى العهدة باسمك حتى يقبلها المستلِم.'),
+      confirmText:t('حسنًا') });
+  }catch(e){
+    console.error(e);
+    const el=document.getElementById('ho-err'); if(el){ el.textContent=t('خطأ اتصال — حاول مرة أخرى.'); el.style.display='block'; }
+    if(btn){ btn.disabled = false; btn.textContent = t('إرسال الطلب'); }
+  }
+}
+
+/* لوحة الطلبات الواردة: تظهر للمحاسب المستلِم فقط */
+function cashIncomingPanel(){
+  const rows = cashIncoming();
+  if(!rows.length) return '';
+  const groups = {};
+  rows.forEach(r=>{ const k = r.handover_no || '—'; (groups[k] = groups[k] || []).push(r); });
+  return Object.keys(groups).map(no=>{
+    const g = groups[no];
+    const total = g.reduce((a,r)=>a+(Number(r.amount)||0), 0);
+    const from = personName(g[0].handover_by || '');
+    const note = g[0].handover_note ? ` · ${escapeHtml(g[0].handover_note)}` : '';
+    return `<section class="h-sec ho-in">
+      <div class="h-sec-hd"><b>${t('تسليم عهدة بانتظار قبولك')}</b>
+        <span>${escapeHtml(no)} · ${t('من')} ${escapeHtml(from)}${note}</span>
+        <em class="h-count">${formatMoney(total)} ${t('ر.ق')}</em></div>
+      <div class="ho-body">
+        <div class="ho-sum">${cashCountLabel(g.length)} · <b>${formatMoney(total)} ${t('ر.ق')}</b></div>
+        <div class="ho-acts">
+          <button class="hbtn ghost" onclick="rejectHandover('${escAttr(no)}')">${t('رفض')}</button>
+          <button class="hbtn primary" onclick="acceptHandover('${escAttr(no)}')">${CASH_ICONS.check}${t('قبول الاستلام')}</button>
+        </div>
+      </div>
+    </section>`;
+  }).join('');
+}
+
+async function acceptHandover(no){
+  const rows = cashIncoming().filter(r=>String(r.handover_no||'') === no);
+  if(!rows.length) return;
+  const total = rows.reduce((a,r)=>a+(Number(r.amount)||0), 0);
+  const from = personName(rows[0].handover_by || '');
+  const ok = await showConfirmDialog({
+    title: t('قبول استلام العهدة'),
+    message: t('بقبولك تنتقل النقدية إلى عهدتك، ويصل إشعار للزميل المرسِل وللإدارة.'),
+    details:[
+      { label:t('رقم التسليم'), value:no, ltr:true },
+      { label:t('من'), value:from },
+      { label:t('الإجمالي'), value: formatMoney(total) + ' ' + t('ر.ق'), ltr:true }
+    ],
+    confirmText: t('قبول')
+  });
+  if(!ok) return;
+  const { error } = await sb.from('cash_receipts').update({
+    held_by: CURRENT?.name || null,
+    handover_state: null,
+    handover_done_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }).in('id', rows.map(r=>r.id));
+  if(error){
+    console.error(error);
+    showMessageDialog({ title:t('تعذّر القبول'), message:error.message||'', confirmText:t('حسنًا') });
+    return;
+  }
+  await loadCash();
+  showMessageDialog({ title:t('تم استلام العهدة'), subtitle:'Cash Handover', message:'',
+    details:[{ label:t('الإجمالي'), value: formatMoney(total) + ' ' + t('ر.ق'), ltr:true }],
+    confirmText:t('حسنًا') });
+}
+
+async function rejectHandover(no){
+  const rows = cashIncoming().filter(r=>String(r.handover_no||'') === no);
+  if(!rows.length) return;
+  const from = personName(rows[0].handover_by || '');
+  const ok = await showConfirmDialog({
+    title: t('رفض التسليم'),
+    message: t('تبقى النقدية في عهدة المرسِل كما هي، ويصله إشعار بالرفض.'),
+    details:[{ label:t('من'), value:from }],
+    confirmText: t('رفض'), danger: true
+  });
+  if(!ok) return;
+  const { error } = await sb.from('cash_receipts').update({
+    handover_state: null, handover_to: null,
+    handover_done_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }).in('id', rows.map(r=>r.id));
+  if(error){
+    console.error(error);
+    showMessageDialog({ title:t('تعذّر الرفض'), message:error.message||'', confirmText:t('حسنًا') });
+    return;
+  }
+  await loadCash();
 }
 
 /* ── تصدير ── */
