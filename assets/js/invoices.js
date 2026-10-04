@@ -680,7 +680,7 @@ async function saveInvoice(){
     }
     if(res && res.error){
       if(res.error.code === '23505' || /duplicate key|already exists/i.test(res.error.message||'')){
-        invShowErr(t('الفاتورة دي مسجّلة قبل كده لنفس المورّد بنفس الرقم.'));
+        invShowErr(t('هذه الفاتورة مسجّلة من قبل لنفس المورّد بالرقم نفسه.'));
       }else{
         console.error(res.error);
         invShowErr(t('تعذّر الحفظ — ') + (res.error.message || ''));
@@ -717,8 +717,8 @@ async function invExclude(id){
   const ok = await showConfirmDialog({
     title: back ? t('إرجاع الفاتورة للسجل') : t('استبعاد الفاتورة'),
     message: back
-      ? t('هترجع الفاتورة لقائمة المستحق وتُحتسب في الإجمالي.')
-      : t('الفاتورة هتخرج من إجمالي المستحق، وهتفضل في السجل للرجوع إليها.'),
+      ? t('تعود الفاتورة إلى قائمة المستحق وتُحتسب في الإجمالي.')
+      : t('تخرج الفاتورة من إجمالي المستحق، وتبقى في السجل للرجوع إليها.'),
     confirmText: back ? t('إرجاع') : t('استبعاد'),
     danger: !back
   });
@@ -803,8 +803,8 @@ function renderInvImportBar(){
   bar.style.display = '';
   bar.innerHTML = `<svg class="lead" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18l-3-2-3 2-3-2-3 2z"></path><path d="M9 11h6"></path></svg>
     <p>${open.length
-        ? t('عندك {c} مسجّلة غير مسدّدة').replace('{c}', invCountInv(open.length)) + ' — ' + formatMoney(total) + ' ' + t('ر.ق')
-        : t('مفيش فواتير مسجّلة متاحة للربط')}</p>
+        ? t('لديك {c} مسجّلة غير مسدّدة').replace('{c}', invCountInv(open.length)) + ' — ' + formatMoney(total) + ' ' + t('ر.ق')
+        : t('لا توجد فواتير مسجّلة متاحة للربط')}</p>
     <button type="button" class="hbtn sm primary" onclick="openInvoicePicker()" ${open.length?'':'disabled style="opacity:.55;cursor:default"'}>
       ${ARC_ICONS.plus}${t('اختيار من الفواتير المسجّلة')}</button>`;
 }
@@ -873,7 +873,7 @@ function invPaintPicker(){
     return da.localeCompare(db);
   });
   if(!rows.length){
-    list.innerHTML = `<div class="pk-empty">${t('مفيش فواتير متاحة للربط')}</div>`;
+    list.innerHTML = `<div class="pk-empty">${t('لا توجد فواتير متاحة للربط')}</div>`;
   }else{
     list.innerHTML = rows.map(r=>{
       const cc = invCostLabel(r);
@@ -918,7 +918,7 @@ function invApplyPick(){
     document.getElementById('app-confirm-overlay')?.remove();
     showMessageDialog({
       title:t('عدد الصفوف أكبر من الحد'),
-      message:t('الطلب الواحد بيستحمل {max} صفًا. اختَر فواتير أقل أو قسّمها على أكتر من طلب.')
+      message:t('يتّسع الطلب الواحد لـ {max} صفًا. اختر فواتير أقل، أو وزّعها على أكثر من طلب.')
         .replace('{max}', MAX_DISB_TABLE_ROWS),
       confirmText:t('حسنًا')
     });
