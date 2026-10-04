@@ -437,10 +437,10 @@ async function loadSupplierNames(){
 /* ══════════════════════════════════════════
    NAVIGATION
 ══════════════════════════════════════════ */
-const APP_PAGES = ['home','cancel','disb','arc','inv'];
+const APP_PAGES = ['home','cancel','disb','arc','inv','cash'];
 // الصفحة الأم لكل شاشة — الرجوع بيوديك لها.
 // الرئيسية مالهاش أم، فالرجوع منها بيخرج من التطبيق زي ما هو متوقّع.
-let PAGE_PARENT = { home:null, disb:'home', cancel:'home', arc:'home', inv:'home' };
+let PAGE_PARENT = { home:null, disb:'home', cancel:'home', arc:'home', inv:'home', cash:'home' };
 function setFormParent(parent){ PAGE_PARENT.disb = parent; PAGE_PARENT.cancel = parent; }
 function currentPage(){
   return APP_PAGES.find(x=>document.getElementById('page-'+x)?.classList.contains('on')) || 'home';
@@ -457,6 +457,7 @@ function showPage(p, opts){
   if (p==='arc') loadArchive();
   if (p==='home') loadHome();
   if (p==='inv'  && typeof loadInvoices === 'function') loadInvoices();
+  if (p==='cash' && typeof loadCash === 'function') loadCash();
   if (p==='disb' && typeof onDisbPageShown === 'function') onDisbPageShown();
   window.scrollTo(0,0);
   if(!(opts && opts.fromHistory)){
@@ -3442,6 +3443,8 @@ function refreshDynamicUI(){
     if(typeof invMarkLinkedRows === 'function') invMarkLinkedRows();
     if(typeof renderInvoices === 'function' && typeof INV_LOADED !== 'undefined' && INV_LOADED
        && document.getElementById('page-inv')?.classList.contains('on')) renderInvoices();
+    if(typeof renderCash === 'function' && typeof CASH_LOADED !== 'undefined' && CASH_LOADED
+       && document.getElementById('page-cash')?.classList.contains('on')) renderCash();
   }catch(e){ console.warn('refreshDynamicUI', e); }
 }
 

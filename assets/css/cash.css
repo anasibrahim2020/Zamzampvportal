@@ -1,0 +1,75 @@
+/* ══════════════════════════════════════════════════════════
+   الخزنة — الكاش المستلم من العملاء
+   تعيد استخدام عناصر سجل الفواتير (iv-kpis و iv-tools و qf و pk)
+   وتضيف هنا ما يخصّ الخزنة وحدها.
+══════════════════════════════════════════════════════════ */
+
+/* ── رصيد كل موظف ── */
+.cash-emps{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;padding:14px 16px;}
+.cash-emp{display:flex;align-items:center;gap:11px;background:var(--n0);border:1px solid var(--border);
+  border-radius:12px;padding:11px 13px;min-width:0;}
+.cash-emp .pav{flex:0 0 auto;}
+.cash-emp-b{min-width:0;flex:1;}
+.cash-emp-b b{display:block;font-size:12.5px;font-weight:700;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cash-emp-b span{display:block;font-size:10.5px;font-weight:600;color:var(--txt-3);}
+.cash-emp-v{flex:0 0 auto;font-size:15px;font-weight:700;color:var(--wait);
+  direction:ltr;text-align:end;font-variant-numeric:tabular-nums;}
+.cash-emp-v em{font-style:normal;font-size:9.5px;font-weight:700;color:var(--txt-3);}
+.cash-emp.zero .cash-emp-v{color:var(--txt-3);}
+
+/* ── صف الإيصال ── */
+.cashrow{display:grid;grid-template-columns:26px 150px minmax(0,1fr) 112px 128px 132px 92px;
+  align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line-2);}
+.cashrow:last-of-type{border-bottom:none;}
+.cashrow:hover{background:var(--indigo-t);}
+.cashrow.sel{background:var(--tint-g);}
+.cashrow.done{opacity:.6;}
+.cashrow input[type=checkbox]{width:17px;height:17px;accent-color:var(--indigo);cursor:pointer;}
+.cashrow .ck-slot{width:17px;}
+.cash-no{font-size:13px;font-weight:700;color:var(--indigo);direction:ltr;text-align:start;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cash-who{min-width:0;display:flex;align-items:center;gap:9px;}
+.cash-who-b{min-width:0;}
+.cash-who-b b{display:block;font-size:12.5px;font-weight:700;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cash-who-b span{display:block;font-size:10.5px;font-weight:600;color:var(--txt-3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cash-dt{font-size:11px;font-weight:700;color:var(--txt-2);}
+.cash-dt i{display:block;font-style:normal;font-size:10px;font-weight:700;color:var(--txt-3);}
+.cash-amt{font-size:15px;font-weight:700;color:var(--ink);direction:ltr;text-align:end;
+  font-variant-numeric:tabular-nums;justify-self:end;}
+.cash-amt em{font-style:normal;font-size:10px;font-weight:700;color:var(--txt-3);}
+.cash-st{justify-self:end;}
+.cash-st .lk{display:block;margin-top:3px;font-size:10px;font-weight:700;color:var(--teal);
+  direction:ltr;text-align:end;}
+.cash-act{justify-self:end;}
+
+/* ── حالات الخزنة ── */
+.st-emp{color:var(--wait);background:var(--wait-bg);border-color:var(--wait-line);}
+.st-acct{color:var(--teal);background:var(--teal-t);border-color:var(--teal-l);}
+.st-dep{color:var(--green);background:var(--tint-g);border-color:var(--green-l);}
+
+/* ── شريط التحديد ── */
+.cash-selbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;
+  background:var(--tint-g);border-top:1px solid var(--green-l);border-bottom:1px solid var(--green-l);}
+.cash-selbar span{font-size:12px;font-weight:700;color:var(--indigo);}
+.cash-selbar b{font-size:18px;font-weight:700;color:var(--green);direction:ltr;font-variant-numeric:tabular-nums;}
+.cash-selbar .hbtn{margin-inline-start:auto;}
+.cash-selbar .hbtn+.hbtn{margin-inline-start:0;}
+
+/* ── قائمة الإيصالات داخل نافذة الإيداع ── */
+.dep-list{max-height:38vh;overflow:auto;border:1px solid var(--line-2);border-radius:10px;padding:2px 10px;}
+
+@media (max-width:900px){
+  .cashrow{grid-template-columns:22px minmax(0,1fr) auto;
+    grid-template-areas:'ck no st' 'ck who who' 'ck dt amt' 'ck act act';gap:5px 10px;padding:12px;}
+  .cashrow input[type=checkbox],.cashrow .ck-slot{grid-area:ck;align-self:start;margin-top:3px;}
+  .cash-no{grid-area:no;}
+  .cash-who{grid-area:who;}
+  .cash-dt{grid-area:dt;}
+  .cash-amt{grid-area:amt;justify-self:end;}
+  .cash-st{grid-area:st;justify-self:end;}
+  .cash-act{grid-area:act;justify-self:start;}
+  .cash-selbar .hbtn{margin-inline-start:0;flex:1 1 100%;justify-content:center;}
+}
