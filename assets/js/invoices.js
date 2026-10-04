@@ -153,18 +153,9 @@ function invIsLinkable(row){
 ══════════════════════════════════════════ */
 async function loadInvoices(){
   const body = document.getElementById('inv-body');
-  const hd   = document.getElementById('inv-actions');
   if(!body || !CURRENT) return;
 
-  if(hd) hd.innerHTML = invCanWrite()
-    ? `<button class="hbtn ghost" onclick="invExport()">${INV_ICONS.excel}${t('تصدير')}</button>
-       <button class="hbtn primary" onclick="openInvoiceForm()">${ARC_ICONS.plus}${t('تسجيل فاتورة')}</button>`
-    : `<button class="hbtn ghost" onclick="invExport()">${INV_ICONS.excel}${t('تصدير')}</button>`;
-
-  const greet = document.getElementById('inv-greet');
-  const sub   = document.getElementById('inv-sub');
-  if(greet) greet.textContent = t('الفواتير المستحقة');
-  if(sub)   sub.textContent   = t('كل فاتورة وصلت ولم تُسدَّد بعد');
+  invRenderHead();
 
   if(!SB_ON){ body.innerHTML = homeEmpty(INV_ICONS.receipt, 'الحفظ السحابي غير مفعّل', '—'); return; }
   body.innerHTML = `<div class="h-loading">${t('جاري التحميل...')}</div>`;
@@ -194,6 +185,19 @@ async function loadInvoices(){
     console.error(e);
     body.innerHTML = homeEmpty(INV_ICONS.receipt, 'تعذّر تحميل سجل الفواتير', 'شغّل ملف schema-invoices.sql في Supabase');
   }
+}
+
+/* رأس الصفحة: العنوان والأزرار، تُرسم مع كل تغيير لغة أيضًا. */
+function invRenderHead(){
+  const greet = document.getElementById('inv-greet');
+  const sub   = document.getElementById('inv-sub');
+  const hd    = document.getElementById('inv-actions');
+  if(greet) greet.textContent = t('الفواتير المستحقة');
+  if(sub)   sub.textContent   = t('كل فاتورة وصلت ولم تُسدَّد بعد');
+  if(hd) hd.innerHTML = invCanWrite()
+    ? `<button class="hbtn ghost" onclick="invExport()">${INV_ICONS.excel}${t('تصدير')}</button>
+       <button class="hbtn primary" onclick="openInvoiceForm()">${ARC_ICONS.plus}${t('تسجيل فاتورة')}</button>`
+    : `<button class="hbtn ghost" onclick="invExport()">${INV_ICONS.excel}${t('تصدير')}</button>`;
 }
 
 /* ══════════════════════════════════════════
@@ -295,6 +299,7 @@ function invRow(row){
 function renderInvoices(){
   const body = document.getElementById('inv-body');
   if(!body) return;
+  invRenderHead();
   const list = invFiltered();
   let inner;
   if(!list.length){

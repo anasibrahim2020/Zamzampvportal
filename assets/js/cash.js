@@ -63,17 +63,9 @@ function cashAgeNote(v){
 ══════════════════════════════════════════ */
 async function loadCash(){
   const body = document.getElementById('cash-body');
-  const acts = document.getElementById('cash-actions');
   if(!body || !CURRENT) return;
 
-  const greet = document.getElementById('cash-greet');
-  const sub   = document.getElementById('cash-sub');
-  if(greet) greet.textContent = t('التحصيل النقدي');
-  if(sub)   sub.textContent   = t('الكاش المستلم من العملاء');
-
-  if(acts) acts.innerHTML =
-    `<button class="hbtn ghost" onclick="cashExport()">${CASH_ICONS.excel}${t('تصدير')}</button>` +
-    (cashCanWrite() ? `<button class="hbtn primary" onclick="openCashForm()">${ARC_ICONS.plus}${t('تسجيل كاش')}</button>` : '');
+  cashRenderHead();
 
   if(!SB_ON){ body.innerHTML = homeEmpty(CASH_ICONS.vault, 'الحفظ السحابي غير مفعّل', '—'); return; }
   body.innerHTML = `<div class="h-loading">${t('جاري التحميل...')}</div>`;
@@ -88,6 +80,19 @@ async function loadCash(){
     console.error(e);
     body.innerHTML = homeEmpty(CASH_ICONS.vault, 'تعذّر تحميل التحصيلات', 'شغّل ملف schema-cash.sql في Supabase');
   }
+}
+
+/* رأس الصفحة: العنوان والأزرار. تُستدعى من التحميل ومن كل رسم،
+   حتى يتبع الرأسُ اللغةَ عند تبديلها كبقية الصفحة. */
+function cashRenderHead(){
+  const greet = document.getElementById('cash-greet');
+  const sub   = document.getElementById('cash-sub');
+  const acts  = document.getElementById('cash-actions');
+  if(greet) greet.textContent = t('التحصيل النقدي');
+  if(sub)   sub.textContent   = t('الكاش المستلم من العملاء');
+  if(acts) acts.innerHTML =
+    `<button class="hbtn ghost" onclick="cashExport()">${CASH_ICONS.excel}${t('تصدير')}</button>` +
+    (cashCanWrite() ? `<button class="hbtn primary" onclick="openCashForm()">${ARC_ICONS.plus}${t('تسجيل كاش')}</button>` : '');
 }
 
 /* ══════════════════════════════════════════
@@ -229,6 +234,7 @@ function cashRowPickable(row){
 function renderCash(){
   const body = document.getElementById('cash-body');
   if(!body) return;
+  cashRenderHead();
   const list = cashFiltered();
   const inner = list.length
     ? list.map(cashRow).join('')
