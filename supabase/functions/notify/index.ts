@@ -243,6 +243,74 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 2ب) تسليم عهدة بين زميلين — طلب بانتظار القبول
+    if (payload?.type === "UPDATE"
+        && record.handover_state === "pending" && oldRecord?.handover_state !== "pending") {
+      const to = record.handover_to ?? "";
+      const by = record.handover_by ?? "زميل";
+      const no = record.handover_no ?? "—";
+      const tag = `cash-ho-${no}`;
+      const u = DIRECTORY[to];
+      if (u) {
+        const subject = `Cash Handover Pending Your Acceptance — ${no}`;
+        const lines = [
+          `Dear ${to},`,
+          `<b>${by}</b> is handing cash over to you and is waiting for you to accept it.`,
+          `<b>Handover No:</b> ${no}`,
+          `<b>Client Invoice:</b> ${invNo}`,
+          `<b>Amount:</b> ${amt} QAR`,
+          `The cash stays under their name until you accept it in the portal.`,
+          `Best regards,<br/>Zamzam Hajj &amp; Umrah`,
+        ];
+        const mail = buildEmail("Cash Handover", lines);
+        const wa = `🤝 *Cash handover waiting for you*\nFrom: ${by}\nHandover: ${no}\nAmount: ${amt} QAR\n\n${PORTAL_URL}`;
+        if (u.email) tasks.push(sendEmail(u.email, subject, mail.html, mail.text));
+        tasks.push(sendWhatsApp(u.phone, u.wa_apikey, wa));
+      }
+      tasks.push(sendPush(to, "🤝 تسليم عهدة بانتظار قبولك",
+        `${by} يسلّمك ${amt} ر.ق — ${no}`, undefined, tag));
+      for (const n of VIEWER_NAMES) {
+        tasks.push(sendPush(n, "🤝 طلب تسليم عهدة",
+          `${by} ← ${to} — ${amt} ر.ق`, undefined, `${tag}-mgmt`));
+      }
+    }
+
+    // 2ج) حُسم التسليم: قُبل فانتقلت العهدة، أو رُفض فبقيت مكانها
+    if (payload?.type === "UPDATE"
+        && oldRecord?.handover_state === "pending" && !record.handover_state) {
+      const by = record.handover_by ?? oldRecord?.handover_by ?? "زميل";
+      const no = record.handover_no ?? oldRecord?.handover_no ?? "—";
+      const accepted = !!record.held_by && record.held_by !== oldRecord?.held_by;
+      const who = accepted ? (record.held_by ?? "") : (oldRecord?.handover_to ?? "");
+      const tag = `cash-hod-${no}`;
+      const u = DIRECTORY[by];
+      if (u) {
+        const subject = accepted ? `Cash Handover Accepted — ${no}` : `Cash Handover Declined — ${no}`;
+        const lines = accepted
+          ? [`Dear ${by}`, `<b>${who}</b> has accepted the cash you handed over.`,
+             `<b>Handover No:</b> ${no}`, `<b>Amount:</b> ${amt} QAR`,
+             `It is no longer on your balance.`, `Best regards,<br/>Zamzam Hajj &amp; Umrah`]
+          : [`Dear ${by}`, `<b>${who}</b> has declined the handover.`,
+             `<b>Handover No:</b> ${no}`, `<b>Amount:</b> ${amt} QAR`,
+             `The cash remains under your name.`, `Best regards,<br/>Zamzam Hajj &amp; Umrah`];
+        const mail = buildEmail(accepted ? "Handover Accepted" : "Handover Declined", lines);
+        const wa = accepted
+          ? `✅ *Handover accepted*\nBy: ${who}\nHandover: ${no}\nAmount: ${amt} QAR\n\n${PORTAL_URL}`
+          : `↩️ *Handover declined*\nBy: ${who}\nHandover: ${no}\nAmount: ${amt} QAR\n\n${PORTAL_URL}`;
+        if (u.email) tasks.push(sendEmail(u.email, subject, mail.html, mail.text));
+        tasks.push(sendWhatsApp(u.phone, u.wa_apikey, wa));
+      }
+      tasks.push(sendPush(by, accepted ? "✅ قُبل تسليم العهدة" : "↩️ رُفض تسليم العهدة",
+        accepted ? `${who} استلم منك ${amt} ر.ق — ${no}`
+                 : `${who} رفض الاستلام — ${amt} ر.ق تبقى باسمك`, undefined, tag));
+      if (accepted) {
+        for (const n of VIEWER_NAMES) {
+          tasks.push(sendPush(n, "✅ انتقلت عهدة",
+            `${by} ← ${who} — ${amt} ر.ق`, undefined, `${tag}-mgmt`));
+        }
+      }
+    }
+
     // 3) الإيداع في البنك → الإدارة (وصاحب الإيصال)
     if (payload?.type === "UPDATE"
         && record.status === "deposited" && oldRecord?.status !== "deposited") {

@@ -729,7 +729,7 @@ function nextHandoverNo(){
 function openHandoverForm(){
   const picked = CASH_ROWS.filter(r=>CASH_SEL.has(r.id) && cashRowPickable(r));
   if(!picked.length) return;
-  const others = cashAccountants().filter(n=>n !== (CURRENT && CURRENT.name));
+  const others = cashPeers();
   if(!others.length){
     showMessageDialog({ title:t('لا يوجد زميل آخر'),
       message:t('التسليم يحتاج زميلًا آخر بنفس الدور.'), confirmText:t('حسنًا') });
