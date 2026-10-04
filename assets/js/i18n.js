@@ -704,8 +704,8 @@ const I18N_EN = {
   // تصدير
   'البيان':'Description',
   'رقم طلب الصرف':'Request No.',
-  // ── الخزنة ──
-  'الخزنة':'Cash Vault',
+  // ── التحصيل النقدي ──
+  'التحصيل النقدي':'Cash Collection',
   'الكاش المستلم من العملاء':'Cash received from clients',
   'تسجيل كاش':'Log Cash',
   'تسجيل كاش مستلم':'Log Cash Received',
@@ -722,13 +722,13 @@ const I18N_EN = {
   'حسابك مخصّص للعرض والطباعة فقط، ولا يمكنك تسجيل الكاش.':'Your account is for viewing and printing only; you cannot log cash.',
   'استلم المحاسب هذا الإيصال، أو سجّله موظف آخر.':'The accountant has received this receipt, or another employee logged it.',
   'حذف الإيصال':'Delete receipt',
-  'يُحذف الإيصال نهائيًا ويخرج من الخزنة. لا يمكن حذفه بعد استلام المحاسب له.':'The receipt is deleted for good and leaves the vault. It cannot be deleted once the accountant has received it.',
+  'يُحذف الإيصال نهائيًا ويخرج من التحصيلات. لا يمكن حذفه بعد استلام المحاسب له.':'The receipt is deleted for good and leaves the collections. It cannot be deleted once the accountant has received it.',
   // الحالات
   'مع الموظف':'With the employee',
   'مع المحاسب':'With the accountant',
   'مودعة':'Deposited',
-  'في الخزنة':'In the vault',
-  'في الخزنة الآن':'In the vault now',
+  'لم يُودَع':'Not deposited',
+  'لم يُودَع بعد':'Not yet deposited',
   'لم تُودَع':'not yet deposited',
   'مع الموظفين':'With employees',
   'بانتظار الاستلام':'awaiting collection',
@@ -760,7 +760,7 @@ const I18N_EN = {
   'الأقدم':'Oldest',
   'لا توجد إيصالات بهذا الفلتر':'No receipts match this filter',
   'ابدأ بتسجيل أول استلام':'Start by logging the first receipt',
-  'تعذّر تحميل الخزنة':'Could not load the vault',
+  'تعذّر تحميل التحصيلات':'Could not load collections',
   'شغّل ملف schema-cash.sql في Supabase':'Run schema-cash.sql in Supabase',
   // الاستلام
   'استلام من الموظفين':'Collect from employees',

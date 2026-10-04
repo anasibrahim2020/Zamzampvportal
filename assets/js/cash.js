@@ -1,7 +1,7 @@
 /* ══════════════════════════════════════════════════════════
-   الخزنة — الكاش المستلم من العملاء
+   التحصيل النقدي — الكاش المستلم من العملاء
    الموظف يسجّل ما استلمه، والمحاسب يستلمه منه ثم يودعه في البنك
-   بصورة إيصال. الخزنة مرئية للجميع كوعاء واحد.
+   بصورة إيصال. التحصيلات مرئية للجميع كوعاء واحد.
 ══════════════════════════════════════════════════════════ */
 
 let CASH_ROWS   = [];
@@ -35,7 +35,7 @@ function cashStatus(row){
   if(row.status === 'with_accountant') return { key:'with_accountant', label:'مع المحاسب',  cls:'st-acct' };
   return { key:'with_employee', label:'مع الموظف', cls:'st-emp' };
 }
-// ما زال في الخزنة: لم يُودَع بعد
+// ما زال ضمن التحصيل: لم يصل البنك بعد
 function cashInVault(row){ return cashStatus(row).key !== 'deposited'; }
 
 function cashFmtDate(v){
@@ -68,7 +68,7 @@ async function loadCash(){
 
   const greet = document.getElementById('cash-greet');
   const sub   = document.getElementById('cash-sub');
-  if(greet) greet.textContent = t('الخزنة');
+  if(greet) greet.textContent = t('التحصيل النقدي');
   if(sub)   sub.textContent   = t('الكاش المستلم من العملاء');
 
   if(acts) acts.innerHTML =
@@ -86,7 +86,7 @@ async function loadCash(){
     renderCash();
   }catch(e){
     console.error(e);
-    body.innerHTML = homeEmpty(CASH_ICONS.vault, 'تعذّر تحميل الخزنة', 'شغّل ملف schema-cash.sql في Supabase');
+    body.innerHTML = homeEmpty(CASH_ICONS.vault, 'تعذّر تحميل التحصيلات', 'شغّل ملف schema-cash.sql في Supabase');
   }
 }
 
@@ -134,7 +134,7 @@ function cashKpis(){
       <span class="val">${formatMoney(val)}<em>${t('ر.ق')}</em></span>
       <span class="sub">${sub}</span></div>`;
   return `<div class="iv-kpis">
-    ${card('all','في الخزنة الآن', sum(vault), cashCountLabel(vault.length) + ' · ' + t('لم تُودَع'))}
+    ${card('all','لم يُودَع بعد', sum(vault), cashCountLabel(vault.length))}
     ${card('week','مع الموظفين', sum(withEmp), cashCountLabel(withEmp.length) + ' · ' + t('بانتظار الاستلام'))}
     ${card('link','مع المحاسب', sum(withAcct), cashCountLabel(withAcct.length) + ' · ' + t('جاهزة للإيداع'))}
     ${card('paid','أُودِع هذا الشهر', sum(deposited), t('{n} إيداعًا').replace('{n}', depCount))}
@@ -185,7 +185,7 @@ function cashToolbar(){
       placeholder="${escAttr(t('بحث برقم الفاتورة أو الموظف'))}">
     ${sel('cash-emp', CASH_FILTER.emp, [['','كل الموظفين']].concat(cashEmployees().map(n=>[n, personName(n)])))}
     ${sel('cash-status', CASH_FILTER.status,
-      [['open','في الخزنة'],['all','الكل'],['emp','مع الموظفين'],['acct','مع المحاسب'],['dep','مودعة']])}
+      [['open','لم يُودَع'],['all','الكل'],['emp','مع الموظفين'],['acct','مع المحاسب'],['dep','مودعة']])}
     ${sel('cash-sort', CASH_FILTER.sort, [['new','ترتيب: الأحدث'],['old','الأقدم'],['amount','الأعلى مبلغًا']])}
   </div>`;
 }
@@ -251,7 +251,7 @@ function renderCash(){
         ${isRec?CASH_ICONS.check:CASH_ICONS.bank}${t(isRec?'استلام الكاش':'إيداع في البنك')}</button>
     </div>`;
   } else if(list.length){
-    bar = `<div class="h-paybar"><span>${t('في الخزنة الآن')}</span>
+    bar = `<div class="h-paybar"><span>${t('لم يُودَع بعد')}</span>
       <b>${formatMoney(shown)} ${t('ر.ق')}</b>${cashModeButtons()}</div>`;
   }
 
@@ -454,7 +454,7 @@ async function cashDelete(id){
   cashCloseForm();
   const ok = await showConfirmDialog({
     title: t('حذف الإيصال'),
-    message: t('يُحذف الإيصال نهائيًا ويخرج من الخزنة. لا يمكن حذفه بعد استلام المحاسب له.'),
+    message: t('يُحذف الإيصال نهائيًا ويخرج من التحصيلات. لا يمكن حذفه بعد استلام المحاسب له.'),
     confirmText: t('حذف'), danger: true
   });
   if(!ok) return;
