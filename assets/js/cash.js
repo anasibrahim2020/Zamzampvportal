@@ -559,6 +559,9 @@ async function cashConfirmReceive(){
     status:'with_accountant',
     received_by: CURRENT?.name || null,
     received_at: new Date().toISOString(),
+    // الحيازة تنتقل للمحاسب. من دون هذا السطر كان الإيصال الذي مرّ بتسليم
+    // بين موظفين يظل محسوباً على آخر موظف، فلا يستطيع المحاسب إيداعه أبداً.
+    held_by: CURRENT?.name || null,
     updated_at: new Date().toISOString()
   }).in('id', picked.map(r=>r.id));
   if(error){

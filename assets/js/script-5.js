@@ -2613,53 +2613,6 @@ async function cancelRequest(i){
 }
 
 // اعتماد الطلب مباشرةً من الأرشيف — المحاسب فقط — بدون فتح النموذج أو تغيير الصفحة
-async function approveFromArchive(i){
-  if(!CURRENT || CURRENT.role !== 'accountant'){ alert(t('اعتماد الحسابات متاح للمحاسب فقط.')); return; }
-  const x=(window._arcRows||[])[i]; if(!x) return;
-  if(x.accounts_signed_by){ alert(t('هذا الطلب معتمد بالفعل.')); return; }
-  if(x.cancelled){ alert(t('هذا الطلب ملغى، لا يمكن اعتماده.')); return; }
-  const kind = x.doc_type === 'cancel' ? 'cancel' : 'disb';
-  const ok = await showConfirmDialog({
-    title:t('تأكيد اعتماد الطلب'),
-    message:t('هل تريد اعتماد هذا الطلب من إدارة الحسابات الآن؟'),
-    details:[
-      { label:t('رقم الطلب'), value:displayRequestNo(x.req_no), ltr:true },
-      { label:t('صاحب الطلب'), value:x.name || x.created_by || '—' },
-      { label:t('نوع الطلب'), value:kind === 'cancel' ? t('طلب إلغاء') : t('طلب صرف') }
-    ],
-    note:t('سيظهر اعتمادك على الطلب ويصبح متاحاً للطباعة فقط.'),
-    confirmText:t('اعتماد الطلب'),
-    cancelText:t('تراجع')
-  });
-  if(!ok) return;
-  if(!SB_ON){ alert(t('الأرشيف غير مفعّل.')); return; }
-  const now = new Date();
-  try{
-    const { error } = await sb.from('requests').update({
-      accounts_signed_by: CURRENT.name,
-      accounts_signed_at: now.toISOString()
-    }).eq('id', x.id);
-    if(error){ console.error(error); alert(t('تعذّر حفظ الاعتماد — تأكد من تفعيل سياسة التعديل (update) في Supabase.')); return; }
-    x.accounts_signed_by = CURRENT.name;
-    x.accounts_signed_at = now.toISOString();
-    if(EDIT_ID === x.id && EDIT_REQUEST){
-      EDIT_REQUEST = { ...EDIT_REQUEST, accounts_signed_by: CURRENT.name, accounts_signed_at: now.toISOString() };
-    }
-    showMessageDialog({
-      title:t('تم اعتماد الطلب'),
-      message:t('تم اعتماد الطلب من إدارة الحسابات وحفظه في الأرشيف.'),
-      details:[
-        { label:t('رقم الطلب'), value: displayRequestNo(x.req_no) || '—', ltr:true },
-        { label:t('معتمد بواسطة'), value: CURRENT.name },
-        { label:t('وقت الاعتماد'), value: stampDate(now), ltr:true }
-      ],
-      note:t('الطلب الآن متاح للطباعة.'),
-      confirmText:t('حسنًا')
-    });
-    loadArchive();
-  }catch(e){ alert(t('خطأ اتصال بـ Supabase.')); console.error(e); }
-}
-
 // إلغاء اعتماد الحسابات — المحاسب فقط — يرجّع الطلب «غير معتمد» ويفكّ القفل
 async function revokeApproval(i){
   if(!CURRENT || CURRENT.role !== 'accountant'){ alert(t('إلغاء الاعتماد متاح للمحاسب فقط.')); return; }
@@ -3523,7 +3476,7 @@ function renderArchiveCount(shown, afterTab, fetched){
   const el = document.getElementById('arc-count');
   if(!el) return;
   const capped = fetched >= 200;
-  el.innerHTML = `${t('عرض')} <b>${shown}</b> ${t('من')} <b>${afterTab}</b> ${t('طلب')}`
+  el.innerHTML = `${t('عرض')} <b>${shown}</b> ${t('من إجمالي')} <b>${afterTab}</b> ${t('طلب')}`
     + (capped ? ` · <span class="arc-count-warn">${t('الحد الأقصى للعرض 200 طلب — استخدم البحث أو فلتر التاريخ')}</span>` : '');
 }
 // سجل التوقيت من قائمة الإجراءات
@@ -3800,10 +3753,6 @@ function homeSection(title, sub, count, inner, more){
     <div class="h-sec-body">${inner}</div></section>`;
 }
 // أفعال مباشرة من الرئيسية
-async function approveFromHome(id){
-  const i = await openArchiveRowById(id); if(i<0) return;
-  await approveFromArchive(i); loadHome();
-}
 async function uploadProofFromHome(id){
   const i = await openArchiveRowById(id); if(i<0) return;
   await uploadTransferImage(i); loadHome();

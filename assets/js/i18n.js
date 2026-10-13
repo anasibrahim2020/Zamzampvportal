@@ -550,7 +550,7 @@ const I18N_EN = {
   'كل الطلبات':'All requests',
   'قيد المراجعة':'Under review',
   'عرض':'Showing',
-  'من':'of',
+  'من إجمالي':'of',
   'طلب':'requests',
   'الحد الأقصى للعرض 200 طلب — استخدم البحث أو فلتر التاريخ':'Showing the first 200 — use search or the date filter to narrow down',
 
@@ -818,7 +818,6 @@ const I18N_EN = {
   'تبقى النقدية في عهدة المرسِل كما هي، ويصله إشعار بالرفض.':'The cash stays with the sender as it was, and they are notified of the decline.',
   'تعذّر الرفض':'Could not decline',
   // ── حالة الإشعارات في قائمة الحساب ──
-  'الإشعارات':'Notifications',
   'مفعّلة':'On',
   'غير مفعّلة':'Off',
   'محظورة':'Blocked',
