@@ -214,16 +214,19 @@ Deno.serve(async (req) => {
       for (const n of VIEWER_NAMES)     tasks.push(sendPush(n, "💵 كاش جديد في الخزنة", body));
     }
 
-    // 2) المحاسب استلم → الموظف صاحب الإيصال + الإدارة
+    // 2) المحاسب استلم → مَن كانت النقدية في عهدته + الإدارة
     if (payload?.type === "UPDATE"
         && record.status === "with_accountant" && oldRecord?.status !== "with_accountant") {
       const by = record.received_by ?? "المحاسب";
-      const tag = `cash-recv-${record.received_at ?? ""}-${emp}`;
-      const owner = DIRECTORY[emp];
+      // الحائز قبل الاستلام، لا مَن سجّل الإيصال: لو سُلِّمت النقدية لزميل
+      // فهو مَن سلّمها للمحاسب، وهو مَن يعنيه أنها خرجت من رصيده.
+      const held = oldRecord?.held_by ?? record.created_by ?? "موظف";
+      const tag = `cash-recv-${record.received_at ?? ""}-${held}`;
+      const owner = DIRECTORY[held];
       if (owner) {
         const subject = `Cash Collected — ${invNo}`;
         const lines = [
-          `Dear ${emp},`,
+          `Dear ${held},`,
           `<b>${by}</b> has collected the cash you were holding.`,
           `<b>Client Invoice:</b> ${invNo}`,
           `<b>Amount:</b> ${amt} QAR`,
@@ -235,11 +238,11 @@ Deno.serve(async (req) => {
         if (owner.email) tasks.push(sendEmail(owner.email, subject, mail.html, mail.text));
         tasks.push(sendWhatsApp(owner.phone, owner.wa_apikey, wa));
       }
-      tasks.push(sendPush(emp, "✅ المحاسب استلم الكاش",
+      tasks.push(sendPush(held, "✅ المحاسب استلم الكاش",
         `${by} استلم منك ${amt} ر.ق — ${invNo}`, undefined, tag));
       for (const n of VIEWER_NAMES) {
         tasks.push(sendPush(n, "✅ استلام كاش",
-          `${by} استلم من ${emp} ${amt} ر.ق`, undefined, `${tag}-mgmt`));
+          `${by} استلم من ${held} ${amt} ر.ق`, undefined, `${tag}-mgmt`));
       }
     }
 

@@ -465,6 +465,8 @@ function restoreBootPage(p){
 /* ══════════════════════════════════════════
    NAVIGATION
 ══════════════════════════════════════════ */
+// أقصى عدد طلبات يجلبه الأرشيف في المرة الواحدة — التحذير مشتقّ منه
+const ARC_FETCH_LIMIT = 1000;
 const APP_PAGES = ['home','cancel','disb','arc','inv','cash'];
 // الصفحة الأم لكل شاشة — الرجوع بيوديك لها.
 // الرئيسية مالهاش أم، فالرجوع منها بيخرج من التطبيق زي ما هو متوقّع.
@@ -734,14 +736,16 @@ function prepareDisbPrintAppendix(){
   `;
   appendix.classList.add('on');
 }
+// القيم تُهرَّب هنا وحدها. كان المتصل مسؤولاً عنها، ففتح الطلب المحفوظ
+// من الأرشيف كان يقطع اسم المورّد عند أول علامة اقتباس.
 function addSupplierRow(supplier='',inv='',amt='', skipLimit=false){
   if(!skipLimit && !canAddDisbTableRow()) return;
   const tb=document.getElementById('supplier-rows');
   const tr=document.createElement('tr');
   tr.innerHTML=`
-    <td><input type="text" class="s-name" list="supplier-names" placeholder="${t('اسم المورّد')}" data-i18n-attr="placeholder|اسم المورّد" value="${supplier}"></td>
-    <td><input type="text" class="s-inv"  placeholder="${t('رقم الفاتورة')}" data-i18n-attr="placeholder|رقم الفاتورة" value="${inv}"></td>
-    <td class="amt-cell"><input type="text" class="s-amt" placeholder="0.00" value="${amt}" oninput="handleSupplierAmt(this)"></td>
+    <td><input type="text" class="s-name" list="supplier-names" placeholder="${t('اسم المورّد')}" data-i18n-attr="placeholder|اسم المورّد" value="${escAttr(supplier)}"></td>
+    <td><input type="text" class="s-inv"  placeholder="${t('رقم الفاتورة')}" data-i18n-attr="placeholder|رقم الفاتورة" value="${escAttr(inv)}"></td>
+    <td class="amt-cell"><input type="text" class="s-amt" placeholder="0.00" value="${escAttr(amt)}" oninput="handleSupplierAmt(this)"></td>
     <td class="no-print"><button class="del-row" onclick="this.closest('tr').remove();recalcSupplier()">✕</button></td>`;
   tb.appendChild(tr);
   if(typeof updateMatch==='function') updateMatch();
@@ -769,8 +773,8 @@ function addClientRow(inv='',amt='', skipLimit=false, src=''){
   // ويظهر بـCSS جوه نفس الخانة — عشان ما يتزوّدش ولا صف ويفضل تقسيم
   // الصفحات والملحق شايف نفس العدد بالظبط.
   tr.innerHTML=`
-    <td${src?` data-src="${escAttr(src)}"`:''}><input type="text" class="c-inv" placeholder="${t('رقم فاتورة العميل - ‎Odoo')}" data-i18n-attr="placeholder|رقم فاتورة العميل - ‎Odoo" value="${inv}"></td>
-    <td class="amt-cell"><input type="text" class="c-amt" placeholder="0.00" value="${amt}" oninput="handleClientAmt(this)"></td>
+    <td${src?` data-src="${escAttr(src)}"`:''}><input type="text" class="c-inv" placeholder="${t('رقم فاتورة العميل - ‎Odoo')}" data-i18n-attr="placeholder|رقم فاتورة العميل - ‎Odoo" value="${escAttr(inv)}"></td>
+    <td class="amt-cell"><input type="text" class="c-amt" placeholder="0.00" value="${escAttr(amt)}" oninput="handleClientAmt(this)"></td>
     <td class="no-print"><button class="del-row" onclick="this.closest('tr').remove();recalcClient()">✕</button></td>`;
   tb.appendChild(tr);
   if(typeof updateMatch==='function') updateMatch();
@@ -2240,7 +2244,7 @@ async function loadArchive(silent=false){
   if(!silent) body.innerHTML=`<div class="arc-empty">${t('جاري التحميل...')}</div>`;
   try{
     await ensureTransferColumns();   // أعمدة التحويل المجمّع موجودة؟ (فحص مرة واحدة لكل جلسة)
-    let qy = sb.from('requests').select('*').order('id',{ascending:false}).limit(1000);
+    let qy = sb.from('requests').select('*').order('id',{ascending:false}).limit(ARC_FETCH_LIMIT);
     if(ARC_TAB==='cancelled') qy = qy.eq('cancelled', true);
     else if(ARC_TAB!=='all') qy = qy.eq('doc_type', ARC_TAB);
     // المبيعات يشوفوا طلبات بعض فقط (عرض/طباعة/تحميل) — مش طلبات المحاسب؛ التعديل لصاحب الطلب فقط
@@ -3475,9 +3479,13 @@ function setArchiveStatusFilter(key){
 function renderArchiveCount(shown, afterTab, fetched){
   const el = document.getElementById('arc-count');
   if(!el) return;
-  const capped = fetched >= 200;
+  // التحذير مربوط بحدّ الاستعلام نفسه. كان ثابتاً على 200 بعدما صار
+  // الاستعلام يجلب 1000، فكان ينبّه لاقتطاع لم يحدث.
+  const capped = fetched >= ARC_FETCH_LIMIT;
   el.innerHTML = `${t('عرض')} <b>${shown}</b> ${t('من إجمالي')} <b>${afterTab}</b> ${t('طلب')}`
-    + (capped ? ` · <span class="arc-count-warn">${t('الحد الأقصى للعرض 200 طلب — استخدم البحث أو فلتر التاريخ')}</span>` : '');
+    + (capped ? ` · <span class="arc-count-warn">${
+        t('الحد الأقصى للعرض {max} طلب — استخدم البحث أو فلتر التاريخ').replace('{max}', ARC_FETCH_LIMIT)
+      }</span>` : '');
 }
 // سجل التوقيت من قائمة الإجراءات
 function showArchiveTimeFromMenu(btn, rowIndex){

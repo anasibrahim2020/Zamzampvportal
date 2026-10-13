@@ -552,7 +552,7 @@ const I18N_EN = {
   'عرض':'Showing',
   'من إجمالي':'of',
   'طلب':'requests',
-  'الحد الأقصى للعرض 200 طلب — استخدم البحث أو فلتر التاريخ':'Showing the first 200 — use search or the date filter to narrow down',
+  'الحد الأقصى للعرض {max} طلب — استخدم البحث أو فلتر التاريخ':'Showing the first {max} — use search or the date filter to narrow down',
 
   'الرئيسية':'Home',
   'المورّد / مقدّم الطلب':'Supplier / Requester',

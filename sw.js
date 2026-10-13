@@ -2,7 +2,7 @@
 // نسخة بسيطة: تخلّي التطبيق قابل للتثبيت، وتسرّع فتح الملفات الثابتة.
 // ملاحظة: البيانات (Supabase) دايمًا من النت — مابنعملهاش cache.
 
-const CACHE = 'zamzam-v194';
+const CACHE = 'zamzam-v195';
 const ASSETS = [
   // الخطوط والصور فقط: ثابتة ولا تتغيّر. أما HTML وCSS وJS فلا تُخزَّن
   // إطلاقاً حتى يفتح التطبيق دائماً على آخر نسخة كأي موقع عادي.
@@ -107,14 +107,16 @@ self.addEventListener('push', (e) => {
   e.waitUntil(self.registration.showNotification(title, options));
 });
 
-// الضغط على الإشعار: يفتح البورتال أو يركّز عليه لو مفتوح
+// الضغط على الإشعار: يفتح البورتال أو يركّز عليه لو مفتوح.
+// النافذة المفتوحة تُركَّز كما هي ولا يُعاد تحميلها: الإشعارات كلها تشير
+// إلى البورتال نفسه، فكان إعادة التحميل تضيّع طلباً نصف مكتوب بلا داعٍ.
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   const target = (e.notification.data && e.notification.data.url) || './index.html';
   e.waitUntil((async () => {
     const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const c of all) {
-      if ('focus' in c) { try { await c.navigate(target); } catch (_e) {} return c.focus(); }
+      if ('focus' in c) return c.focus();
     }
     if (self.clients.openWindow) return self.clients.openWindow(target);
   })());

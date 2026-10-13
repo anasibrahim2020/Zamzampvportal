@@ -935,7 +935,7 @@ function invApplyPick(){
 
   let anyCc = false;
   picked.forEach(r=>{
-    addSupplierRow(escAttr(r.supplier||''), escAttr(r.inv_no||''), formatMoney(r.amount), true);
+    addSupplierRow(r.supplier||'', r.inv_no||'', formatMoney(r.amount), true);
     if(!r.is_general){
       // أول مركز في المجموعة بس بياخد اسم الفاتورة — يكفي إنه يعلّم بداية
       // المجموعة، والباقي تحته. ده بيمنع تكرار الرقم في كل سطر.
@@ -943,7 +943,7 @@ function invApplyPick(){
       invCostRowsFor(r).forEach(c=>{
         if(!c.inv && !c.amt) return;
         anyCc = true;
-        addClientRow(escAttr(c.inv||''), c.amt ? formatMoney(c.amt) : '', true,
+        addClientRow(c.inv||'', c.amt ? formatMoney(c.amt) : '', true,
                      first ? (r.inv_no || '') : '');
         first = false;
       });
