@@ -817,6 +817,12 @@ const I18N_EN = {
   'رفض التسليم':'Decline the handover',
   'تبقى النقدية في عهدة المرسِل كما هي، ويصله إشعار بالرفض.':'The cash stays with the sender as it was, and they are notified of the decline.',
   'تعذّر الرفض':'Could not decline',
+  // ── حالة الإشعارات في قائمة الحساب ──
+  'الإشعارات':'Notifications',
+  'مفعّلة':'On',
+  'غير مفعّلة':'Off',
+  'محظورة':'Blocked',
+  'تحتاج التثبيت':'Needs install',
 };
 
 /* أسماء المستخدمين: عربي ← إنجليزي (تُبنى من USER_MAP) */

@@ -94,3 +94,7 @@
   .ho-acts{margin-inline-start:0;width:100%;}
   .ho-acts .hbtn{flex:1 1 calc(50% - 4px);justify-content:center;}
 }
+
+/* ترويسة القسم تحمل مبلغًا لا رقمًا صغيرًا، فتلفّ بدل أن تنضغط ويُقصّ النص */
+#cash-body .h-sec-hd{flex-wrap:wrap;row-gap:4px;}
+#cash-body .h-count{flex:0 0 auto;white-space:nowrap;height:auto;min-height:20px;padding:2px 9px;line-height:1.5;}

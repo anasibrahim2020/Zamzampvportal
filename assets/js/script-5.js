@@ -3439,6 +3439,7 @@ function refreshDynamicUI(){
     if(document.getElementById('page-arc')?.classList.contains('on') && typeof loadArchive === 'function') loadArchive();
     if(typeof updateTransferSelectUI === 'function') updateTransferSelectUI();
     // سجل الفواتير: الشريط والشارات والجدول كلها مرسومة من JS، فبتتعاد مع اللغة
+    if(typeof syncPushMenu === 'function') syncPushMenu();
     if(typeof renderInvImportBar === 'function') renderInvImportBar();
     if(typeof invMarkLinkedRows === 'function') invMarkLinkedRows();
     if(typeof renderInvoices === 'function' && typeof INV_LOADED !== 'undefined' && INV_LOADED
@@ -3669,7 +3670,7 @@ function toggleUserMenu(e){
   const on = menu.classList.toggle('on');
   chip?.setAttribute('aria-expanded', on ? 'true' : 'false');
   chip?.classList.toggle('on', on);
-  if(on) syncUserChip();
+  if(on){ syncUserChip(); if(typeof syncPushMenu === 'function') syncPushMenu(); }
 }
 function closeUserMenu(){
   document.getElementById('tb-menu')?.classList.remove('on');

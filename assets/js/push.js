@@ -205,6 +205,25 @@
     return 'default';
   };
 
+  /* حالة الإشعارات في قائمة الحساب — مكان ثابت يفعّل منه المستخدم
+     في أي وقت، بدل انتظار النافذة التي تظهر عند فتح التطبيق. */
+  window.syncPushMenu = function () {
+    var btn = document.getElementById('tbm-push');
+    var em  = document.getElementById('tbm-push-state');
+    if (!btn || !em) return;
+    var st = window.pushStatus();
+    if (st === 'unsupported') { btn.style.display = 'none'; return; }
+    btn.style.display = '';
+    var label =
+      st === 'granted'          ? 'مفعّلة' :
+      st === 'denied'           ? 'محظورة' :
+      st === 'ios-needs-install'? 'تحتاج التثبيت' : 'غير مفعّلة';
+    em.textContent = (typeof t === 'function') ? t(label) : label;
+    em.setAttribute('data-i18n', label);
+    btn.classList.toggle('push-on',  st === 'granted');
+    btn.classList.toggle('push-off', st !== 'granted');
+  };
+
   /* تفعيل يدوي من زرّ في الواجهة — يفتح النافذة حتى لو سبق رفضها */
   window.enablePush = function () {
     var n = currentUserName();

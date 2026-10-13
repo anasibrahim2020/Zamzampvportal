@@ -2194,3 +2194,7 @@ html{-webkit-tap-highlight-color:transparent;}
   border-color:var(--teal);
 }
 .doc[data-locked="1"] .add-row-btn:disabled:active{transform:none;}
+
+/* حالة الإشعارات في قائمة الحساب: أخضر حين تعمل، ورمادي حين لا تعمل */
+#tbm-push.push-on  em{color:var(--green);}
+#tbm-push.push-off em{color:var(--wait);}

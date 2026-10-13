@@ -247,3 +247,7 @@
    في أكبر طلب (٢٤ صف). مقيس. */
 .appendix-table .ap-src{content:none;display:inline;font-size:8px;margin-bottom:0;line-height:inherit;}
 .appendix-table .ap-src::after{content:' · ';color:var(--n4);font-weight:700;}
+
+/* ترويسة القسم تحمل مبلغًا لا رقمًا صغيرًا، فتلفّ بدل أن تنضغط ويُقصّ النص */
+#inv-body .h-sec-hd{flex-wrap:wrap;row-gap:4px;}
+#inv-body .h-count{flex:0 0 auto;white-space:nowrap;height:auto;min-height:20px;padding:2px 9px;line-height:1.5;}
