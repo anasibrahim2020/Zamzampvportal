@@ -315,8 +315,10 @@ async function doLogin(){
 }
 
 async function doLogout(){
+  if(typeof endBoot === 'function') endBoot();
   try{ if(sb) await sb.auth.signOut(); }catch(e){}
   CURRENT = null;
+  try{ history.replaceState({page:'home'}, '', '#home'); }catch(e){}
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('app').style.display='none';
   document.getElementById('login-user').value='';
@@ -324,6 +326,8 @@ async function doLogout(){
 }
 
 function enterApp(){
+  if(typeof bootIn  === 'function') bootIn();
+  if(typeof endBoot === 'function') endBoot();
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('tb-name').textContent = personName(CURRENT.name);
@@ -424,14 +428,38 @@ async function loadSupplierNames(){
   }catch(e){ /* لا يؤثر على عمل النموذج */ }
 }
 
+// إنهاء شاشة التمهيد — تُستدعى في كل المسارات حتى لا يعلق المؤشّر يدور
+function endBoot(){ try{ document.documentElement.classList.remove('booting'); }catch(e){} }
+
+// انتقال هادئ من شاشة التمهيد إلى التطبيق — الفئة تُزال سريعاً حتى لا تبقى أي حركة
+function bootIn(){
+  try{
+    if(!document.documentElement.classList.contains('booting')) return;
+    const h = document.documentElement;
+    h.classList.add('boot-in');
+    setTimeout(()=>{ try{ h.classList.remove('boot-in'); }catch(e){} }, 400);
+  }catch(e){}
+}
+
+// الصفحات التي يصحّ الرجوع إليها بعد تحديث الصفحة. طلب الصرف والإلغاء
+// غير مشمولين لأن محتوى النموذج يضيع بالتحديث، فالعودة إليه مُربِكة.
+const RESTORABLE_PAGES = ['arc','inv','cash'];
+function restoreBootPage(p){
+  if(RESTORABLE_PAGES.indexOf(p) < 0) return;   // الرئيسية والنماذج: نترك ما قرّره enterApp
+  try{ showPage(p); }catch(e){}
+}
+
 // استعادة الجلسة لو المستخدم مسجّل دخول بالفعل
 (async function(){
-  if(!SB_ON) return;
+  // نلتقط الصفحة من العنوان قبل أي شيء، لأن enterApp يكتب '#home' مكانها
+  const bootPage = (location.hash || '').replace('#','');
+  if(!SB_ON){ endBoot(); return; }
   try{
     const { data } = await sb.auth.getSession();
     const u = data && data.session ? data.session.user : null;
-    if(u){ const m=_mapUser(u.email); if(m){ CURRENT=m; enterApp(); } }
+    if(u){ const m=_mapUser(u.email); if(m){ CURRENT=m; enterApp(); restoreBootPage(bootPage); } }
   }catch(e){}
+  endBoot();
 })();
 
 /* ══════════════════════════════════════════

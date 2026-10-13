@@ -2198,3 +2198,29 @@ html{-webkit-tap-highlight-color:transparent;}
 /* حالة الإشعارات في قائمة الحساب: أخضر حين تعمل، ورمادي حين لا تعمل */
 #tbm-push.push-on  em{color:var(--green);}
 #tbm-push.push-off em{color:var(--wait);}
+
+/* ── شاشة التمهيد ────────────────────────────────────────────────
+   أثناء استعادة الجلسة بعد تحديث الصفحة نعرض خلفية زمزم ومؤشّر
+   انتظار بدل نموذج الدخول، حتى لا يظنّ المستخدم أنه خرج من حسابه. */
+html.booting .login-box{padding:34px 32px 30px;}
+html.booting .login-box > *{display:none;}
+html.booting .login-box > .login-logo{display:block;margin-bottom:0;}
+html.booting .login-box::after{
+  content:'';display:block;width:28px;height:28px;margin:20px auto 0;
+  border-radius:50%;border:3px solid rgba(20,24,46,.12);border-top-color:var(--teal);
+  animation:zz-boot-spin .8s linear infinite;
+}
+@keyframes zz-boot-spin{to{transform:rotate(360deg);}}
+@media (prefers-reduced-motion:reduce){
+  html.booting .login-box::after{animation-duration:2.4s;}
+}
+
+/* دخول هادئ للتطبيق بعد التمهيد بدل الظهور المفاجئ.
+   محصور في @media screen وفي فئة تُزال بعد انتهاء الحركة، فلا أثر له على الطباعة. */
+@media screen{
+  html.boot-in #app{animation:zz-boot-in .26s ease-out both;}
+  @keyframes zz-boot-in{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){
+    html.boot-in #app{animation:none;}
+  }
+}
