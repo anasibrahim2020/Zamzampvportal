@@ -70,9 +70,74 @@
     }
     return false;
   }
+  /* لوحة شرح — تُبنى بأنماط مضمّنة فقط وبلا أي صورة، لأن الملفات
+     الخارجية هي نفسها المحجوبة. بديل عن ترك الموظف أمام صفحة مكسورة. */
+  function showBlocked(){
+    if(document.getElementById('zz-blocked')) return;
+    // تفضيل اللغة من التخزين مباشرة: i18n.js قد لا يكون عمل أصلاً،
+    // وهو يضع صنفاً على الجذر ولا يغيّر سمة lang دائماً.
+    var en = false;
+    try{ en = localStorage.getItem('zamzam_lang') === 'en'; }catch(e){}
+    if(!en){ en = document.documentElement.lang === 'en'
+                || document.documentElement.className.indexOf('lang-en') >= 0; }
+    // نخفي الصفحة المكسورة بدل تغطيتها: بلا ملف أنماط لا يُعتمد على
+    // position:fixed في تغطية الشاشة، فالأضمن ألّا يبقى تحتها شيء.
+    try{
+      document.body.style.margin = '0';
+      var kids = document.body.children;
+      for(var i = 0; i < kids.length; i++){ kids[i].style.display = 'none'; }
+    }catch(e){}
+    var d = document.createElement('div');
+    d.id = 'zz-blocked';
+    d.dir = en ? 'ltr' : 'rtl';
+    d.style.cssText = 'box-sizing:border-box;width:100%;min-height:100vh;'
+      + 'background:linear-gradient(115deg,#1E9E78 0%,#31708E 45%,#287E80 100%);'
+      + 'display:flex;align-items:center;justify-content:center;padding:20px;'
+      + "font-family:'PlexAr','Segoe UI',Tahoma,sans-serif;";
+    d.innerHTML =
+      '<div style="box-sizing:border-box;background:#fff;border-radius:14px;max-width:460px;width:100%;'
+      + 'padding:30px 26px;text-align:center;box-shadow:0 24px 56px -20px rgba(20,24,46,.45)">'
+      + '<div style="font-size:30px;line-height:1;margin-bottom:14px">&#9888;&#65039;</div>'
+      + '<div style="font-size:18px;font-weight:700;color:#1A2233;margin-bottom:6px">'
+      + (en ? 'The portal is blocked on this device' : 'البوابة محجوبة على هذا الجهاز') + '</div>'
+      + '<div style="font-size:13px;color:#5A6880;line-height:1.75;margin-bottom:18px">'
+      + (en
+          ? 'A security or antivirus program on this device is blocking part of the portal\u2019s files, so the page cannot display correctly. The portal itself is working normally.'
+          : 'برنامج حماية على هذا الجهاز يحجب جزءاً من ملفات البوابة، فتعذّر عرض الصفحة بشكل صحيح. البوابة نفسها تعمل بصورة طبيعية.')
+      + '</div>'
+      + '<div style="text-align:' + (en ? 'left' : 'right') + ';background:#F4F6FA;border-radius:10px;'
+      + 'padding:14px 16px;font-size:12.5px;color:#1A2233;line-height:2;margin-bottom:18px;box-sizing:border-box">'
+      + '<b style="color:#31708E">' + (en ? 'What to do' : 'ما العمل') + '</b><br>'
+      + (en
+          ? '1. Add this site to your security program\u2019s exclusions.<br>2. Or open the portal from another network, or from your phone\u2019s mobile data.'
+          : '١. أضف هذا الموقع إلى استثناءات برنامج الحماية.<br>٢. أو افتح البوابة من شبكة أخرى، أو من بيانات الهاتف.')
+      + '</div>'
+      + '<button id="zz-blocked-retry" style="box-sizing:border-box;width:100%;padding:12px;border:none;border-radius:11px;'
+      + 'background:linear-gradient(115deg,#1E9E78 0%,#31708E 45%,#287E80 100%);color:#fff;'
+      + 'font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">'
+      + (en ? 'Try again' : 'إعادة المحاولة') + '</button>'
+      + '</div>';
+    document.body.appendChild(d);
+    var b = document.getElementById('zz-blocked-retry');
+    if(b) b.onclick = function(){
+      try{ sessionStorage.removeItem('zz-heal'); }catch(e){}
+      location.reload();
+    };
+  }
+
   function heal(){
     if(stylesOK()) return;
-    try{ if(sessionStorage.getItem('zz-heal') === '1') return; sessionStorage.setItem('zz-heal','1'); }catch(e){}
+    // علامة المحاولة. لو التخزين غير متاح نستعمل علامة في العنوان بدلاً منه،
+    // وإلّا دارت الصفحة في إعادة تحميل لا تنتهي.
+    var tried;
+    try{
+      tried = sessionStorage.getItem('zz-heal') === '1';
+      if(!tried) sessionStorage.setItem('zz-heal','1');
+    }catch(e){
+      tried = location.search.indexOf('zzheal=1') >= 0;
+    }
+    // جرّبنا الإصلاح ولم ينفع ⇒ الحجب من خارج التطبيق، فنشرح بدل الصفحة المكسورة
+    if(tried){ showBlocked(); return; }
     var jobs = [];
     try{
       if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
@@ -88,7 +153,26 @@
         }));
       }
     }catch(e){}
-    Promise.all(jobs).catch(function(){}).then(function(){ location.reload(); });
+    // مهلة قصوى: لو تعليق التسجيل أو مسح التخزين لم يُحسم — وهذا يحدث
+    // فعلاً حين يتدخّل برنامج الحماية — نُكمل بدلاً من البقاء معلّقين.
+    var done = false;
+    var go = function(){
+      if(done) return; done = true;
+      // التخزين شغّال ⇒ العلامة محفوظة فيه، وإعادة تحميل عادية تكفي.
+      // لا يصحّ replace على العنوان نفسه: وجود #home يجعلها انتقال جزء
+      // لا إعادة تحميل، فتبقى الصفحة مكسورة بلا أي محاولة.
+      var needMark = false;
+      try{ needMark = sessionStorage.getItem('zz-heal') !== '1'; }
+      catch(e){ needMark = true; }
+      if(needMark && location.href.indexOf('zzheal=1') < 0){
+        var u = location.href.replace(/#.*$/, '');
+        location.replace(u + (u.indexOf('?') < 0 ? '?' : '&') + 'zzheal=1');
+      } else {
+        location.reload();
+      }
+    };
+    setTimeout(go, 2500);
+    Promise.all(jobs).catch(function(){}).then(go);
   }
   if(document.readyState === 'complete') setTimeout(heal, 300);
   else window.addEventListener('load', function(){ setTimeout(heal, 300); });
