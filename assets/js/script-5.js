@@ -3421,6 +3421,9 @@ function refreshDynamicUI(){
     if(typeof setDisbMainTotalLabels === 'function') setDisbMainTotalLabels(!!document.getElementById('doc-disb')?.classList.contains('has-appendix'));
     if(typeof closeArchiveMenu === 'function') closeArchiveMenu();
     if(typeof closeArchiveTimePopover === 'function') closeArchiveTimePopover();
+    // الرئيسية مرسومة بالكامل من JS — الترحيب والأزرار وعناوين الأقسام
+    // ورسائل الفراغ — فبدون إعادة رسمها كانت تبقى باللغة القديمة وحدها.
+    if(document.getElementById('page-home')?.classList.contains('on') && typeof loadHome === 'function') loadHome();
     if(document.getElementById('page-arc')?.classList.contains('on') && typeof loadArchive === 'function') loadArchive();
     if(typeof updateTransferSelectUI === 'function') updateTransferSelectUI();
     // سجل الفواتير: الشريط والشارات والجدول كلها مرسومة من JS، فبتتعاد مع اللغة
